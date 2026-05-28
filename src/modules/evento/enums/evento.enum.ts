@@ -1,0 +1,18 @@
+export enum EstadoEvento {
+  PENDIENTE = 'PENDIENTE',
+  EN_VALIDACION = 'EN_VALIDACION',
+  APROBADO = 'APROBADO',
+  EJECUTADO = 'EJECUTADO',
+  RECHAZADO = 'RECHAZADO',
+  ANULADO = 'ANULADO',
+}
+
+export enum OrigenCreacionEvento {
+  FORMULARIO_WEB = 'FORMULARIO_WEB',
+  INTERCONEXION_PJUD = 'INTERCONEXION_PJUD',
+}
+
+export enum ParaQuien {
+  CONDENADO = 'CONDENADO',
+  VICTIMA = 'VICTIMA',
+}
