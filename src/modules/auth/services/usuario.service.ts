@@ -27,6 +27,16 @@ export class UsuarioService {
       .leftJoinAndSelect('u.region', 'r')
       .leftJoinAndSelect('u.crs', 'crs')
       .leftJoinAndSelect('u.tribunal', 't')
+      .select([
+        'u.id', 'u.username', 'u.email', 'u.rut', 'u.nombres',
+        'u.apellidoPaterno', 'u.apellidoMaterno', 'u.telefonoMovil',
+        'u.telefonoFijo', 'u.activo', 'u.debeCambiarPass',
+        'u.ultimoLogin', 'u.createdAt', 'u.updatedAt',
+        'u.regionId', 'u.crsId', 'u.tribunalId',
+        'r.id', 'r.nombre',
+        'crs.id', 'crs.nombreCrs',
+        't.id', 't.nombreTribunal',
+      ])
       .where('u.deletedAt IS NULL');
 
     if (activo !== undefined) {
@@ -60,6 +70,27 @@ export class UsuarioService {
     const usuario = await this.usuarioRepo.findOne({
       where: { id, deletedAt: IsNull() },
       relations: { region: true, crs: true, tribunal: true },
+    });
+    if (!usuario) {
+      throw new BadRequestException(`Usuario con ID ${id} no encontrado`);
+    }
+    return usuario;
+  }
+
+  async findOnePublic(id: number): Promise<Partial<Usuario>> {
+    const usuario = await this.usuarioRepo.findOne({
+      where: { id, deletedAt: IsNull() },
+      relations: { region: true, crs: true, tribunal: true },
+      select: {
+        id: true, username: true, email: true, rut: true,
+        nombres: true, apellidoPaterno: true, apellidoMaterno: true,
+        telefonoMovil: true, telefonoFijo: true,
+        activo: true, debeCambiarPass: true, ultimoLogin: true,
+        createdAt: true, updatedAt: true,
+        region: { id: true, nombre: true },
+        crs: { id: true, nombreCrs: true },
+        tribunal: { id: true, nombreTribunal: true },
+      },
     });
     if (!usuario) {
       throw new BadRequestException(`Usuario con ID ${id} no encontrado`);

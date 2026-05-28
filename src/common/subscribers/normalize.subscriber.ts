@@ -5,12 +5,29 @@ import {
   UpdateEvent,
 } from 'typeorm';
 import { normalizeString } from '../utils/normalize.util';
-import { Logger } from '@nestjs/common';
+
+const SKIP_PROPERTIES = new Set([
+  'passHash',
+  'hashSha256',
+  'uuid',
+  'urlMapa',
+  'rutaRelativa',
+  'mimeType',
+  'numeroSerie',
+  'crrIdPjud',
+  'folioInterno',
+  'latitud',
+  'longitud',
+  'requestBody',
+  'responseBody',
+  'errorDesc',
+  'mensajeRespuesta',
+  'detalles',
+  'setupSecret',
+]);
 
 @EventSubscriber()
 export class NormalizeSubscriber implements EntitySubscriberInterface {
-  private readonly logger = new Logger(NormalizeSubscriber.name);
-
   beforeInsert(event: InsertEvent<any>): void {
     this.normalizeEntity(event.entity);
   }
@@ -25,6 +42,8 @@ export class NormalizeSubscriber implements EntitySubscriberInterface {
     if (!entity || typeof entity !== 'object') return;
 
     for (const key of Object.keys(entity)) {
+      if (SKIP_PROPERTIES.has(key)) continue;
+
       const value = entity[key];
       if (typeof value === 'string') {
         const normalized = normalizeString(value);
