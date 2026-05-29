@@ -2,8 +2,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity('sga.CAT_TIPO_CAUSA')
@@ -19,10 +17,4 @@ export class CatTipoCausa {
 
   @Column({ name: 'activo', type: 'bit', default: 1 })
   activo: boolean;
-
-  @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime2' })
-  updatedAt: Date;
 }
