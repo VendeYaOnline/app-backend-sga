@@ -32,13 +32,28 @@ export class Usuario {
   @Column({ name: 'apellido_paterno', type: 'nvarchar', length: 100 })
   apellidoPaterno: string;
 
-  @Column({ name: 'apellido_materno', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'apellido_materno',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   apellidoMaterno: string | null;
 
-  @Column({ name: 'telefono_movil', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'telefono_movil',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   telefonoMovil: string | null;
 
-  @Column({ name: 'telefono_fijo', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'telefono_fijo',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   telefonoFijo: string | null;
 
   @Column({ name: 'region_id', type: 'int', nullable: true })

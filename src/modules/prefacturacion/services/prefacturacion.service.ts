@@ -1,5 +1,9 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ConflictException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -24,7 +28,8 @@ export class PrefacturacionService {
   async findPeriodos(filters: PaginationDto) {
     const { page = 1, limit = 20 } = filters;
 
-    const qb = this.periodoRepo.createQueryBuilder('p')
+    const qb = this.periodoRepo
+      .createQueryBuilder('p')
       .leftJoinAndSelect('p.cerradoPor', 'u')
       .orderBy('p.anio', 'DESC')
       .addOrderBy('p.mes', 'DESC');
@@ -32,7 +37,15 @@ export class PrefacturacionService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findPeriodo(id: number) {
@@ -40,7 +53,8 @@ export class PrefacturacionService {
       where: { id },
       relations: { cerradoPor: true },
     });
-    if (!periodo) throw new NotFoundException(`Periodo con ID ${id} no encontrado`);
+    if (!periodo)
+      throw new NotFoundException(`Periodo con ID ${id} no encontrado`);
     return periodo;
   }
 
@@ -48,14 +62,18 @@ export class PrefacturacionService {
     const existente = await this.periodoRepo.findOne({
       where: { anio: dto.anio, mes: dto.mes },
     });
-    if (existente) throw new ConflictException(`El periodo ${dto.mes}/${dto.anio} ya existe`);
+    if (existente)
+      throw new ConflictException(
+        `El periodo ${dto.mes}/${dto.anio} ya existe`,
+      );
     const periodo = this.periodoRepo.create(dto);
     return this.periodoRepo.save(periodo) as unknown as Promise<PrefactPeriodo>;
   }
 
   async cerrarPeriodo(id: number, userId: number): Promise<PrefactPeriodo> {
     const periodo = await this.findPeriodo(id);
-    if (periodo.cerrado) throw new BadRequestException('El periodo ya está cerrado');
+    if (periodo.cerrado)
+      throw new BadRequestException('El periodo ya está cerrado');
     periodo.cerrado = true;
     periodo.cerradoAt = new Date();
     periodo.cerradoBy = userId;

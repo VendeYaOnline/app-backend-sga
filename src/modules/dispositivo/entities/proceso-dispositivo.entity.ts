@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Evento } from '../../evento/entities/evento.entity';
 import { Dispositivo } from './dispositivo.entity';
@@ -23,7 +26,12 @@ export class ProcesoDispositivo {
   @Column({ name: 'fecha_registro', type: 'datetime2' })
   fechaRegistro: Date;
 
-  @Column({ name: 'observaciones', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'observaciones',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   observaciones: string | null;
 
   @ManyToOne(() => Evento)

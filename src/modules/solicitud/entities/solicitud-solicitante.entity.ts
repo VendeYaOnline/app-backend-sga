@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Solicitud } from './solicitud.entity';
 
 @Entity('sga.SOLICITUD_SOLICITANTE')
@@ -18,13 +24,28 @@ export class SolicitudSolicitante {
   @Column({ name: 'apellido_paterno', type: 'nvarchar', length: 100 })
   apellidoPaterno: string;
 
-  @Column({ name: 'apellido_materno', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'apellido_materno',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   apellidoMaterno: string | null;
 
-  @Column({ name: 'rut_solicitante', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'rut_solicitante',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   rutSolicitante: string | null;
 
-  @Column({ name: 'email_solicitante', type: 'nvarchar', length: 255, nullable: true })
+  @Column({
+    name: 'email_solicitante',
+    type: 'nvarchar',
+    length: 255,
+    nullable: true,
+  })
   emailSolicitante: string | null;
 
   @Column({ name: 'telefono', type: 'nvarchar', length: 30, nullable: true })

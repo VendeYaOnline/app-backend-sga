@@ -2,7 +2,9 @@ import { IsString, IsNotEmpty, MaxLength, IsEmail } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SetupDto {
-  @ApiProperty({ description: 'Token secreto de inicialización configurado en el servidor' })
+  @ApiProperty({
+    description: 'Token secreto de inicialización configurado en el servidor',
+  })
   @IsString()
   @IsNotEmpty()
   setupSecret: string;

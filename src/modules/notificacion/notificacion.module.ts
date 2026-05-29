@@ -7,7 +7,13 @@ import { NotificacionUsuario } from './entities/notificacion-usuario.entity';
 import { NotificacionPlantilla } from './entities/notificacion-plantilla.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Notificacion, NotificacionUsuario, NotificacionPlantilla])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Notificacion,
+      NotificacionUsuario,
+      NotificacionPlantilla,
+    ]),
+  ],
   controllers: [NotificacionController],
   providers: [NotificacionService],
   exports: [TypeOrmModule, NotificacionService],

@@ -7,10 +7,10 @@ export class PermisosGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const required = this.reflector.getAllAndOverride<string>(REQUIRED_PERMISO, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const required = this.reflector.getAllAndOverride<string>(
+      REQUIRED_PERMISO,
+      [context.getHandler(), context.getClass()],
+    );
     if (!required) return true;
 
     const { user } = context.switchToHttp().getRequest();

@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Solicitud } from './solicitud.entity';
 import { CatMotivoNoFactible } from '../../catalogo/entities/cat-motivo-no-factible.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';

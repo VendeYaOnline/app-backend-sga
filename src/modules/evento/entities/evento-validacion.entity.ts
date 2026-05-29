@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Evento } from './evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
@@ -24,13 +27,23 @@ export class EventoValidacion {
   @Column({ name: 'usuario_id', type: 'int', nullable: true })
   usuarioId: number | null;
 
-  @Column({ name: 'estado', type: 'nvarchar', length: 20, default: 'PENDIENTE' })
+  @Column({
+    name: 'estado',
+    type: 'nvarchar',
+    length: 20,
+    default: 'PENDIENTE',
+  })
   estado: string;
 
   @Column({ name: 'fecha_validacion', type: 'datetime2', nullable: true })
   fechaValidacion: Date | null;
 
-  @Column({ name: 'observaciones', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'observaciones',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   observaciones: string | null;
 
   @ManyToOne(() => Evento)

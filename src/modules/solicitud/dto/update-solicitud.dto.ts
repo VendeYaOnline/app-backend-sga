@@ -1,7 +1,18 @@
-import { IsString, IsOptional, IsInt, IsBoolean, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsBoolean,
+  MaxLength,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateSolicitudDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  tipoCausaId?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

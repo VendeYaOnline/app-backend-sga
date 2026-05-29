@@ -23,6 +23,7 @@ import { CatRolDispositivo } from './entities/cat-rol-dispositivo.entity';
 import { CatIdentificacion } from './entities/cat-identificacion.entity';
 import { CatParentesco } from './entities/cat-parentesco.entity';
 import { CatSexo } from './entities/cat-sexo.entity';
+import { CatTipoCausa } from './entities/cat-tipo-causa.entity';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CatSexo } from './entities/cat-sexo.entity';
       CatIdentificacion,
       CatParentesco,
       CatSexo,
+      CatTipoCausa,
     ]),
   ],
   controllers: [CatalogoController],

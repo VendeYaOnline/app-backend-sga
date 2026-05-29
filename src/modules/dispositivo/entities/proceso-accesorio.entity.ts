@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Evento } from '../../evento/entities/evento.entity';
 import { CatTipoAccesorio } from '../../catalogo/entities/cat-tipo-accesorio.entity';
@@ -16,10 +19,20 @@ export class ProcesoAccesorio {
   @Column({ name: 'tipo_accesorio_id', type: 'int' })
   tipoAccesorioId: number;
 
-  @Column({ name: 'numero_serie', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'numero_serie',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   numeroSerie: string | null;
 
-  @Column({ name: 'observaciones', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'observaciones',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   observaciones: string | null;
 
   @ManyToOne(() => Evento)

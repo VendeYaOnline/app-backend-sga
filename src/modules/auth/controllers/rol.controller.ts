@@ -10,7 +10,13 @@ import {
   UseGuards,
   NotFoundException,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CatRol } from '../entities/cat-rol.entity';
@@ -36,7 +42,11 @@ export class RolController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos los roles', description: 'Retorna la lista completa de roles del sistema ordenados alfabéticamente' })
+  @ApiOperation({
+    summary: 'Listar todos los roles',
+    description:
+      'Retorna la lista completa de roles del sistema ordenados alfabéticamente',
+  })
   @ApiResponse({ status: 200, description: 'Lista de roles' })
   async findAllRoles() {
     return this.rolRepo.find({ order: { nombreRol: 'ASC' } });
@@ -44,21 +54,33 @@ export class RolController {
 
   @Post()
   @HttpCode(201)
-  @ApiOperation({ summary: 'Crear un nuevo rol', description: 'Crea un rol con su código, nombre y descripción' })
+  @ApiOperation({
+    summary: 'Crear un nuevo rol',
+    description: 'Crea un rol con su código, nombre y descripción',
+  })
   @ApiResponse({ status: 201, description: 'Rol creado exitosamente' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o código duplicado' })
+  @ApiResponse({
+    status: 400,
+    description: 'Datos inválidos o código duplicado',
+  })
   async createRol(@Body() dto: CreateRolDto) {
     const rol = this.rolRepo.create(dto);
     return this.rolRepo.save(rol);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Actualizar un rol', description: 'Modifica el nombre o descripción de un rol existente' })
+  @ApiOperation({
+    summary: 'Actualizar un rol',
+    description: 'Modifica el nombre o descripción de un rol existente',
+  })
   @ApiParam({ name: 'id', description: 'ID del rol', type: Number })
   @ApiResponse({ status: 200, description: 'Rol actualizado exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 404, description: 'Rol no encontrado' })
-  async updateRol(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRolDto) {
+  async updateRol(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRolDto,
+  ) {
     const rol = await this.rolRepo.findOne({ where: { id } });
     if (!rol) {
       throw new NotFoundException(`Rol con ID ${id} no encontrado`);
@@ -68,7 +90,10 @@ export class RolController {
   }
 
   @Get(':id/permisos')
-  @ApiOperation({ summary: 'Ver permisos asignados a un rol', description: 'Retorna la lista de permisos que tiene asignados el rol' })
+  @ApiOperation({
+    summary: 'Ver permisos asignados a un rol',
+    description: 'Retorna la lista de permisos que tiene asignados el rol',
+  })
   @ApiParam({ name: 'id', description: 'ID del rol', type: Number })
   @ApiResponse({ status: 200, description: 'Lista de permisos del rol' })
   @ApiResponse({ status: 404, description: 'Rol no encontrado' })
@@ -80,7 +105,11 @@ export class RolController {
   }
 
   @Post(':id/permisos')
-  @ApiOperation({ summary: 'Asignar permisos a un rol (reemplaza existentes)', description: 'Reemplaza todos los permisos actuales del rol por la nueva lista enviada' })
+  @ApiOperation({
+    summary: 'Asignar permisos a un rol (reemplaza existentes)',
+    description:
+      'Reemplaza todos los permisos actuales del rol por la nueva lista enviada',
+  })
   @ApiParam({ name: 'id', description: 'ID del rol', type: Number })
   @ApiResponse({ status: 201, description: 'Permisos asignados exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
@@ -97,7 +126,10 @@ export class RolController {
   }
 
   @Get('/all/permisos')
-  @ApiOperation({ summary: 'Listar todos los permisos disponibles', description: 'Retorna el catálogo completo de permisos del sistema' })
+  @ApiOperation({
+    summary: 'Listar todos los permisos disponibles',
+    description: 'Retorna el catálogo completo de permisos del sistema',
+  })
   @ApiResponse({ status: 200, description: 'Lista de permisos disponibles' })
   async findAllPermisos() {
     return this.permisoRepo.find({ order: { codigo: 'ASC' } });

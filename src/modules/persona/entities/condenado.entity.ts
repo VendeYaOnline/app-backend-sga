@@ -25,7 +25,12 @@ export class Condenado {
   @Column({ name: 'tipo_identificacion_id', type: 'int' })
   tipoIdentificacionId: number;
 
-  @Column({ name: 'rut_condenado', type: 'nvarchar', length: 12, nullable: true })
+  @Column({
+    name: 'rut_condenado',
+    type: 'nvarchar',
+    length: 12,
+    nullable: true,
+  })
   rutCondenado: string | null;
 
   @Column({ name: 'pasaporte', type: 'nvarchar', length: 50, nullable: true })
@@ -37,10 +42,20 @@ export class Condenado {
   @Column({ name: 'apellido_paterno', type: 'nvarchar', length: 100 })
   apellidoPaterno: string;
 
-  @Column({ name: 'apellido_materno', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'apellido_materno',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   apellidoMaterno: string | null;
 
-  @Column({ name: 'nombre_social', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'nombre_social',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   nombreSocial: string | null;
 
   @Column({ name: 'sexo_id', type: 'int', nullable: true })
@@ -52,22 +67,46 @@ export class Condenado {
   @Column({ name: 'fecha_nacimiento', type: 'date', nullable: true })
   fechaNacimiento: string | null;
 
-  @Column({ name: 'email_condenado', type: 'nvarchar', length: 255, nullable: true })
+  @Column({
+    name: 'email_condenado',
+    type: 'nvarchar',
+    length: 255,
+    nullable: true,
+  })
   emailCondenado: string | null;
 
   @Column({ name: 'crs_id', type: 'int', nullable: true })
   crsId: number | null;
 
-  @Column({ name: 'contacto_emergencia_nombre', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'contacto_emergencia_nombre',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   contactoEmergenciaNombre: string | null;
 
-  @Column({ name: 'contacto_emergencia_apellido', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'contacto_emergencia_apellido',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   contactoEmergenciaApellido: string | null;
 
-  @Column({ name: 'contacto_emergencia_parentesco_id', type: 'int', nullable: true })
+  @Column({
+    name: 'contacto_emergencia_parentesco_id',
+    type: 'int',
+    nullable: true,
+  })
   contactoEmergenciaParentescoId: number | null;
 
-  @Column({ name: 'contacto_emergencia_telefono', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'contacto_emergencia_telefono',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   contactoEmergenciaTelefono: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
@@ -105,6 +144,9 @@ export class Condenado {
   crs: CatCrs;
 
   @ManyToOne(() => CatParentesco)
-  @JoinColumn({ name: 'contacto_emergencia_parentesco_id', referencedColumnName: 'id' })
+  @JoinColumn({
+    name: 'contacto_emergencia_parentesco_id',
+    referencedColumnName: 'id',
+  })
   contactoEmergenciaParentesco: CatParentesco;
 }

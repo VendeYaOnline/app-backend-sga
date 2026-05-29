@@ -14,14 +14,28 @@ export class PjudService {
     private readonly pjudLlamadaRepo: Repository<PjudLlamada>,
   ) {}
 
-  async findAllLlamadas(filters: PaginationDto & { endpoint?: string; procesadoOk?: string; solicitudId?: number }) {
-    const { page = 1, limit = 20, endpoint, procesadoOk, solicitudId } = filters;
+  async findAllLlamadas(
+    filters: PaginationDto & {
+      endpoint?: string;
+      procesadoOk?: string;
+      solicitudId?: number;
+    },
+  ) {
+    const {
+      page = 1,
+      limit = 20,
+      endpoint,
+      procesadoOk,
+      solicitudId,
+    } = filters;
 
-    const qb = this.pjudLlamadaRepo.createQueryBuilder('pl')
+    const qb = this.pjudLlamadaRepo
+      .createQueryBuilder('pl')
       .leftJoinAndSelect('pl.solicitud', 's');
 
     if (endpoint) qb.andWhere('pl.endpoint = :ep', { ep: endpoint });
-    if (procesadoOk !== undefined) qb.andWhere('pl.procesadoOk = :pok', { pok: procesadoOk === 'true' });
+    if (procesadoOk !== undefined)
+      qb.andWhere('pl.procesadoOk = :pok', { pok: procesadoOk === 'true' });
     if (solicitudId) qb.andWhere('pl.solicitudId = :sid', { sid: solicitudId });
 
     qb.orderBy('pl.fechaLlamada', 'DESC');
@@ -29,7 +43,15 @@ export class PjudService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number) {
@@ -37,7 +59,8 @@ export class PjudService {
       where: { id },
       relations: { solicitud: true },
     });
-    if (!llamada) throw new NotFoundException(`Llamada PJUD con ID ${id} no encontrada`);
+    if (!llamada)
+      throw new NotFoundException(`Llamada PJUD con ID ${id} no encontrada`);
     return llamada;
   }
 
@@ -70,7 +93,10 @@ export class PjudService {
     });
   }
 
-  async enviarFactibilidad(solicitudId: number, dto: any): Promise<PjudLlamada> {
+  async enviarFactibilidad(
+    solicitudId: number,
+    dto: any,
+  ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_FACTIBILIDAD',
       direccion: 'OUT',
@@ -81,7 +107,10 @@ export class PjudService {
     return this.pjudLlamadaRepo.save(llamada);
   }
 
-  async enviarIncumplimiento(solicitudId: number, dto: any): Promise<PjudLlamada> {
+  async enviarIncumplimiento(
+    solicitudId: number,
+    dto: any,
+  ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_INCUMPLIMIENTO',
       direccion: 'OUT',

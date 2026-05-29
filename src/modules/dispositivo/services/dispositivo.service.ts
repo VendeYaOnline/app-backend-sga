@@ -20,21 +20,34 @@ export class DispositivoService {
     private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
   ) {}
 
-  async findAllDispositivos(filters: PaginationDto & { tipoAccesorioId?: number; numeroSerie?: string }) {
+  async findAllDispositivos(
+    filters: PaginationDto & { tipoAccesorioId?: number; numeroSerie?: string },
+  ) {
     const { page = 1, limit = 20, tipoAccesorioId, numeroSerie } = filters;
 
-    const qb = this.dispositivoRepo.createQueryBuilder('d')
+    const qb = this.dispositivoRepo
+      .createQueryBuilder('d')
       .leftJoinAndSelect('d.tipoAccesorio', 'ta');
 
-    if (tipoAccesorioId) qb.andWhere('d.tipoAccesorioId = :tid', { tid: tipoAccesorioId });
-    if (numeroSerie) qb.andWhere('d.numeroSerie LIKE :serie', { serie: `%${numeroSerie}%` });
+    if (tipoAccesorioId)
+      qb.andWhere('d.tipoAccesorioId = :tid', { tid: tipoAccesorioId });
+    if (numeroSerie)
+      qb.andWhere('d.numeroSerie LIKE :serie', { serie: `%${numeroSerie}%` });
 
     qb.orderBy('d.createdAt', 'DESC');
 
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findDispositivo(id: number) {
@@ -42,13 +55,16 @@ export class DispositivoService {
       where: { id },
       relations: { tipoAccesorio: true },
     });
-    if (!dispositivo) throw new NotFoundException(`Dispositivo con ID ${id} no encontrado`);
+    if (!dispositivo)
+      throw new NotFoundException(`Dispositivo con ID ${id} no encontrado`);
     return dispositivo;
   }
 
   async createDispositivo(dto: any): Promise<Dispositivo> {
     const dispositivo = this.dispositivoRepo.create(dto);
-    return this.dispositivoRepo.save(dispositivo) as unknown as Promise<Dispositivo>;
+    return this.dispositivoRepo.save(
+      dispositivo,
+    ) as unknown as Promise<Dispositivo>;
   }
 
   async findAccesoriosByEvento(eventoId: number) {
@@ -60,7 +76,9 @@ export class DispositivoService {
 
   async createAccesorio(eventoId: number, dto: any): Promise<ProcesoAccesorio> {
     const accesorio = this.procesoAccesorioRepo.create({ eventoId, ...dto });
-    return this.procesoAccesorioRepo.save(accesorio) as unknown as Promise<ProcesoAccesorio>;
+    return this.procesoAccesorioRepo.save(
+      accesorio,
+    ) as unknown as Promise<ProcesoAccesorio>;
   }
 
   async findDispositivosByEvento(eventoId: number) {
@@ -70,8 +88,17 @@ export class DispositivoService {
     });
   }
 
-  async createProcesoDispositivo(eventoId: number, dto: any): Promise<ProcesoDispositivo> {
-    const pd = this.procesoDispositivoRepo.create({ eventoId, ...dto, fechaRegistro: new Date() });
-    return this.procesoDispositivoRepo.save(pd) as unknown as Promise<ProcesoDispositivo>;
+  async createProcesoDispositivo(
+    eventoId: number,
+    dto: any,
+  ): Promise<ProcesoDispositivo> {
+    const pd = this.procesoDispositivoRepo.create({
+      eventoId,
+      ...dto,
+      fechaRegistro: new Date(),
+    });
+    return this.procesoDispositivoRepo.save(
+      pd,
+    ) as unknown as Promise<ProcesoDispositivo>;
   }
 }

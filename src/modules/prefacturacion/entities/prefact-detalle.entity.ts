@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { PrefactPeriodo } from './prefact-periodo.entity';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';

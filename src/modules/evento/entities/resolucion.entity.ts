@@ -1,11 +1,9 @@
-import {
-  Entity, PrimaryColumn, Column,
-  ManyToOne, JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Evento } from './evento.entity';
 import { CatTribunal } from '../../catalogo/entities/cat-tribunal.entity';
 import { CatTipoLey } from '../../catalogo/entities/cat-tipo-ley.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
+import { CatTipoCausa } from '../../catalogo/entities/cat-tipo-causa.entity';
 
 @Entity('sga.RESOLUCION')
 export class Resolucion {
@@ -15,8 +13,8 @@ export class Resolucion {
   @Column({ name: 'tribunal_id', type: 'int', nullable: true })
   tribunalId: number | null;
 
-  @Column({ name: 'tipo_causa_res', type: 'nvarchar', length: 10, nullable: true })
-  tipoCausaRes: string | null;
+  @Column({ name: 'tipo_causa_id', type: 'int', nullable: true })
+  tipoCausaId: number | null;
 
   @Column({ name: 'ruc_res', type: 'nvarchar', length: 50, nullable: true })
   rucRes: string | null;
@@ -72,4 +70,8 @@ export class Resolucion {
   @ManyToOne(() => CatCrs)
   @JoinColumn({ name: 'crs_id', referencedColumnName: 'id' })
   crs: CatCrs;
+
+  @ManyToOne(() => CatTipoCausa)
+  @JoinColumn({ name: 'tipo_causa_id', referencedColumnName: 'id' })
+  tipoCausa: CatTipoCausa | null;
 }

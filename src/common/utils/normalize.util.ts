@@ -1,4 +1,6 @@
-export function normalizeString(value: string | null | undefined): string | null | undefined {
+export function normalizeString(
+  value: string | null | undefined,
+): string | null | undefined {
   if (value == null) return value;
   return value
     .normalize('NFD')

@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Solicitud } from './solicitud.entity';
 import { CatPenaSustitutiva } from '../../catalogo/entities/cat-pena-sustitutiva.entity';
 import { CatMotivoNoFactible } from '../../catalogo/entities/cat-motivo-no-factible.entity';

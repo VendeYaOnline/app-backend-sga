@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
@@ -27,9 +31,17 @@ export class PersonaService {
   ) {}
 
   async findCondenados(filters: FindCondenadoDto & { search?: string }) {
-    const { page = 1, limit = 20, search, rutCondenado, pasaporte, crsId } = filters;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      rutCondenado,
+      pasaporte,
+      crsId,
+    } = filters;
 
-    const qb = this.condenadoRepo.createQueryBuilder('c')
+    const qb = this.condenadoRepo
+      .createQueryBuilder('c')
       .leftJoinAndSelect('c.tipoIdentificacion', 'ti')
       .leftJoinAndSelect('c.sexo', 's')
       .leftJoinAndSelect('c.identidadGenero', 'ig')
@@ -60,7 +72,12 @@ export class PersonaService {
 
     return {
       data,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -75,7 +92,8 @@ export class PersonaService {
         contactoEmergenciaParentesco: true,
       },
     });
-    if (!condenado) throw new NotFoundException(`Condenado con ID ${id} no encontrado`);
+    if (!condenado)
+      throw new NotFoundException(`Condenado con ID ${id} no encontrado`);
     return condenado;
   }
 
@@ -92,18 +110,27 @@ export class PersonaService {
     });
   }
 
-  async createCondenado(dto: CreateCondenadoDto, userId: number): Promise<Condenado> {
+  async createCondenado(
+    dto: CreateCondenadoDto,
+    userId: number,
+  ): Promise<Condenado> {
     if (dto.rutCondenado) {
       const existente = await this.findCondenadoByRut(dto.rutCondenado);
       if (existente) {
-        throw new ConflictException(`Ya existe un condenado con RUT ${dto.rutCondenado}`);
+        throw new ConflictException(
+          `Ya existe un condenado con RUT ${dto.rutCondenado}`,
+        );
       }
     }
     const condenado = this.condenadoRepo.create({ ...dto, createdBy: userId });
     return this.condenadoRepo.save(condenado);
   }
 
-  async updateCondenado(id: number, dto: UpdateCondenadoDto, userId: number): Promise<Condenado> {
+  async updateCondenado(
+    id: number,
+    dto: UpdateCondenadoDto,
+    userId: number,
+  ): Promise<Condenado> {
     const condenado = await this.findCondenadoById(id);
     Object.assign(condenado, dto, { updatedBy: userId });
     return this.condenadoRepo.save(condenado);
@@ -116,24 +143,34 @@ export class PersonaService {
     await this.condenadoRepo.save(condenado);
   }
 
-  async addContactoCondenado(condenadoId: number, dto: CreateContactoDto): Promise<CondenadoContacto> {
+  async addContactoCondenado(
+    condenadoId: number,
+    dto: CreateContactoDto,
+  ): Promise<CondenadoContacto> {
     await this.findCondenadoById(condenadoId);
     const contacto = this.condenadoContactoRepo.create({ condenadoId, ...dto });
     return this.condenadoContactoRepo.save(contacto);
   }
 
-  async removeContactoCondenado(condenadoId: number, contactoId: number): Promise<void> {
+  async removeContactoCondenado(
+    condenadoId: number,
+    contactoId: number,
+  ): Promise<void> {
     const contacto = await this.condenadoContactoRepo.findOne({
       where: { id: contactoId, condenadoId },
     });
-    if (!contacto) throw new NotFoundException(`Contacto con ID ${contactoId} no encontrado`);
+    if (!contacto)
+      throw new NotFoundException(
+        `Contacto con ID ${contactoId} no encontrado`,
+      );
     await this.condenadoContactoRepo.remove(contacto);
   }
 
   async findVictimas(filters: any) {
     const { page = 1, limit = 20, search, rutVictima, datoReservado } = filters;
 
-    const qb = this.victimaRepo.createQueryBuilder('v')
+    const qb = this.victimaRepo
+      .createQueryBuilder('v')
       .leftJoinAndSelect('v.tipoIdentificacion', 'ti')
       .leftJoinAndSelect('v.sexo', 's')
       .where('v.deletedAt IS NULL');
@@ -155,7 +192,12 @@ export class PersonaService {
 
     return {
       data: data.map((v) => (v.datoReservado ? this.maskVictimaData(v) : v)),
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -164,7 +206,8 @@ export class PersonaService {
       where: { id, deletedAt: IsNull() },
       relations: { tipoIdentificacion: true, sexo: true },
     });
-    if (!victima) throw new NotFoundException(`Víctima con ID ${id} no encontrada`);
+    if (!victima)
+      throw new NotFoundException(`Víctima con ID ${id} no encontrada`);
     return victima;
   }
 
@@ -180,7 +223,11 @@ export class PersonaService {
     return this.victimaRepo.save(victima);
   }
 
-  async updateVictima(id: number, dto: UpdateVictimaDto, userId: number): Promise<Victima> {
+  async updateVictima(
+    id: number,
+    dto: UpdateVictimaDto,
+    userId: number,
+  ): Promise<Victima> {
     const victima = await this.findVictimaById(id);
     Object.assign(victima, dto, { updatedBy: userId });
     return this.victimaRepo.save(victima);
@@ -193,17 +240,26 @@ export class PersonaService {
     await this.victimaRepo.save(victima);
   }
 
-  async addContactoVictima(victimaId: number, dto: CreateContactoDto): Promise<VictimaContacto> {
+  async addContactoVictima(
+    victimaId: number,
+    dto: CreateContactoDto,
+  ): Promise<VictimaContacto> {
     await this.findVictimaById(victimaId);
     const contacto = this.victimaContactoRepo.create({ victimaId, ...dto });
     return this.victimaContactoRepo.save(contacto);
   }
 
-  async removeContactoVictima(victimaId: number, contactoId: number): Promise<void> {
+  async removeContactoVictima(
+    victimaId: number,
+    contactoId: number,
+  ): Promise<void> {
     const contacto = await this.victimaContactoRepo.findOne({
       where: { id: contactoId, victimaId },
     });
-    if (!contacto) throw new NotFoundException(`Contacto con ID ${contactoId} no encontrado`);
+    if (!contacto)
+      throw new NotFoundException(
+        `Contacto con ID ${contactoId} no encontrado`,
+      );
     await this.victimaContactoRepo.remove(contacto);
   }
 
@@ -216,6 +272,6 @@ export class PersonaService {
       apellidoPaterno: '***',
       apellidoMaterno: '***',
       emailVictima: '***',
-    } as Victima;
+    };
   }
 }

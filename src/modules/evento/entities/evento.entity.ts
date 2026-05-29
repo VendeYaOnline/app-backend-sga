@@ -1,7 +1,12 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
@@ -18,7 +23,12 @@ export class Evento {
   @Column({ name: 'solicitud_id', type: 'int' })
   solicitudId: number;
 
-  @Column({ name: 'estado_evento', type: 'nvarchar', length: 30, default: 'PENDIENTE' })
+  @Column({
+    name: 'estado_evento',
+    type: 'nvarchar',
+    length: 30,
+    default: 'PENDIENTE',
+  })
   estadoEvento: string;
 
   @Column({ name: 'origen_creacion', type: 'nvarchar', length: 30 })
@@ -30,7 +40,12 @@ export class Evento {
   @Column({ name: 'asignado_a', type: 'int', nullable: true })
   asignadoA: number | null;
 
-  @Column({ name: 'observaciones', type: 'nvarchar', length: 'max', nullable: true })
+  @Column({
+    name: 'observaciones',
+    type: 'nvarchar',
+    length: 'max',
+    nullable: true,
+  })
   observaciones: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime2' })

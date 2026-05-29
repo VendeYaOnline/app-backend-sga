@@ -1,6 +1,10 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
-  ConflictException, UnprocessableEntityException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -23,11 +27,28 @@ import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
 import { EstadoSolicitud } from '../enums/solicitud.enum';
 
 const TRANSICIONES_VALIDAS: Record<string, string[]> = {
-  [EstadoSolicitud.RECEPCIONADA]: [EstadoSolicitud.APROBADA, EstadoSolicitud.DEVUELTA, EstadoSolicitud.ANULADA],
-  [EstadoSolicitud.APROBADA]: [EstadoSolicitud.INFORME_EMITIDO, EstadoSolicitud.DEVUELTA, EstadoSolicitud.ANULADA],
-  [EstadoSolicitud.INFORME_EMITIDO]: [EstadoSolicitud.INSTALADA, EstadoSolicitud.ANULADA],
-  [EstadoSolicitud.INSTALADA]: [EstadoSolicitud.EN_CONTROL, EstadoSolicitud.ANULADA],
-  [EstadoSolicitud.EN_CONTROL]: [EstadoSolicitud.CERRADA, EstadoSolicitud.ANULADA],
+  [EstadoSolicitud.RECEPCIONADA]: [
+    EstadoSolicitud.APROBADA,
+    EstadoSolicitud.DEVUELTA,
+    EstadoSolicitud.ANULADA,
+  ],
+  [EstadoSolicitud.APROBADA]: [
+    EstadoSolicitud.INFORME_EMITIDO,
+    EstadoSolicitud.DEVUELTA,
+    EstadoSolicitud.ANULADA,
+  ],
+  [EstadoSolicitud.INFORME_EMITIDO]: [
+    EstadoSolicitud.INSTALADA,
+    EstadoSolicitud.ANULADA,
+  ],
+  [EstadoSolicitud.INSTALADA]: [
+    EstadoSolicitud.EN_CONTROL,
+    EstadoSolicitud.ANULADA,
+  ],
+  [EstadoSolicitud.EN_CONTROL]: [
+    EstadoSolicitud.CERRADA,
+    EstadoSolicitud.ANULADA,
+  ],
 };
 
 @Injectable()
@@ -58,30 +79,54 @@ export class SolicitudService {
   async findAll(filters: FindSolicitudDto) {
     const { page = 1, limit = 20, ...where } = filters;
 
-    const qb = this.solicitudRepo.createQueryBuilder('s')
+    const qb = this.solicitudRepo
+      .createQueryBuilder('s')
       .leftJoinAndSelect('s.condenado', 'c')
       .leftJoinAndSelect('s.tribunal', 't')
       .leftJoinAndSelect('s.crs', 'crs')
       .leftJoinAndSelect('s.asignado', 'a')
       .where('s.deletedAt IS NULL');
 
-    if (where.estado) qb.andWhere('s.estadoActual = :estado', { estado: where.estado });
-    if (where.rucCausa) qb.andWhere('s.rucCausa LIKE :ruc', { ruc: `%${where.rucCausa}%` });
-    if (where.ritCausa) qb.andWhere('s.ritCausa LIKE :rit', { rit: `%${where.ritCausa}%` });
-    if (where.condenadoId) qb.andWhere('s.condenadoId = :cid', { cid: where.condenadoId });
+    if (where.estado)
+      qb.andWhere('s.estadoActual = :estado', { estado: where.estado });
+    if (where.rucCausa)
+      qb.andWhere('s.rucCausa LIKE :ruc', { ruc: `%${where.rucCausa}%` });
+    if (where.ritCausa)
+      qb.andWhere('s.ritCausa LIKE :rit', { rit: `%${where.ritCausa}%` });
+    if (where.condenadoId)
+      qb.andWhere('s.condenadoId = :cid', { cid: where.condenadoId });
     if (where.crsId) qb.andWhere('s.crsId = :crs', { crs: where.crsId });
-    if (where.asignadaA) qb.andWhere('s.asignadaA = :uid', { uid: where.asignadaA });
-    if (where.origenCreacion) qb.andWhere('s.origenCreacion = :origen', { origen: where.origenCreacion });
-    if (where.rutCondenado) qb.andWhere('c.rutCondenado LIKE :rut', { rut: `%${where.rutCondenado}%` });
-    if (where.fechaDesde) qb.andWhere('s.createdAt >= :desde', { desde: where.fechaDesde });
-    if (where.fechaHasta) qb.andWhere('s.createdAt <= :hasta', { hasta: `${where.fechaHasta} 23:59:59` });
+    if (where.asignadaA)
+      qb.andWhere('s.asignadaA = :uid', { uid: where.asignadaA });
+    if (where.origenCreacion)
+      qb.andWhere('s.origenCreacion = :origen', {
+        origen: where.origenCreacion,
+      });
+    if (where.rutCondenado)
+      qb.andWhere('c.rutCondenado LIKE :rut', {
+        rut: `%${where.rutCondenado}%`,
+      });
+    if (where.fechaDesde)
+      qb.andWhere('s.createdAt >= :desde', { desde: where.fechaDesde });
+    if (where.fechaHasta)
+      qb.andWhere('s.createdAt <= :hasta', {
+        hasta: `${where.fechaHasta} 23:59:59`,
+      });
 
     qb.orderBy('s.estadoAt', 'DESC');
 
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number): Promise<Solicitud> {
@@ -91,6 +136,7 @@ export class SolicitudService {
         condenado: true,
         tribunal: true,
         crs: true,
+        tipoCausa: true,
         tipoLey: true,
         tipoPena: true,
         medidaControl: true,
@@ -99,7 +145,8 @@ export class SolicitudService {
         asignado: true,
       },
     });
-    if (!solicitud) throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
+    if (!solicitud)
+      throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
     return solicitud;
   }
 
@@ -159,7 +206,7 @@ export class SolicitudService {
       const manager = queryRunner.manager;
 
       const solicitud = manager.create(Solicitud, {
-        tipoCausa: dto.tipoCausa,
+        tipoCausaId: dto.tipoCausaId,
         rucCausa: dto.rucCausa,
         ritCausa: dto.ritCausa,
         rolCausa: dto.rolCausa,
@@ -184,7 +231,11 @@ export class SolicitudService {
 
       if (dto.zonas?.length) {
         const zonas = dto.zonas.map((z) =>
-          manager.create(SolicitudZona, { solicitudId: saved.id, ...z, createdBy: userId }),
+          manager.create(SolicitudZona, {
+            solicitudId: saved.id,
+            ...z,
+            createdBy: userId,
+          }),
         );
         await manager.save(zonas);
       }
@@ -238,16 +289,30 @@ export class SolicitudService {
     }
   }
 
-  async update(id: number, dto: UpdateSolicitudDto, userId: number): Promise<Solicitud> {
+  async update(
+    id: number,
+    dto: UpdateSolicitudDto,
+    userId: number,
+  ): Promise<Solicitud> {
     const solicitud = await this.findOne(id);
-    if (![EstadoSolicitud.RECEPCIONADA].includes(solicitud.estadoActual as EstadoSolicitud)) {
-      throw new UnprocessableEntityException('Solo se puede editar una solicitud en estado RECEPCIONADA');
+    if (
+      ![EstadoSolicitud.RECEPCIONADA].includes(
+        solicitud.estadoActual as EstadoSolicitud,
+      )
+    ) {
+      throw new UnprocessableEntityException(
+        'Solo se puede editar una solicitud en estado RECEPCIONADA',
+      );
     }
     Object.assign(solicitud, dto, { updatedBy: userId });
     return this.solicitudRepo.save(solicitud);
   }
 
-  async cambiarEstado(id: number, dto: TransicionEstadoDto, userId: number): Promise<Solicitud> {
+  async cambiarEstado(
+    id: number,
+    dto: TransicionEstadoDto,
+    userId: number,
+  ): Promise<Solicitud> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -258,7 +323,8 @@ export class SolicitudService {
         where: { id, deletedAt: IsNull() },
       });
 
-      if (!solicitud) throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
+      if (!solicitud)
+        throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
 
       const estadoActual = solicitud.estadoActual;
       const permitidos = TRANSICIONES_VALIDAS[estadoActual];
@@ -296,7 +362,9 @@ export class SolicitudService {
       await manager.save(accion);
 
       await queryRunner.commitTransaction();
-      this.logger.log(`Solicitud ${id}: ${estadoActual} → ${dto.estadoNuevo} por usuario ${userId}`);
+      this.logger.log(
+        `Solicitud ${id}: ${estadoActual} → ${dto.estadoNuevo} por usuario ${userId}`,
+      );
 
       this.eventEmitter.emit('solicitud.cambio-estado', {
         solicitudId: id,
@@ -323,27 +391,40 @@ export class SolicitudService {
 
   async addZona(solicitudId: number, dto: any, userId: number) {
     await this.findOne(solicitudId);
-    const zona = this.solicitudZonaRepo.create({ solicitudId, ...dto, createdBy: userId });
+    const zona = this.solicitudZonaRepo.create({
+      solicitudId,
+      ...dto,
+      createdBy: userId,
+    });
     return this.solicitudZonaRepo.save(zona);
   }
 
   async updateZona(solicitudId: number, zonaId: number, dto: any) {
-    const zona = await this.solicitudZonaRepo.findOne({ where: { id: zonaId, solicitudId, deletedAt: IsNull() } });
-    if (!zona) throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
+    const zona = await this.solicitudZonaRepo.findOne({
+      where: { id: zonaId, solicitudId, deletedAt: IsNull() },
+    });
+    if (!zona)
+      throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
     Object.assign(zona, dto);
     return this.solicitudZonaRepo.save(zona);
   }
 
   async deleteZona(solicitudId: number, zonaId: number) {
-    const zona = await this.solicitudZonaRepo.findOne({ where: { id: zonaId, solicitudId, deletedAt: IsNull() } });
-    if (!zona) throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
+    const zona = await this.solicitudZonaRepo.findOne({
+      where: { id: zonaId, solicitudId, deletedAt: IsNull() },
+    });
+    if (!zona)
+      throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
     zona.deletedAt = new Date();
     await this.solicitudZonaRepo.save(zona);
   }
 
   async validarZona(solicitudId: number, zonaId: number, userId: number) {
-    const zona = await this.solicitudZonaRepo.findOne({ where: { id: zonaId, solicitudId, deletedAt: IsNull() } });
-    if (!zona) throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
+    const zona = await this.solicitudZonaRepo.findOne({
+      where: { id: zonaId, solicitudId, deletedAt: IsNull() },
+    });
+    if (!zona)
+      throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
     zona.validada = true;
     zona.validadaAt = new Date();
     zona.validadaBy = userId;
@@ -355,52 +436,102 @@ export class SolicitudService {
     return this.solicitanteRepo.save(solicitante);
   }
 
-  async updateSolicitante(solicitudId: number, solicitanteId: number, dto: any) {
-    const sol = await this.solicitanteRepo.findOne({ where: { id: solicitanteId, solicitudId } });
-    if (!sol) throw new NotFoundException(`Solicitante con ID ${solicitanteId} no encontrado`);
+  async updateSolicitante(
+    solicitudId: number,
+    solicitanteId: number,
+    dto: any,
+  ) {
+    const sol = await this.solicitanteRepo.findOne({
+      where: { id: solicitanteId, solicitudId },
+    });
+    if (!sol)
+      throw new NotFoundException(
+        `Solicitante con ID ${solicitanteId} no encontrado`,
+      );
     Object.assign(sol, dto);
     return this.solicitanteRepo.save(sol);
   }
 
   async removeSolicitante(solicitudId: number, solicitanteId: number) {
-    const sol = await this.solicitanteRepo.findOne({ where: { id: solicitanteId, solicitudId } });
-    if (!sol) throw new NotFoundException(`Solicitante con ID ${solicitanteId} no encontrado`);
+    const sol = await this.solicitanteRepo.findOne({
+      where: { id: solicitanteId, solicitudId },
+    });
+    if (!sol)
+      throw new NotFoundException(
+        `Solicitante con ID ${solicitanteId} no encontrado`,
+      );
     await this.solicitanteRepo.remove(sol);
   }
 
-  async addVictima(solicitudId: number, victimaId: number, radioProhibicionMetros?: number) {
-    const existente = await this.solicitudVictimaRepo.findOne({ where: { solicitudId, victimaId } });
-    if (existente) throw new ConflictException('La víctima ya está asociada a esta solicitud');
-    const sv = this.solicitudVictimaRepo.create({ solicitudId, victimaId, radioProhibicionMetros });
+  async addVictima(
+    solicitudId: number,
+    victimaId: number,
+    radioProhibicionMetros?: number,
+  ) {
+    const existente = await this.solicitudVictimaRepo.findOne({
+      where: { solicitudId, victimaId },
+    });
+    if (existente)
+      throw new ConflictException(
+        'La víctima ya está asociada a esta solicitud',
+      );
+    const sv = this.solicitudVictimaRepo.create({
+      solicitudId,
+      victimaId,
+      radioProhibicionMetros,
+    });
     return this.solicitudVictimaRepo.save(sv);
   }
 
   async removeVictima(solicitudId: number, victimaId: number) {
-    const sv = await this.solicitudVictimaRepo.findOne({ where: { solicitudId, victimaId } });
-    if (!sv) throw new NotFoundException('La víctima no está asociada a esta solicitud');
+    const sv = await this.solicitudVictimaRepo.findOne({
+      where: { solicitudId, victimaId },
+    });
+    if (!sv)
+      throw new NotFoundException(
+        'La víctima no está asociada a esta solicitud',
+      );
     await this.solicitudVictimaRepo.remove(sv);
   }
 
   async addDelito(solicitudId: number, delitoId: number) {
-    const existente = await this.solicitudDelitoRepo.findOne({ where: { solicitudId, delitoId } });
-    if (existente) throw new ConflictException('El delito ya está asociado a esta solicitud');
+    const existente = await this.solicitudDelitoRepo.findOne({
+      where: { solicitudId, delitoId },
+    });
+    if (existente)
+      throw new ConflictException(
+        'El delito ya está asociado a esta solicitud',
+      );
     const sd = this.solicitudDelitoRepo.create({ solicitudId, delitoId });
     return this.solicitudDelitoRepo.save(sd);
   }
 
   async removeDelito(solicitudId: number, delitoId: number) {
-    const sd = await this.solicitudDelitoRepo.findOne({ where: { solicitudId, delitoId } });
-    if (!sd) throw new NotFoundException('El delito no está asociado a esta solicitud');
+    const sd = await this.solicitudDelitoRepo.findOne({
+      where: { solicitudId, delitoId },
+    });
+    if (!sd)
+      throw new NotFoundException(
+        'El delito no está asociado a esta solicitud',
+      );
     await this.solicitudDelitoRepo.remove(sd);
   }
 
-  async emitirFactibilidad(solicitudId: number, dto: {
-    tipoFactibilidad: string;
-    motivoNoFactibleId?: number;
-    emitidoPor: number;
-  }) {
-    const existente = await this.factibilidadRepo.findOne({ where: { solicitudId } });
-    if (existente) throw new ConflictException('Ya existe un informe de factibilidad para esta solicitud');
+  async emitirFactibilidad(
+    solicitudId: number,
+    dto: {
+      tipoFactibilidad: string;
+      motivoNoFactibleId?: number;
+      emitidoPor: number;
+    },
+  ) {
+    const existente = await this.factibilidadRepo.findOne({
+      where: { solicitudId },
+    });
+    if (existente)
+      throw new ConflictException(
+        'Ya existe un informe de factibilidad para esta solicitud',
+      );
 
     const lastFolio = await this.factibilidadRepo
       .createQueryBuilder('f')
@@ -419,7 +550,9 @@ export class SolicitudService {
   }
 
   async upsertSentencia(solicitudId: number, dto: any) {
-    const existente = await this.sentenciaRepo.findOne({ where: { solicitudId } });
+    const existente = await this.sentenciaRepo.findOne({
+      where: { solicitudId },
+    });
     if (existente) {
       Object.assign(existente, dto);
       return this.sentenciaRepo.save(existente);

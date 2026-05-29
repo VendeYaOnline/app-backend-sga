@@ -22,6 +22,7 @@ import { CatRolDispositivo } from '../entities/cat-rol-dispositivo.entity';
 import { CatIdentificacion } from '../entities/cat-identificacion.entity';
 import { CatParentesco } from '../entities/cat-parentesco.entity';
 import { CatSexo } from '../entities/cat-sexo.entity';
+import { CatTipoCausa } from '../entities/cat-tipo-causa.entity';
 
 @Injectable()
 export class CatalogoService {
@@ -68,10 +69,15 @@ export class CatalogoService {
     private readonly parentescoRepo: Repository<CatParentesco>,
     @InjectRepository(CatSexo)
     private readonly sexoRepo: Repository<CatSexo>,
+    @InjectRepository(CatTipoCausa)
+    private readonly tipoCausaRepo: Repository<CatTipoCausa>,
   ) {}
 
   async findRegiones() {
-    return this.regionRepo.find({ where: { activo: true }, order: { nombre: 'ASC' } });
+    return this.regionRepo.find({
+      where: { activo: true },
+      order: { nombre: 'ASC' },
+    });
   }
 
   async findComunas(regionId?: number) {
@@ -81,39 +87,66 @@ export class CatalogoService {
   }
 
   async findTribunales() {
-    return this.tribunalRepo.find({ where: { activo: true }, order: { nombreTribunal: 'ASC' } });
+    return this.tribunalRepo.find({
+      where: { activo: true },
+      order: { nombreTribunal: 'ASC' },
+    });
   }
 
   async findCrs() {
-    return this.crsRepo.find({ where: { activo: true }, order: { nombreCrs: 'ASC' } });
+    return this.crsRepo.find({
+      where: { activo: true },
+      order: { nombreCrs: 'ASC' },
+    });
   }
 
   async findTiposLey() {
-    return this.tipoLeyRepo.find({ where: { activo: true }, order: { nombreLey: 'ASC' } });
+    return this.tipoLeyRepo.find({
+      where: { activo: true },
+      order: { nombreLey: 'ASC' },
+    });
   }
 
   async findPenasSustitutivas() {
-    return this.penaSustRepo.find({ where: { activo: true }, order: { nombrePena: 'ASC' } });
+    return this.penaSustRepo.find({
+      where: { activo: true },
+      order: { nombrePena: 'ASC' },
+    });
   }
 
   async findMedidasControl() {
-    return this.medidaControlRepo.find({ where: { activo: true }, order: { descripcion: 'ASC' } });
+    return this.medidaControlRepo.find({
+      where: { activo: true },
+      order: { descripcion: 'ASC' },
+    });
   }
 
   async findDelitos() {
-    return this.delitoRepo.find({ where: { activo: true }, order: { descripcionDelito: 'ASC' } });
+    return this.delitoRepo.find({
+      where: { activo: true },
+      order: { descripcionDelito: 'ASC' },
+    });
   }
 
   async findMotivosNoFactible() {
-    return this.motivoNoFactibleRepo.find({ where: { activo: true }, order: { descripcionMotivo: 'ASC' } });
+    return this.motivoNoFactibleRepo.find({
+      where: { activo: true },
+      order: { descripcionMotivo: 'ASC' },
+    });
   }
 
   async findTiposZona() {
-    return this.tipoZonaRepo.find({ where: { activo: true }, order: { descripcionZona: 'ASC' } });
+    return this.tipoZonaRepo.find({
+      where: { activo: true },
+      order: { descripcionZona: 'ASC' },
+    });
   }
 
   async findTiposEvento() {
-    return this.tipoEventoRepo.find({ where: { activo: true }, order: { descripcionEvento: 'ASC' } });
+    return this.tipoEventoRepo.find({
+      where: { activo: true },
+      order: { descripcionEvento: 'ASC' },
+    });
   }
 
   async findValidacionesByTipoEvento(tipoEventoId: number) {
@@ -124,23 +157,38 @@ export class CatalogoService {
   }
 
   async findMotivosNoRealizado() {
-    return this.motivoNoRealizadoRepo.find({ where: { activo: true }, order: { descripcionMotivo: 'ASC' } });
+    return this.motivoNoRealizadoRepo.find({
+      where: { activo: true },
+      order: { descripcionMotivo: 'ASC' },
+    });
   }
 
   async findTiposProblemaSt() {
-    return this.tipoProblemaStRepo.find({ where: { activo: true }, order: { descripcionProblema: 'ASC' } });
+    return this.tipoProblemaStRepo.find({
+      where: { activo: true },
+      order: { descripcionProblema: 'ASC' },
+    });
   }
 
   async findTiposAccesorio() {
-    return this.tipoAccesorioRepo.find({ where: { activo: true }, order: { descripcionAccesorio: 'ASC' } });
+    return this.tipoAccesorioRepo.find({
+      where: { activo: true },
+      order: { descripcionAccesorio: 'ASC' },
+    });
   }
 
   async findTiposDia() {
-    return this.tipoDiaRepo.find({ where: { activo: true }, order: { descripcionDia: 'ASC' } });
+    return this.tipoDiaRepo.find({
+      where: { activo: true },
+      order: { descripcionDia: 'ASC' },
+    });
   }
 
   async findIdentidadesGenero() {
-    return this.identidadGeneroRepo.find({ where: { activo: true }, order: { descripcionGenero: 'ASC' } });
+    return this.identidadGeneroRepo.find({
+      where: { activo: true },
+      order: { descripcionGenero: 'ASC' },
+    });
   }
 
   async findRolesDispositivo() {
@@ -148,14 +196,30 @@ export class CatalogoService {
   }
 
   async findTiposIdentificacion() {
-    return this.identificacionRepo.find({ where: { activo: true }, order: { descripcionId: 'ASC' } });
+    return this.identificacionRepo.find({
+      where: { activo: true },
+      order: { descripcionId: 'ASC' },
+    });
   }
 
   async findParentescos() {
-    return this.parentescoRepo.find({ where: { activo: true }, order: { descripcionParentesco: 'ASC' } });
+    return this.parentescoRepo.find({
+      where: { activo: true },
+      order: { descripcionParentesco: 'ASC' },
+    });
   }
 
   async findSexos() {
-    return this.sexoRepo.find({ where: { activo: true }, order: { descripcionSexo: 'ASC' } });
+    return this.sexoRepo.find({
+      where: { activo: true },
+      order: { descripcionSexo: 'ASC' },
+    });
+  }
+
+  async findTiposCausa() {
+    return this.tipoCausaRepo.find({
+      where: { activo: true },
+      order: { descripcionCausa: 'ASC' },
+    });
   }
 }

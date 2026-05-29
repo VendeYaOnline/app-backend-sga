@@ -1,7 +1,4 @@
-import {
-  Entity, PrimaryColumn, Column,
-  ManyToOne, JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Evento } from './evento.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
@@ -38,7 +35,12 @@ export class Proceso {
   @Column({ name: 'comuna_id', type: 'int', nullable: true })
   comunaId: number | null;
 
-  @Column({ name: 'direccion_proceso', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'direccion_proceso',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   direccionProceso: string | null;
 
   @Column({ name: 'fecha_programada', type: 'datetime2', nullable: true })
@@ -59,7 +61,12 @@ export class Proceso {
   @Column({ name: 'motivo_no_realizado_id', type: 'int', nullable: true })
   motivoNoRealizadoId: number | null;
 
-  @Column({ name: 'detalle_no_realizado', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'detalle_no_realizado',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   detalleNoRealizado: string | null;
 
   @Column({ name: 'fecha_cierre', type: 'datetime2', nullable: true })
@@ -68,7 +75,12 @@ export class Proceso {
   @Column({ name: 'cerrado_by', type: 'int', nullable: true })
   cerradoBy: number | null;
 
-  @Column({ name: 'para_quien', type: 'nvarchar', length: 10, default: 'CONDENADO' })
+  @Column({
+    name: 'para_quien',
+    type: 'nvarchar',
+    length: 10,
+    default: 'CONDENADO',
+  })
   paraQuien: string;
 
   @ManyToOne(() => Evento)

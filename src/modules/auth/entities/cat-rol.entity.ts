@@ -11,6 +11,11 @@ export class CatRol {
   @Column({ name: 'nombre_rol', type: 'nvarchar', length: 200 })
   nombreRol: string;
 
-  @Column({ name: 'descripcion_rol', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'descripcion_rol',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   descripcionRol: string | null;
 }

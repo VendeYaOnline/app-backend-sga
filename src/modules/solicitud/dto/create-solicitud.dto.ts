@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsInt, IsArray, MaxLength, ValidateIf, ArrayNotEmpty, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsArray,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -59,30 +67,25 @@ export class CreateZonaDto {
 }
 
 export class CreateSolicitudDto {
-  @ApiProperty({ enum: ['RUC_RIT', 'ROL'] })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(10)
-  tipoCausa: string;
+  @ApiProperty({ description: 'ID del tipo de causa (RUC_RIT o ROL)' })
+  @IsInt()
+  tipoCausaId: number;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => o.tipoCausa === 'RUC_RIT')
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(50)
   rucCausa?: string;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => o.tipoCausa === 'RUC_RIT')
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(50)
   ritCausa?: string;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => o.tipoCausa === 'ROL')
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(50)
   rolCausa?: string;
 

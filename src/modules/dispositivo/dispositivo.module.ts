@@ -7,7 +7,13 @@ import { ProcesoAccesorio } from './entities/proceso-accesorio.entity';
 import { ProcesoDispositivo } from './entities/proceso-dispositivo.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Dispositivo, ProcesoAccesorio, ProcesoDispositivo])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Dispositivo,
+      ProcesoAccesorio,
+      ProcesoDispositivo,
+    ]),
+  ],
   controllers: [DispositivoController],
   providers: [DispositivoService],
   exports: [TypeOrmModule, DispositivoService],

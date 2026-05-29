@@ -1,7 +1,12 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Evento } from '../../evento/entities/evento.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
@@ -25,7 +30,12 @@ export class Agendamiento {
   @Column({ name: 'crs_id', type: 'int', nullable: true })
   crsId: number | null;
 
-  @Column({ name: 'direccion_agenda', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'direccion_agenda',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   direccionAgenda: string | null;
 
   @Column({ name: 'para_condenado', type: 'bit', default: 1 })
@@ -34,7 +44,12 @@ export class Agendamiento {
   @Column({ name: 'para_victima_id', type: 'int', nullable: true })
   paraVictimaId: number | null;
 
-  @Column({ name: 'estado_agenda', type: 'nvarchar', length: 20, default: 'PROGRAMADO' })
+  @Column({
+    name: 'estado_agenda',
+    type: 'nvarchar',
+    length: 20,
+    default: 'PROGRAMADO',
+  })
   estadoAgenda: string;
 
   @Column({ name: 'notas', type: 'nvarchar', length: 500, nullable: true })

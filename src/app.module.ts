@@ -45,7 +45,10 @@ import { NormalizeSubscriber } from './common/subscribers/normalize.subscriber';
         subscribers: [NormalizeSubscriber],
         autoLoadEntities: true,
         synchronize: false,
-        logging: config.get('NODE_ENV') === 'development' ? ['error', 'warn'] : ['error'],
+        logging:
+          config.get('NODE_ENV') === 'development'
+            ? ['error', 'warn']
+            : ['error'],
       }),
     }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),

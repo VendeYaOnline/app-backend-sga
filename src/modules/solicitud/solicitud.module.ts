@@ -11,6 +11,7 @@ import { SolicitudFactibilidad } from './entities/solicitud-factibilidad.entity'
 import { SolicitudSentencia } from './entities/solicitud-sentencia.entity';
 import { SolicitudEstadoHist } from './entities/solicitud-estado-hist.entity';
 import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
+import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
       SolicitudSentencia,
       SolicitudEstadoHist,
       AccionUsuario,
+      CatTipoCausa,
     ]),
   ],
   controllers: [SolicitudController],

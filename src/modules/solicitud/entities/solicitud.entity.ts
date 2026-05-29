@@ -1,7 +1,12 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { CatTribunal } from '../../catalogo/entities/cat-tribunal.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
@@ -9,6 +14,7 @@ import { CatTipoLey } from '../../catalogo/entities/cat-tipo-ley.entity';
 import { CatPenaSustitutiva } from '../../catalogo/entities/cat-pena-sustitutiva.entity';
 import { CatMedidaControl } from '../../catalogo/entities/cat-medida-control.entity';
 import { CatTipoDia } from '../../catalogo/entities/cat-tipo-dia.entity';
+import { CatTipoCausa } from '../../catalogo/entities/cat-tipo-causa.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 
@@ -20,14 +26,19 @@ export class Solicitud {
   @Column({ name: 'solicitud_padre_id', type: 'int', nullable: true })
   solicitudPadreId: number | null;
 
-  @Column({ name: 'motivo_origen', type: 'nvarchar', length: 30, default: 'ORIGINAL' })
+  @Column({
+    name: 'motivo_origen',
+    type: 'nvarchar',
+    length: 30,
+    default: 'ORIGINAL',
+  })
   motivoOrigen: string;
 
   @Column({ name: 'origen_creacion', type: 'nvarchar', length: 30 })
   origenCreacion: string;
 
-  @Column({ name: 'tipo_causa', type: 'nvarchar', length: 10 })
-  tipoCausa: string;
+  @Column({ name: 'tipo_causa_id', type: 'int' })
+  tipoCausaId: number;
 
   @Column({ name: 'ruc_causa', type: 'nvarchar', length: 50, nullable: true })
   rucCausa: string | null;
@@ -74,7 +85,12 @@ export class Solicitud {
   @Column({ name: 'con_beacon', type: 'bit', default: 1 })
   conBeacon: boolean;
 
-  @Column({ name: 'estado_actual', type: 'nvarchar', length: 50, default: 'RECEPCIONADA' })
+  @Column({
+    name: 'estado_actual',
+    type: 'nvarchar',
+    length: 50,
+    default: 'RECEPCIONADA',
+  })
   estadoActual: string;
 
   @Column({ name: 'estado_at', type: 'datetime2' })
@@ -86,7 +102,12 @@ export class Solicitud {
   @Column({ name: 'asignada_at', type: 'datetime2', nullable: true })
   asignadaAt: Date | null;
 
-  @Column({ name: 'observaciones', type: 'nvarchar', length: 'max', nullable: true })
+  @Column({
+    name: 'observaciones',
+    type: 'nvarchar',
+    length: 'max',
+    nullable: true,
+  })
   observaciones: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
@@ -110,6 +131,10 @@ export class Solicitud {
   @ManyToOne(() => Solicitud)
   @JoinColumn({ name: 'solicitud_padre_id', referencedColumnName: 'id' })
   solicitudPadre: Solicitud;
+
+  @ManyToOne(() => CatTipoCausa)
+  @JoinColumn({ name: 'tipo_causa_id', referencedColumnName: 'id' })
+  tipoCausa: CatTipoCausa;
 
   @ManyToOne(() => CatTribunal)
   @JoinColumn({ name: 'tribunal_id', referencedColumnName: 'id' })

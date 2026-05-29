@@ -50,21 +50,30 @@ export class AuthService {
 
     if (!usuario.activo || usuario.bloqueado) {
       throw new UnauthorizedException(
-        usuario.bloqueado ? 'Usuario bloqueado. Contacte al administrador.' : 'Usuario inactivo',
+        usuario.bloqueado
+          ? 'Usuario bloqueado. Contacte al administrador.'
+          : 'Usuario inactivo',
       );
     }
 
     if (!usuario.passHash) {
-      throw new UnauthorizedException('El usuario no tiene contraseña configurada');
+      throw new UnauthorizedException(
+        'El usuario no tiene contraseña configurada',
+      );
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, usuario.passHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      usuario.passHash,
+    );
     if (!isPasswordValid) {
       usuario.intentosFallidos += 1;
       if (usuario.intentosFallidos >= this.MAX_INTENTOS) {
         usuario.bloqueado = true;
         usuario.bloqueadoAt = new Date();
-        this.logger.warn(`Usuario ${usuario.username} bloqueado por intentos fallidos`);
+        this.logger.warn(
+          `Usuario ${usuario.username} bloqueado por intentos fallidos`,
+        );
       }
       await this.usuarioRepo.save(usuario);
       throw new UnauthorizedException('Credenciales inválidas');
@@ -77,7 +86,9 @@ export class AuthService {
     await this.usuarioRepo.save(usuario);
 
     const roles = await this.usuarioService.findRolesByUsuario(usuario.id);
-    const permisos = await this.usuarioService.findPermisosByUsuario(usuario.id);
+    const permisos = await this.usuarioService.findPermisosByUsuario(
+      usuario.id,
+    );
 
     const payload: JwtPayload = {
       sub: usuario.id,
@@ -89,7 +100,9 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload);
 
-    this.logger.log(`Usuario ${usuario.username} (ID: ${usuario.id}) inició sesión exitosamente`);
+    this.logger.log(
+      `Usuario ${usuario.username} (ID: ${usuario.id}) inició sesión exitosamente`,
+    );
 
     return {
       accessToken,
@@ -132,16 +145,25 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordDto) {
     const usuario = await this.usuarioService.findByEmail(dto.email);
     if (!usuario) {
-      return { message: 'Si el email existe, se enviarán instrucciones de recuperación' };
+      return {
+        message:
+          'Si el email existe, se enviarán instrucciones de recuperación',
+      };
     }
 
-    this.logger.log(`Solicitud de recuperación de contraseña para ${usuario.email}`);
+    this.logger.log(
+      `Solicitud de recuperación de contraseña para ${usuario.email}`,
+    );
 
-    return { message: 'Si el email existe, se enviarán instrucciones de recuperación' };
+    return {
+      message: 'Si el email existe, se enviarán instrucciones de recuperación',
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    this.logger.log(`Intento de reset de contraseña con token: ${dto.token.substring(0, 10)}...`);
+    this.logger.log(
+      `Intento de reset de contraseña con token: ${dto.token.substring(0, 10)}...`,
+    );
 
     throw new BadRequestException('Token inválido o expirado');
   }
@@ -157,7 +179,9 @@ export class AuthService {
   async setup(dto: SetupDto) {
     const setupSecret = process.env.SETUP_SECRET;
     if (!setupSecret) {
-      throw new BadRequestException('SETUP_SECRET no está configurado en el servidor');
+      throw new BadRequestException(
+        'SETUP_SECRET no está configurado en el servidor',
+      );
     }
 
     if (dto.setupSecret !== setupSecret) {
@@ -165,11 +189,17 @@ export class AuthService {
       throw new UnauthorizedException('Token de inicialización inválido');
     }
 
-    const adminExistente = await this.rolRepo.findOne({ where: { codigo: 'ADMINISTRADOR' } });
+    const adminExistente = await this.rolRepo.findOne({
+      where: { codigo: 'ADMINISTRADOR' },
+    });
     if (adminExistente) {
-      const usuariosConRol = await this.usuarioRolRepo.count({ where: { rolId: adminExistente.id } });
+      const usuariosConRol = await this.usuarioRolRepo.count({
+        where: { rolId: adminExistente.id },
+      });
       if (usuariosConRol > 0) {
-        throw new ConflictException('Ya existe un administrador en el sistema. El endpoint de setup solo puede usarse una vez.');
+        throw new ConflictException(
+          'Ya existe un administrador en el sistema. El endpoint de setup solo puede usarse una vez.',
+        );
       }
     }
 
@@ -180,7 +210,9 @@ export class AuthService {
     try {
       const manager = queryRunner.manager;
 
-      let rolAdmin = await manager.findOne(CatRol, { where: { codigo: 'ADMINISTRADOR' } });
+      let rolAdmin = await manager.findOne(CatRol, {
+        where: { codigo: 'ADMINISTRADOR' },
+      });
       if (!rolAdmin) {
         rolAdmin = manager.create(CatRol, {
           codigo: 'ADMINISTRADOR',
@@ -194,36 +226,71 @@ export class AuthService {
         { codigo: 'SOLICITUD_LEER', nombrePermiso: 'Ver solicitudes IFT' },
         { codigo: 'SOLICITUD_CREAR', nombrePermiso: 'Crear solicitudes IFT' },
         { codigo: 'SOLICITUD_EDITAR', nombrePermiso: 'Editar solicitudes IFT' },
-        { codigo: 'SOLICITUD_ELIMINAR', nombrePermiso: 'Eliminar solicitudes IFT' },
-        { codigo: 'SOLICITUD_TRANSICIONAR', nombrePermiso: 'Cambiar estado de solicitudes' },
-        { codigo: 'SOLICITUD_EMITIR_FACTIBILIDAD', nombrePermiso: 'Emitir informes de factibilidad' },
+        {
+          codigo: 'SOLICITUD_ELIMINAR',
+          nombrePermiso: 'Eliminar solicitudes IFT',
+        },
+        {
+          codigo: 'SOLICITUD_TRANSICIONAR',
+          nombrePermiso: 'Cambiar estado de solicitudes',
+        },
+        {
+          codigo: 'SOLICITUD_EMITIR_FACTIBILIDAD',
+          nombrePermiso: 'Emitir informes de factibilidad',
+        },
         { codigo: 'EVENTO_LEER', nombrePermiso: 'Ver eventos' },
         { codigo: 'EVENTO_CREAR', nombrePermiso: 'Crear eventos' },
         { codigo: 'EVENTO_EDITAR', nombrePermiso: 'Editar eventos' },
-        { codigo: 'EVENTO_VALIDAR', nombrePermiso: 'Ejecutar validaciones de eventos' },
+        {
+          codigo: 'EVENTO_VALIDAR',
+          nombrePermiso: 'Ejecutar validaciones de eventos',
+        },
         { codigo: 'PROCESO_LEER', nombrePermiso: 'Ver procesos' },
-        { codigo: 'PROCESO_CERRAR', nombrePermiso: 'Cerrar procesos en terreno' },
-        { codigo: 'AGENDAMIENTO_GESTIONAR', nombrePermiso: 'Gestionar agendamientos' },
-        { codigo: 'DISPOSITIVO_GESTIONAR', nombrePermiso: 'Gestionar dispositivos' },
+        {
+          codigo: 'PROCESO_CERRAR',
+          nombrePermiso: 'Cerrar procesos en terreno',
+        },
+        {
+          codigo: 'AGENDAMIENTO_GESTIONAR',
+          nombrePermiso: 'Gestionar agendamientos',
+        },
+        {
+          codigo: 'DISPOSITIVO_GESTIONAR',
+          nombrePermiso: 'Gestionar dispositivos',
+        },
         { codigo: 'USUARIO_LEER', nombrePermiso: 'Ver usuarios' },
         { codigo: 'USUARIO_CREAR', nombrePermiso: 'Crear usuarios' },
         { codigo: 'USUARIO_EDITAR', nombrePermiso: 'Editar usuarios' },
         { codigo: 'USUARIO_ELIMINAR', nombrePermiso: 'Eliminar usuarios' },
-        { codigo: 'ROL_GESTIONAR', nombrePermiso: 'Gestionar roles y permisos' },
+        {
+          codigo: 'ROL_GESTIONAR',
+          nombrePermiso: 'Gestionar roles y permisos',
+        },
         { codigo: 'CONDENADO_CREAR', nombrePermiso: 'Registrar condenados' },
         { codigo: 'CONDENADO_EDITAR', nombrePermiso: 'Editar condenados' },
         { codigo: 'VICTIMA_CREAR', nombrePermiso: 'Registrar víctimas' },
         { codigo: 'VICTIMA_EDITAR', nombrePermiso: 'Editar víctimas' },
         { codigo: 'ARCHIVO_SUBIR', nombrePermiso: 'Subir archivos' },
         { codigo: 'ARCHIVO_ELIMINAR', nombrePermiso: 'Eliminar archivos' },
-        { codigo: 'PREFACTURACION_GESTIONAR', nombrePermiso: 'Gestionar prefacturación' },
-        { codigo: 'CARGA_LABORAL_VER', nombrePermiso: 'Ver reportes de carga laboral' },
-        { codigo: 'PJUD_GESTIONAR', nombrePermiso: 'Gestionar interconexión PJUD' },
+        {
+          codigo: 'PREFACTURACION_GESTIONAR',
+          nombrePermiso: 'Gestionar prefacturación',
+        },
+        {
+          codigo: 'CARGA_LABORAL_VER',
+          nombrePermiso: 'Ver reportes de carga laboral',
+        },
+        {
+          codigo: 'PJUD_GESTIONAR',
+          nombrePermiso: 'Gestionar interconexión PJUD',
+        },
       ];
 
       const permisoIds: number[] = [];
       for (const p of permisosPorDefecto) {
-        let permiso = await manager.findOne(CatPermiso, { where: { codigo: p.codigo } });
+        let permiso = await manager.findOne(CatPermiso, {
+          where: { codigo: p.codigo },
+        });
         if (!permiso) {
           permiso = manager.create(CatPermiso, p);
           await manager.save(permiso);
@@ -231,7 +298,9 @@ export class AuthService {
         permisoIds.push(permiso.id);
       }
 
-      const existentes = await manager.find(RolPermiso, { where: { rolId: rolAdmin.id } });
+      const existentes = await manager.find(RolPermiso, {
+        where: { rolId: rolAdmin.id },
+      });
       const existentesIds = new Set(existentes.map((rp) => rp.permisoId));
       const nuevos = permisoIds.filter((pid) => !existentesIds.has(pid));
       if (nuevos.length > 0) {
@@ -241,17 +310,25 @@ export class AuthService {
         await manager.save(rolPermisos);
       }
 
-      const existenteUser = await manager.findOne(Usuario, { where: { username: dto.username } });
+      const existenteUser = await manager.findOne(Usuario, {
+        where: { username: dto.username },
+      });
       if (existenteUser) {
         throw new ConflictException(`El username "${dto.username}" ya existe`);
       }
 
-      const existenteEmail = await manager.findOne(Usuario, { where: { email: dto.email } });
+      const existenteEmail = await manager.findOne(Usuario, {
+        where: { email: dto.email },
+      });
       if (existenteEmail) {
-        throw new ConflictException(`El email "${dto.email}" ya está registrado`);
+        throw new ConflictException(
+          `El email "${dto.email}" ya está registrado`,
+        );
       }
 
-      const existenteRut = await manager.findOne(Usuario, { where: { rut: dto.rut } });
+      const existenteRut = await manager.findOne(Usuario, {
+        where: { rut: dto.rut },
+      });
       if (existenteRut) {
         throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
       }
@@ -279,14 +356,17 @@ export class AuthService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Admin inicial "${dto.username}" creado exitosamente vía setup`);
+      this.logger.log(
+        `Admin inicial "${dto.username}" creado exitosamente vía setup`,
+      );
 
       return {
         id: savedUser.id,
         username: savedUser.username,
         email: savedUser.email,
         rol: 'ADMINISTRADOR',
-        message: 'Administrador inicial creado exitosamente. Use el endpoint POST /auth/login para obtener un JWT.',
+        message:
+          'Administrador inicial creado exitosamente. Use el endpoint POST /auth/login para obtener un JWT.',
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();

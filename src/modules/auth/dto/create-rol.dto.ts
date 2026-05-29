@@ -14,7 +14,10 @@ export class CreateRolDto {
   @MaxLength(200)
   nombreRol: string;
 
-  @ApiProperty({ example: 'Responsable de supervisar y gestionar solicitudes IFT', required: false })
+  @ApiProperty({
+    example: 'Responsable de supervisar y gestionar solicitudes IFT',
+    required: false,
+  })
   @IsString()
   @MaxLength(500)
   descripcionRol?: string;

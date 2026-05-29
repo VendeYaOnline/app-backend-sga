@@ -1,5 +1,8 @@
 import {
-  Injectable, NotFoundException, Logger, InternalServerErrorException,
+  Injectable,
+  NotFoundException,
+  Logger,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -38,14 +41,22 @@ export class ArchivoService {
 
     try {
       const manager = queryRunner.manager;
-      const hash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+      const hash = crypto
+        .createHash('sha256')
+        .update(file.buffer)
+        .digest('hex');
 
-      let archivo = await this.archivoRepo.findOne({ where: { hashSha256: hash } });
+      let archivo = await this.archivoRepo.findOne({
+        where: { hashSha256: hash },
+      });
 
       if (!archivo) {
         const fecha = new Date();
         const dirRelativo = `${fecha.getFullYear()}/${String(fecha.getMonth() + 1).padStart(2, '0')}/${entidad.toLowerCase()}`;
-        const dirAbsoluto = path.join(process.env.STORAGE_ROOT || 'C:/sga-storage', dirRelativo);
+        const dirAbsoluto = path.join(
+          process.env.STORAGE_ROOT || 'C:/sga-storage',
+          dirRelativo,
+        );
         await fs.mkdir(dirAbsoluto, { recursive: true });
 
         const filename = `${Date.now()}-${file.originalname}`;
@@ -119,8 +130,13 @@ export class ArchivoService {
   }
 
   async softDeleteReferencia(id: number, userId: number): Promise<void> {
-    const ref = await this.archivoRefRepo.findOne({ where: { id, deletedAt: IsNull() } });
-    if (!ref) throw new NotFoundException(`Referencia de archivo con ID ${id} no encontrada`);
+    const ref = await this.archivoRefRepo.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
+    if (!ref)
+      throw new NotFoundException(
+        `Referencia de archivo con ID ${id} no encontrada`,
+      );
     ref.deletedAt = new Date();
     ref.deletedBy = userId;
     await this.archivoRefRepo.save(ref);

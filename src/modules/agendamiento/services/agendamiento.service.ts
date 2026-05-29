@@ -1,5 +1,8 @@
 import {
-  Injectable, NotFoundException, BadRequestException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -19,10 +22,17 @@ export class AgendamientoService {
     private readonly agendamientoRepo: Repository<Agendamiento>,
   ) {}
 
-  async findAll(filters: PaginationDto & { eventoId?: number; asignadoA?: number; estadoAgenda?: string }) {
+  async findAll(
+    filters: PaginationDto & {
+      eventoId?: number;
+      asignadoA?: number;
+      estadoAgenda?: string;
+    },
+  ) {
     const { page = 1, limit = 20, eventoId, asignadoA, estadoAgenda } = filters;
 
-    const qb = this.agendamientoRepo.createQueryBuilder('a')
+    const qb = this.agendamientoRepo
+      .createQueryBuilder('a')
       .leftJoinAndSelect('a.evento', 'e')
       .leftJoinAndSelect('a.asignado', 'u')
       .leftJoinAndSelect('a.crs', 'c')
@@ -31,14 +41,23 @@ export class AgendamientoService {
 
     if (eventoId) qb.andWhere('a.eventoId = :eid', { eid: eventoId });
     if (asignadoA) qb.andWhere('a.asignadoA = :uid', { uid: asignadoA });
-    if (estadoAgenda) qb.andWhere('a.estadoAgenda = :est', { est: estadoAgenda });
+    if (estadoAgenda)
+      qb.andWhere('a.estadoAgenda = :est', { est: estadoAgenda });
 
     qb.orderBy('a.fechaAgendada', 'ASC');
 
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number) {
@@ -46,7 +65,8 @@ export class AgendamientoService {
       where: { id, deletedAt: IsNull() },
       relations: { evento: true, asignado: true, crs: true, paraVictima: true },
     });
-    if (!agendamiento) throw new NotFoundException(`Agendamiento con ID ${id} no encontrado`);
+    if (!agendamiento)
+      throw new NotFoundException(`Agendamiento con ID ${id} no encontrado`);
     return agendamiento;
   }
 
@@ -56,7 +76,9 @@ export class AgendamientoService {
       createdBy: userId,
       estadoAgenda: dto.estadoAgenda || 'PROGRAMADO',
     });
-    const saved = await this.agendamientoRepo.save(agendamiento) as unknown as Agendamiento;
+    const saved = (await this.agendamientoRepo.save(
+      agendamiento,
+    )) as unknown as Agendamiento;
     this.logger.log(`Agendamiento ${saved.id} creado por usuario ${userId}`);
     return this.findOne(saved.id);
   }
@@ -73,17 +95,30 @@ export class AgendamientoService {
     return this.agendamientoRepo.save(agendamiento);
   }
 
-  async findCalendario(filters: { fechaDesde?: string; fechaHasta?: string; asignadoA?: number; crsId?: number }) {
-    const qb = this.agendamientoRepo.createQueryBuilder('a')
+  async findCalendario(filters: {
+    fechaDesde?: string;
+    fechaHasta?: string;
+    asignadoA?: number;
+    crsId?: number;
+  }) {
+    const qb = this.agendamientoRepo
+      .createQueryBuilder('a')
       .leftJoinAndSelect('a.evento', 'e')
       .leftJoinAndSelect('a.asignado', 'u')
       .leftJoinAndSelect('a.crs', 'c')
       .where('a.deletedAt IS NULL')
-      .andWhere('a.estadoAgenda NOT IN (:...estados)', { estados: ['CANCELADO'] });
+      .andWhere('a.estadoAgenda NOT IN (:...estados)', {
+        estados: ['CANCELADO'],
+      });
 
-    if (filters.fechaDesde) qb.andWhere('a.fechaAgendada >= :desde', { desde: filters.fechaDesde });
-    if (filters.fechaHasta) qb.andWhere('a.fechaAgendada <= :hasta', { hasta: `${filters.fechaHasta} 23:59:59` });
-    if (filters.asignadoA) qb.andWhere('a.asignadoA = :uid', { uid: filters.asignadoA });
+    if (filters.fechaDesde)
+      qb.andWhere('a.fechaAgendada >= :desde', { desde: filters.fechaDesde });
+    if (filters.fechaHasta)
+      qb.andWhere('a.fechaAgendada <= :hasta', {
+        hasta: `${filters.fechaHasta} 23:59:59`,
+      });
+    if (filters.asignadoA)
+      qb.andWhere('a.asignadoA = :uid', { uid: filters.asignadoA });
     if (filters.crsId) qb.andWhere('a.crsId = :crs', { crs: filters.crsId });
 
     qb.orderBy('a.fechaAgendada', 'ASC');
@@ -92,14 +127,19 @@ export class AgendamientoService {
   }
 
   async findTecnicosDisponibles(fecha: string) {
-    const qb = this.agendamientoRepo.createQueryBuilder('a')
+    const qb = this.agendamientoRepo
+      .createQueryBuilder('a')
       .leftJoinAndSelect('a.asignado', 'u')
       .where('a.deletedAt IS NULL')
       .andWhere('a.fechaAgendada = :fecha', { fecha })
-      .andWhere('a.estadoAgenda IN (:...estados)', { estados: ['PROGRAMADO', 'CONFIRMADO'] });
+      .andWhere('a.estadoAgenda IN (:...estados)', {
+        estados: ['PROGRAMADO', 'CONFIRMADO'],
+      });
 
     const ocupados = await qb.getMany();
-    const idsOcupados = ocupados.filter(a => a.asignadoA).map(a => a.asignadoA);
+    const idsOcupados = ocupados
+      .filter((a) => a.asignadoA)
+      .map((a) => a.asignadoA);
     return { ocupados, idsOcupados };
   }
 }

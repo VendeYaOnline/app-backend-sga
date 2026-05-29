@@ -1,4 +1,9 @@
-import { PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export abstract class BaseCatalogEntity {
   @PrimaryGeneratedColumn({ type: 'int' })

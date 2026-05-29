@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { CatRegion } from './cat-region.entity';
 
 @Entity('sga.CAT_CRS')
@@ -15,7 +23,12 @@ export class CatCrs {
   @Column({ name: 'region_id', type: 'int', nullable: true })
   regionId: number | null;
 
-  @Column({ name: 'direccion_crs', type: 'nvarchar', length: 255, nullable: true })
+  @Column({
+    name: 'direccion_crs',
+    type: 'nvarchar',
+    length: 255,
+    nullable: true,
+  })
   direccionCrs: string | null;
 
   @Column({ name: 'activo', type: 'bit', default: 1 })

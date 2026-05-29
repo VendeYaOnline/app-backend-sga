@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Solicitud } from './solicitud.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 
@@ -13,7 +19,12 @@ export class SolicitudEstadoHist {
   @Column({ name: 'estado_nuevo', type: 'nvarchar', length: 50 })
   estadoNuevo: string;
 
-  @Column({ name: 'estado_anterior', type: 'nvarchar', length: 50, nullable: true })
+  @Column({
+    name: 'estado_anterior',
+    type: 'nvarchar',
+    length: 50,
+    nullable: true,
+  })
   estadoAnterior: string | null;
 
   @Column({ name: 'fecha_cambio', type: 'datetime2' })
@@ -22,7 +33,12 @@ export class SolicitudEstadoHist {
   @Column({ name: 'usuario_id', type: 'int', nullable: true })
   usuarioId: number | null;
 
-  @Column({ name: 'motivo_cambio', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'motivo_cambio',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   motivoCambio: string | null;
 
   @Column({ name: 'evento_id', type: 'int', nullable: true })

@@ -4,7 +4,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class FindUsuarioDto extends PaginationDto {
-  @ApiPropertyOptional({ description: 'Buscar por nombre, username, email o RUT' })
+  @ApiPropertyOptional({
+    description: 'Buscar por nombre, username, email o RUT',
+  })
   @IsOptional()
   @IsString()
   search?: string;

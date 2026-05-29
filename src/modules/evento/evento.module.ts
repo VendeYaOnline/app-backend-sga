@@ -12,6 +12,7 @@ import { ProcesoSoporteMotivo } from './entities/proceso-soporte-motivo.entity';
 import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
 import { CatTipoEvento } from '../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../catalogo/entities/cat-tipo-evento-validacion.entity';
+import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CatTipoEventoValidacion } from '../catalogo/entities/cat-tipo-evento-va
       AccionUsuario,
       CatTipoEvento,
       CatTipoEventoValidacion,
+      CatTipoCausa,
     ]),
   ],
   controllers: [EventoController],

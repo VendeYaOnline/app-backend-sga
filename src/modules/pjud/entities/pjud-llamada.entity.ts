@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
 
@@ -24,10 +27,20 @@ export class PjudLlamada {
   @Column({ name: 'folio_interno', type: 'bigint', nullable: true })
   folioInterno: number | null;
 
-  @Column({ name: 'request_body', type: 'nvarchar', length: 'max', nullable: true })
+  @Column({
+    name: 'request_body',
+    type: 'nvarchar',
+    length: 'max',
+    nullable: true,
+  })
   requestBody: string | null;
 
-  @Column({ name: 'response_body', type: 'nvarchar', length: 'max', nullable: true })
+  @Column({
+    name: 'response_body',
+    type: 'nvarchar',
+    length: 'max',
+    nullable: true,
+  })
   responseBody: string | null;
 
   @Column({ name: 'http_status', type: 'int', nullable: true })
@@ -36,7 +49,12 @@ export class PjudLlamada {
   @Column({ name: 'recepcion_status', type: 'int', nullable: true })
   recepcionStatus: number | null;
 
-  @Column({ name: 'mensaje_respuesta', type: 'nvarchar', length: 'max', nullable: true })
+  @Column({
+    name: 'mensaje_respuesta',
+    type: 'nvarchar',
+    length: 'max',
+    nullable: true,
+  })
   mensajeRespuesta: string | null;
 
   @Column({ name: 'fecha_llamada', type: 'datetime2' })
@@ -45,7 +63,12 @@ export class PjudLlamada {
   @Column({ name: 'duracion_ms', type: 'int', nullable: true })
   duracionMs: number | null;
 
-  @Column({ name: 'error_desc', type: 'nvarchar', length: 'max', nullable: true })
+  @Column({
+    name: 'error_desc',
+    type: 'nvarchar',
+    length: 'max',
+    nullable: true,
+  })
   errorDesc: string | null;
 
   @Column({ name: 'procesado_ok', type: 'bit', default: 0 })

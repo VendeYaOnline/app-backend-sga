@@ -1,7 +1,12 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, UpdateDateColumn, DeleteDateColumn,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Solicitud } from './solicitud.entity';
 import { CatTipoZona } from '../../catalogo/entities/cat-tipo-zona.entity';
@@ -26,10 +31,20 @@ export class SolicitudZona {
   @Column({ name: 'comuna_id', type: 'int' })
   comunaId: number;
 
-  @Column({ name: 'nombre_calle', type: 'nvarchar', length: 200, nullable: true })
+  @Column({
+    name: 'nombre_calle',
+    type: 'nvarchar',
+    length: 200,
+    nullable: true,
+  })
   nombreCalle: string | null;
 
-  @Column({ name: 'numero_direccion', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'numero_direccion',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   numeroDireccion: string | null;
 
   @Column({ name: 'numero_ruta', type: 'nvarchar', length: 50, nullable: true })
@@ -38,16 +53,33 @@ export class SolicitudZona {
   @Column({ name: 'poblacion', type: 'nvarchar', length: 200, nullable: true })
   poblacion: string | null;
 
-  @Column({ name: 'codigo_postal', type: 'nvarchar', length: 10, nullable: true })
+  @Column({
+    name: 'codigo_postal',
+    type: 'nvarchar',
+    length: 10,
+    nullable: true,
+  })
   codigoPostal: string | null;
 
   @Column({ name: 'radio_metros', type: 'int' })
   radioMetros: number;
 
-  @Column({ name: 'latitud', type: 'decimal', precision: 10, scale: 7, nullable: true })
+  @Column({
+    name: 'latitud',
+    type: 'decimal',
+    precision: 10,
+    scale: 7,
+    nullable: true,
+  })
   latitud: number | null;
 
-  @Column({ name: 'longitud', type: 'decimal', precision: 10, scale: 7, nullable: true })
+  @Column({
+    name: 'longitud',
+    type: 'decimal',
+    precision: 10,
+    scale: 7,
+    nullable: true,
+  })
   longitud: number | null;
 
   @Column({ name: 'url_mapa', type: 'nvarchar', length: 500, nullable: true })

@@ -20,10 +20,13 @@ export class NotificacionService {
     private readonly plantillaRepo: Repository<NotificacionPlantilla>,
   ) {}
 
-  async findNotificaciones(filters: PaginationDto & { usuarioId?: number; solicitudId?: number }) {
+  async findNotificaciones(
+    filters: PaginationDto & { usuarioId?: number; solicitudId?: number },
+  ) {
     const { page = 1, limit = 20, usuarioId, solicitudId } = filters;
 
-    const qb = this.notificacionUsuarioRepo.createQueryBuilder('nu')
+    const qb = this.notificacionUsuarioRepo
+      .createQueryBuilder('nu')
       .leftJoinAndSelect('nu.notificacion', 'n')
       .leftJoinAndSelect('nu.usuario', 'u')
       .leftJoinAndSelect('n.plantilla', 'p');
@@ -36,7 +39,15 @@ export class NotificacionService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findNoLeidas(usuarioId: number) {
@@ -47,11 +58,17 @@ export class NotificacionService {
     });
   }
 
-  async marcarLeida(id: number, usuarioId: number): Promise<NotificacionUsuario> {
+  async marcarLeida(
+    id: number,
+    usuarioId: number,
+  ): Promise<NotificacionUsuario> {
     const nu = await this.notificacionUsuarioRepo.findOne({
       where: { id, usuarioId },
     });
-    if (!nu) throw new NotFoundException(`Notificación de usuario con ID ${id} no encontrada`);
+    if (!nu)
+      throw new NotFoundException(
+        `Notificación de usuario con ID ${id} no encontrada`,
+      );
     nu.leidaAt = new Date();
     return this.notificacionUsuarioRepo.save(nu);
   }
@@ -64,7 +81,10 @@ export class NotificacionService {
   }
 
   async findAllPlantillas() {
-    return this.plantillaRepo.find({ relations: { rol: true }, order: { codigo: 'ASC' } });
+    return this.plantillaRepo.find({
+      relations: { rol: true },
+      order: { codigo: 'ASC' },
+    });
   }
 
   async findPlantilla(id: number) {
@@ -72,13 +92,16 @@ export class NotificacionService {
       where: { id },
       relations: { rol: true },
     });
-    if (!plantilla) throw new NotFoundException(`Plantilla con ID ${id} no encontrada`);
+    if (!plantilla)
+      throw new NotFoundException(`Plantilla con ID ${id} no encontrada`);
     return plantilla;
   }
 
   async createPlantilla(dto: any): Promise<NotificacionPlantilla> {
     const plantilla = this.plantillaRepo.create(dto);
-    return this.plantillaRepo.save(plantilla) as unknown as Promise<NotificacionPlantilla>;
+    return this.plantillaRepo.save(
+      plantilla,
+    ) as unknown as Promise<NotificacionPlantilla>;
   }
 
   async updatePlantilla(id: number, dto: any): Promise<NotificacionPlantilla> {

@@ -25,7 +25,12 @@ export class Victima {
   @Column({ name: 'rut_victima', type: 'nvarchar', length: 12, nullable: true })
   rutVictima: string | null;
 
-  @Column({ name: 'pasaporte_victima', type: 'nvarchar', length: 50, nullable: true })
+  @Column({
+    name: 'pasaporte_victima',
+    type: 'nvarchar',
+    length: 50,
+    nullable: true,
+  })
   pasaporteVictima: string | null;
 
   @Column({ name: 'nombres', type: 'nvarchar', length: 100 })
@@ -34,13 +39,23 @@ export class Victima {
   @Column({ name: 'apellido_paterno', type: 'nvarchar', length: 100 })
   apellidoPaterno: string;
 
-  @Column({ name: 'apellido_materno', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'apellido_materno',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   apellidoMaterno: string | null;
 
   @Column({ name: 'sexo_id', type: 'int', nullable: true })
   sexoId: number | null;
 
-  @Column({ name: 'email_victima', type: 'nvarchar', length: 255, nullable: true })
+  @Column({
+    name: 'email_victima',
+    type: 'nvarchar',
+    length: 255,
+    nullable: true,
+  })
   emailVictima: string | null;
 
   @Column({ name: 'dato_reservado', type: 'bit', default: 0 })

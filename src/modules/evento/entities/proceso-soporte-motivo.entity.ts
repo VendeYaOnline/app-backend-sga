@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Evento } from './evento.entity';
 import { CatTipoProblemaSt } from '../../catalogo/entities/cat-tipo-problema-st.entity';
@@ -19,7 +22,12 @@ export class ProcesoSoporteMotivo {
   @Column({ name: 'es_motivo_principal', type: 'bit', default: 0 })
   esMotivoPrincipal: boolean;
 
-  @Column({ name: 'observacion', type: 'nvarchar', length: 500, nullable: true })
+  @Column({
+    name: 'observacion',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
   observacion: string | null;
 
   @ManyToOne(() => Evento)

@@ -1,7 +1,4 @@
-import {
-  Entity, PrimaryColumn, Column,
-  ManyToOne, JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Evento } from './evento.entity';
 import { CatMotivoNoFactible } from '../../catalogo/entities/cat-motivo-no-factible.entity';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
@@ -11,10 +8,20 @@ export class ResolucionCambioDomicilio {
   @PrimaryColumn({ name: 'evento_id', type: 'int' })
   eventoId: number;
 
-  @Column({ name: 'subtipo_cambio', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'subtipo_cambio',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   subtipoCambio: string | null;
 
-  @Column({ name: 'factibilidad_cd', type: 'nvarchar', length: 20, nullable: true })
+  @Column({
+    name: 'factibilidad_cd',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
   factibilidadCd: string | null;
 
   @Column({ name: 'motivo_no_factible_id', type: 'int', nullable: true })

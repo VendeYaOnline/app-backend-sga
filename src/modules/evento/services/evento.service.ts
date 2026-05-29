@@ -1,6 +1,9 @@
 import {
-  Injectable, NotFoundException, BadRequestException,
-  UnprocessableEntityException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnprocessableEntityException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -46,18 +49,35 @@ export class EventoService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async findAll(filters: PaginationDto & { solicitudId?: number; tipoEventoId?: number; estadoEvento?: string; asignadoA?: number }) {
-    const { page = 1, limit = 20, solicitudId, tipoEventoId, estadoEvento, asignadoA } = filters;
+  async findAll(
+    filters: PaginationDto & {
+      solicitudId?: number;
+      tipoEventoId?: number;
+      estadoEvento?: string;
+      asignadoA?: number;
+    },
+  ) {
+    const {
+      page = 1,
+      limit = 20,
+      solicitudId,
+      tipoEventoId,
+      estadoEvento,
+      asignadoA,
+    } = filters;
 
-    const qb = this.eventoRepo.createQueryBuilder('e')
+    const qb = this.eventoRepo
+      .createQueryBuilder('e')
       .leftJoinAndSelect('e.tipoEvento', 'te')
       .leftJoinAndSelect('e.solicitud', 's')
       .leftJoinAndSelect('e.asignado', 'a')
       .where('e.deletedAt IS NULL');
 
     if (solicitudId) qb.andWhere('e.solicitudId = :sid', { sid: solicitudId });
-    if (tipoEventoId) qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
-    if (estadoEvento) qb.andWhere('e.estadoEvento = :est', { est: estadoEvento });
+    if (tipoEventoId)
+      qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
+    if (estadoEvento)
+      qb.andWhere('e.estadoEvento = :est', { est: estadoEvento });
     if (asignadoA) qb.andWhere('e.asignadoA = :uid', { uid: asignadoA });
 
     qb.orderBy('e.fechaEvento', 'DESC');
@@ -65,7 +85,15 @@ export class EventoService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number) {
@@ -73,7 +101,8 @@ export class EventoService {
       where: { id, deletedAt: IsNull() },
       relations: { tipoEvento: true, solicitud: true, asignado: true },
     });
-    if (!evento) throw new NotFoundException(`Evento con ID ${id} no encontrado`);
+    if (!evento)
+      throw new NotFoundException(`Evento con ID ${id} no encontrado`);
     return evento;
   }
 
@@ -88,14 +117,20 @@ export class EventoService {
   async findProceso(eventoId: number) {
     return this.procesoRepo.findOne({
       where: { eventoId },
-      relations: { tecnico: true, crs: true, region: true, comuna: true, motivoNoRealizado: true },
+      relations: {
+        tecnico: true,
+        crs: true,
+        region: true,
+        comuna: true,
+        motivoNoRealizado: true,
+      },
     });
   }
 
   async findResolucion(eventoId: number) {
     return this.resolucionRepo.findOne({
       where: { eventoId },
-      relations: { tribunal: true, tipoLey: true, crs: true },
+      relations: { tribunal: true, tipoLey: true, crs: true, tipoCausa: true },
     });
   }
 
@@ -107,8 +142,11 @@ export class EventoService {
     try {
       const manager = queryRunner.manager;
 
-      const tipoEvento = await this.tipoEventoRepo.findOne({ where: { id: dto.tipoEventoId } });
-      if (!tipoEvento) throw new BadRequestException('Tipo de evento no encontrado');
+      const tipoEvento = await this.tipoEventoRepo.findOne({
+        where: { id: dto.tipoEventoId },
+      });
+      if (!tipoEvento)
+        throw new BadRequestException('Tipo de evento no encontrado');
 
       const evento = manager.create(Evento, {
         tipoEventoId: dto.tipoEventoId,
@@ -138,7 +176,9 @@ export class EventoService {
       }
 
       await queryRunner.commitTransaction();
-      this.logger.log(`Evento ${saved.id} (tipo ${dto.tipoEventoId}) creado por usuario ${userId}`);
+      this.logger.log(
+        `Evento ${saved.id} (tipo ${dto.tipoEventoId}) creado por usuario ${userId}`,
+      );
 
       return this.findOne(saved.id);
     } catch (error) {
@@ -155,7 +195,12 @@ export class EventoService {
     return this.eventoRepo.save(evento);
   }
 
-  async ejecutarValidacion(eventoId: number, validacionId: number, dto: { estado: string; observaciones?: string }, userId: number) {
+  async ejecutarValidacion(
+    eventoId: number,
+    validacionId: number,
+    dto: { estado: string; observaciones?: string },
+    userId: number,
+  ) {
     const validacion = await this.eventoValidacionRepo.findOne({
       where: { id: validacionId, eventoId },
       relations: { tipoEventoValidacion: true },
@@ -163,7 +208,9 @@ export class EventoService {
 
     if (!validacion) throw new NotFoundException('Validación no encontrada');
     if (validacion.estado !== 'PENDIENTE') {
-      throw new UnprocessableEntityException('Esta validación ya fue ejecutada');
+      throw new UnprocessableEntityException(
+        'Esta validación ya fue ejecutada',
+      );
     }
 
     validacion.estado = dto.estado;
@@ -172,13 +219,18 @@ export class EventoService {
     validacion.observaciones = dto.observaciones ?? null;
     await this.eventoValidacionRepo.save(validacion);
 
-    if (dto.estado === 'RECHAZADO' && validacion.tipoEventoValidacion?.obligatorio) {
+    if (
+      dto.estado === 'RECHAZADO' &&
+      validacion.tipoEventoValidacion?.obligatorio
+    ) {
       const evento = await this.findOne(eventoId);
       evento.estadoEvento = 'RECHAZADO';
       await this.eventoRepo.save(evento);
     }
 
-    this.logger.log(`Validación ${validacionId} del evento ${eventoId}: ${dto.estado}`);
+    this.logger.log(
+      `Validación ${validacionId} del evento ${eventoId}: ${dto.estado}`,
+    );
     return validacion;
   }
 
@@ -186,13 +238,21 @@ export class EventoService {
     const existente = await this.procesoRepo.findOne({ where: { eventoId } });
     if (existente) {
       Object.assign(existente, dto);
-      return this.procesoRepo.save(existente) as unknown as Promise<Proceso>;
+      return this.procesoRepo.save(existente);
     }
     const nuevo = this.procesoRepo.create({ eventoId, ...dto });
     return this.procesoRepo.save(nuevo) as unknown as Promise<Proceso>;
   }
 
-  async cerrarProceso(eventoId: number, dto: { realizado: boolean; motivoNoRealizadoId?: number; detalleNoRealizado?: string }, userId: number) {
+  async cerrarProceso(
+    eventoId: number,
+    dto: {
+      realizado: boolean;
+      motivoNoRealizadoId?: number;
+      detalleNoRealizado?: string;
+    },
+    userId: number,
+  ) {
     const proceso = await this.procesoRepo.findOne({ where: { eventoId } });
     if (!proceso) throw new NotFoundException('Proceso no encontrado');
 
@@ -209,17 +269,21 @@ export class EventoService {
   }
 
   async updateResolucion(eventoId: number, dto: any) {
-    const existente = await this.resolucionRepo.findOne({ where: { eventoId } });
+    const existente = await this.resolucionRepo.findOne({
+      where: { eventoId },
+    });
     if (existente) {
       Object.assign(existente, dto);
-      return this.resolucionRepo.save(existente) as unknown as Promise<Resolucion>;
+      return this.resolucionRepo.save(existente);
     }
     const nueva = this.resolucionRepo.create({ eventoId, ...dto });
     return this.resolucionRepo.save(nueva) as unknown as Promise<Resolucion>;
   }
 
   async updateCambioDomicilio(eventoId: number, dto: any) {
-    const existente = await this.resolucionCdRepo.findOne({ where: { eventoId } });
+    const existente = await this.resolucionCdRepo.findOne({
+      where: { eventoId },
+    });
     if (existente) {
       Object.assign(existente, dto);
       return this.resolucionCdRepo.save(existente);
@@ -229,7 +293,9 @@ export class EventoService {
   }
 
   async addSoporteDetalle(eventoId: number, dto: any) {
-    const existente = await this.soporteDetalleRepo.findOne({ where: { eventoId } });
+    const existente = await this.soporteDetalleRepo.findOne({
+      where: { eventoId },
+    });
     if (existente) {
       Object.assign(existente, dto);
       return this.soporteDetalleRepo.save(existente);
@@ -245,7 +311,14 @@ export class EventoService {
     });
   }
 
-  async addSoporteMotivo(eventoId: number, dto: { tipoProblemaId: number; esMotivoPrincipal?: boolean; observacion?: string }) {
+  async addSoporteMotivo(
+    eventoId: number,
+    dto: {
+      tipoProblemaId: number;
+      esMotivoPrincipal?: boolean;
+      observacion?: string;
+    },
+  ) {
     if (dto.esMotivoPrincipal) {
       await this.soporteMotivoRepo.update(
         { eventoId, esMotivoPrincipal: true },
@@ -256,8 +329,18 @@ export class EventoService {
     return this.soporteMotivoRepo.save(motivo);
   }
 
-  async updateSoporteMotivo(motivoId: number, eventoId: number, dto: { tipoProblemaId?: number; esMotivoPrincipal?: boolean; observacion?: string }) {
-    const motivo = await this.soporteMotivoRepo.findOne({ where: { id: motivoId, eventoId } });
+  async updateSoporteMotivo(
+    motivoId: number,
+    eventoId: number,
+    dto: {
+      tipoProblemaId?: number;
+      esMotivoPrincipal?: boolean;
+      observacion?: string;
+    },
+  ) {
+    const motivo = await this.soporteMotivoRepo.findOne({
+      where: { id: motivoId, eventoId },
+    });
     if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
 
     if (dto.esMotivoPrincipal) {
@@ -272,7 +355,9 @@ export class EventoService {
   }
 
   async deleteSoporteMotivo(motivoId: number, eventoId: number) {
-    const motivo = await this.soporteMotivoRepo.findOne({ where: { id: motivoId, eventoId } });
+    const motivo = await this.soporteMotivoRepo.findOne({
+      where: { id: motivoId, eventoId },
+    });
     if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
     await this.soporteMotivoRepo.delete(motivoId);
   }
