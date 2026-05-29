@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Body, Param, Query,
+  Controller, Get, Post, Put, Delete, Body, Param, Query,
   ParseIntPipe, HttpCode, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
@@ -10,6 +10,7 @@ import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { EjecutarValidacionDto } from '../dto/validacion.dto';
+import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -122,6 +123,56 @@ export class EventoController {
   @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento/proceso' })
   async addSoporteDetalle(@Param('eventoId', ParseIntPipe) eventoId: number, @Body() dto: any) {
     return this.eventoService.addSoporteDetalle(eventoId, dto);
+  }
+
+  @Get('procesos/:eventoId/soporte-motivos')
+  @ApiOperation({ summary: 'Listar motivos de un soporte', description: 'Retorna los motivos asociados a un proceso de soporte' })
+  @ApiResponse({ status: 200, description: 'Lista de motivos' })
+  @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento/proceso de soporte' })
+  async findSoporteMotivos(@Param('eventoId', ParseIntPipe) eventoId: number) {
+    return this.eventoService.findSoporteMotivos(eventoId);
+  }
+
+  @Post('procesos/:eventoId/soporte-motivos')
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Agregar motivo a un soporte', description: 'Agrega un motivo de problema a un proceso de soporte' })
+  @ApiResponse({ status: 201, description: 'Motivo agregado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
+  @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento/proceso de soporte' })
+  @ApiBody({ type: CreateSoporteMotivoDto })
+  async addSoporteMotivo(
+    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Body() dto: CreateSoporteMotivoDto,
+  ) {
+    return this.eventoService.addSoporteMotivo(eventoId, dto);
+  }
+
+  @Put('procesos/:eventoId/soporte-motivos/:motivoId')
+  @ApiOperation({ summary: 'Editar motivo de soporte', description: 'Actualiza un motivo de problema de un proceso de soporte' })
+  @ApiResponse({ status: 200, description: 'Motivo actualizado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Motivo no encontrado' })
+  @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento/proceso de soporte' })
+  @ApiParam({ name: 'motivoId', type: Number, description: 'ID del motivo' })
+  async updateSoporteMotivo(
+    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('motivoId', ParseIntPipe) motivoId: number,
+    @Body() dto: CreateSoporteMotivoDto,
+  ) {
+    return this.eventoService.updateSoporteMotivo(motivoId, eventoId, dto);
+  }
+
+  @Delete('procesos/:eventoId/soporte-motivos/:motivoId')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Eliminar motivo de soporte', description: 'Elimina un motivo de problema de un proceso de soporte' })
+  @ApiResponse({ status: 204, description: 'Motivo eliminado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Motivo no encontrado' })
+  @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento/proceso de soporte' })
+  @ApiParam({ name: 'motivoId', type: Number, description: 'ID del motivo' })
+  async deleteSoporteMotivo(
+    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('motivoId', ParseIntPipe) motivoId: number,
+  ) {
+    await this.eventoService.deleteSoporteMotivo(motivoId, eventoId);
   }
 
   @Put('resoluciones/:eventoId')

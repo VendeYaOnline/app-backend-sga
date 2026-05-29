@@ -13,6 +13,7 @@ import { Resolucion } from '../entities/resolucion.entity';
 import { ResolucionCambioDomicilio } from '../entities/resolucion-cambio-domicilio.entity';
 import { Proceso } from '../entities/proceso.entity';
 import { ProcesoSoporteDetalle } from '../entities/proceso-soporte-detalle.entity';
+import { ProcesoSoporteMotivo } from '../entities/proceso-soporte-motivo.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
@@ -36,6 +37,8 @@ export class EventoService {
     private readonly procesoRepo: Repository<Proceso>,
     @InjectRepository(ProcesoSoporteDetalle)
     private readonly soporteDetalleRepo: Repository<ProcesoSoporteDetalle>,
+    @InjectRepository(ProcesoSoporteMotivo)
+    private readonly soporteMotivoRepo: Repository<ProcesoSoporteMotivo>,
     @InjectRepository(CatTipoEvento)
     private readonly tipoEventoRepo: Repository<CatTipoEvento>,
     @InjectRepository(CatTipoEventoValidacion)
@@ -233,5 +236,44 @@ export class EventoService {
     }
     const nuevo = this.soporteDetalleRepo.create({ eventoId, ...dto });
     return this.soporteDetalleRepo.save(nuevo);
+  }
+
+  async findSoporteMotivos(eventoId: number) {
+    return this.soporteMotivoRepo.find({
+      where: { eventoId },
+      relations: { tipoProblema: true },
+    });
+  }
+
+  async addSoporteMotivo(eventoId: number, dto: { tipoProblemaId: number; esMotivoPrincipal?: boolean; observacion?: string }) {
+    if (dto.esMotivoPrincipal) {
+      await this.soporteMotivoRepo.update(
+        { eventoId, esMotivoPrincipal: true },
+        { esMotivoPrincipal: false },
+      );
+    }
+    const motivo = this.soporteMotivoRepo.create({ eventoId, ...dto });
+    return this.soporteMotivoRepo.save(motivo);
+  }
+
+  async updateSoporteMotivo(motivoId: number, eventoId: number, dto: { tipoProblemaId?: number; esMotivoPrincipal?: boolean; observacion?: string }) {
+    const motivo = await this.soporteMotivoRepo.findOne({ where: { id: motivoId, eventoId } });
+    if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
+
+    if (dto.esMotivoPrincipal) {
+      await this.soporteMotivoRepo.update(
+        { eventoId, esMotivoPrincipal: true },
+        { esMotivoPrincipal: false },
+      );
+    }
+
+    Object.assign(motivo, dto);
+    return this.soporteMotivoRepo.save(motivo);
+  }
+
+  async deleteSoporteMotivo(motivoId: number, eventoId: number) {
+    const motivo = await this.soporteMotivoRepo.findOne({ where: { id: motivoId, eventoId } });
+    if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
+    await this.soporteMotivoRepo.delete(motivoId);
   }
 }

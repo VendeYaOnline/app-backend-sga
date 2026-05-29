@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { CatTipoEvento } from './cat-tipo-evento.entity';
+import { CatRol } from '../../auth/entities/cat-rol.entity';
 
 @Entity('sga.CAT_TIPO_EVENTO_VALIDACION')
 export class CatTipoEventoValidacion {
@@ -24,4 +25,8 @@ export class CatTipoEventoValidacion {
   @ManyToOne(() => CatTipoEvento)
   @JoinColumn({ name: 'tipo_evento_id', referencedColumnName: 'id' })
   tipoEvento: CatTipoEvento;
+
+  @ManyToOne(() => CatRol)
+  @JoinColumn({ name: 'rol_id', referencedColumnName: 'id' })
+  rol: CatRol;
 }

@@ -8,6 +8,7 @@ import { Resolucion } from './entities/resolucion.entity';
 import { ResolucionCambioDomicilio } from './entities/resolucion-cambio-domicilio.entity';
 import { Proceso } from './entities/proceso.entity';
 import { ProcesoSoporteDetalle } from './entities/proceso-soporte-detalle.entity';
+import { ProcesoSoporteMotivo } from './entities/proceso-soporte-motivo.entity';
 import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
 import { CatTipoEvento } from '../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../catalogo/entities/cat-tipo-evento-validacion.entity';
@@ -21,6 +22,7 @@ import { CatTipoEventoValidacion } from '../catalogo/entities/cat-tipo-evento-va
       ResolucionCambioDomicilio,
       Proceso,
       ProcesoSoporteDetalle,
+      ProcesoSoporteMotivo,
       AccionUsuario,
       CatTipoEvento,
       CatTipoEventoValidacion,

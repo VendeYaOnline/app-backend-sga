@@ -17,6 +17,12 @@ export class Proceso {
   @Column({ name: 'proceso_padre_id', type: 'int', nullable: true })
   procesoPadreId: number | null;
 
+  @Column({ name: 'proceso_origen_id', type: 'int', nullable: true })
+  procesoOrigenId: number | null;
+
+  @Column({ name: 'numero_intento', type: 'int', default: 1 })
+  numeroIntento: number;
+
   @Column({ name: 'agendamiento_id', type: 'int', nullable: true })
   agendamientoId: number | null;
 
@@ -72,6 +78,10 @@ export class Proceso {
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'proceso_padre_id', referencedColumnName: 'id' })
   procesoPadre: Evento;
+
+  @ManyToOne(() => Evento)
+  @JoinColumn({ name: 'proceso_origen_id', referencedColumnName: 'id' })
+  procesoOrigen: Evento;
 
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'tecnico_id', referencedColumnName: 'id' })
