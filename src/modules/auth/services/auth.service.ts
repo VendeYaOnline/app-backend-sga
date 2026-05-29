@@ -246,6 +246,16 @@ export class AuthService {
         throw new ConflictException(`El username "${dto.username}" ya existe`);
       }
 
+      const existenteEmail = await manager.findOne(Usuario, { where: { email: dto.email } });
+      if (existenteEmail) {
+        throw new ConflictException(`El email "${dto.email}" ya está registrado`);
+      }
+
+      const existenteRut = await manager.findOne(Usuario, { where: { rut: dto.rut } });
+      if (existenteRut) {
+        throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
+      }
+
       const salt = await bcrypt.genSalt(10);
       const passHash = await bcrypt.hash(dto.password, salt);
 

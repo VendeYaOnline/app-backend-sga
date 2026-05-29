@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -20,22 +24,44 @@ export class UsuarioService {
     private readonly rolRepo: Repository<CatRol>,
   ) {}
 
-  async findAll(filters: PaginationDto & { search?: string; activo?: boolean; rolId?: number }) {
+  async findAll(
+    filters: PaginationDto & {
+      search?: string;
+      activo?: boolean;
+      rolId?: number;
+    },
+  ) {
     const { page = 1, limit = 20, search, activo, rolId } = filters;
 
-    const qb = this.usuarioRepo.createQueryBuilder('u')
+    const qb = this.usuarioRepo
+      .createQueryBuilder('u')
       .leftJoinAndSelect('u.region', 'r')
       .leftJoinAndSelect('u.crs', 'crs')
       .leftJoinAndSelect('u.tribunal', 't')
       .select([
-        'u.id', 'u.username', 'u.email', 'u.rut', 'u.nombres',
-        'u.apellidoPaterno', 'u.apellidoMaterno', 'u.telefonoMovil',
-        'u.telefonoFijo', 'u.activo', 'u.debeCambiarPass',
-        'u.ultimoLogin', 'u.createdAt', 'u.updatedAt',
-        'u.regionId', 'u.crsId', 'u.tribunalId',
-        'r.id', 'r.nombre',
-        'crs.id', 'crs.nombreCrs',
-        't.id', 't.nombreTribunal',
+        'u.id',
+        'u.username',
+        'u.email',
+        'u.rut',
+        'u.nombres',
+        'u.apellidoPaterno',
+        'u.apellidoMaterno',
+        'u.telefonoMovil',
+        'u.telefonoFijo',
+        'u.activo',
+        'u.debeCambiarPass',
+        'u.ultimoLogin',
+        'u.createdAt',
+        'u.updatedAt',
+        'u.regionId',
+        'u.crsId',
+        'u.tribunalId',
+        'r.id',
+        'r.nombre',
+        'crs.id',
+        'crs.nombreCrs',
+        't.id',
+        't.nombreTribunal',
       ])
       .where('u.deletedAt IS NULL');
 
@@ -51,18 +77,28 @@ export class UsuarioService {
     }
 
     if (rolId) {
-      qb.innerJoin('sga.USUARIO_ROL', 'ur', 'ur.usuario_id = u.id')
-        .andWhere('ur.rol_id = :rolId', { rolId });
+      qb.innerJoin('sga.USUARIO_ROL', 'ur', 'ur.usuario_id = u.id').andWhere(
+        'ur.rol_id = :rolId',
+        { rolId },
+      );
     }
 
-    qb.orderBy('u.apellidoPaterno', 'ASC').addOrderBy('u.apellidoMaterno', 'ASC');
+    qb.orderBy('u.apellidoPaterno', 'ASC').addOrderBy(
+      'u.apellidoMaterno',
+      'ASC',
+    );
 
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
     return {
       data,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) } as PaginationMeta,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -82,11 +118,20 @@ export class UsuarioService {
       where: { id, deletedAt: IsNull() },
       relations: { region: true, crs: true, tribunal: true },
       select: {
-        id: true, username: true, email: true, rut: true,
-        nombres: true, apellidoPaterno: true, apellidoMaterno: true,
-        telefonoMovil: true, telefonoFijo: true,
-        activo: true, debeCambiarPass: true, ultimoLogin: true,
-        createdAt: true, updatedAt: true,
+        id: true,
+        username: true,
+        email: true,
+        rut: true,
+        nombres: true,
+        apellidoPaterno: true,
+        apellidoMaterno: true,
+        telefonoMovil: true,
+        telefonoFijo: true,
+        activo: true,
+        debeCambiarPass: true,
+        ultimoLogin: true,
+        createdAt: true,
+        updatedAt: true,
         region: { id: true, nombre: true },
         crs: { id: true, nombreCrs: true },
         tribunal: { id: true, nombreTribunal: true },
@@ -108,6 +153,12 @@ export class UsuarioService {
   async findByEmail(email: string): Promise<Usuario | null> {
     return this.usuarioRepo.findOne({
       where: { email, deletedAt: IsNull() },
+    });
+  }
+
+  async findByRut(rut: string): Promise<Usuario | null> {
+    return this.usuarioRepo.findOne({
+      where: { rut, deletedAt: IsNull() },
     });
   }
 
@@ -142,6 +193,11 @@ export class UsuarioService {
       throw new BadRequestException(`El email "${dto.email}" ya existe`);
     }
 
+    const existingRut = await this.findByRut(dto.rut);
+    if (existingRut) {
+      throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
+    }
+
     const usuario = this.usuarioRepo.create({
       ...dto,
       passHash: dto.debeCambiarPass ? null : null,
@@ -150,17 +206,31 @@ export class UsuarioService {
     return this.usuarioRepo.save(usuario);
   }
 
-  async update(id: number, dto: UpdateUsuarioDto, userId: number): Promise<Usuario> {
+  async update(
+    id: number,
+    dto: UpdateUsuarioDto,
+    userId: number,
+  ): Promise<Usuario> {
     const usuario = await this.findOne(id);
 
     if (dto.username && dto.username !== usuario.username) {
       const existing = await this.findByUsername(dto.username);
-      if (existing) throw new BadRequestException(`El username "${dto.username}" ya existe`);
+      if (existing)
+        throw new BadRequestException(
+          `El username "${dto.username}" ya existe`,
+        );
     }
 
     if (dto.email && dto.email !== usuario.email) {
       const existing = await this.findByEmail(dto.email);
-      if (existing) throw new BadRequestException(`El email "${dto.email}" ya existe`);
+      if (existing)
+        throw new BadRequestException(`El email "${dto.email}" ya existe`);
+    }
+
+    if (dto.rut && dto.rut !== usuario.rut) {
+      const existing = await this.findByRut(dto.rut);
+      if (existing)
+        throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
     }
 
     Object.assign(usuario, dto, { updatedBy: userId });
@@ -174,7 +244,11 @@ export class UsuarioService {
     await this.usuarioRepo.save(usuario);
   }
 
-  async assignRol(usuarioId: number, rolId: number, userId: number): Promise<void> {
+  async assignRol(
+    usuarioId: number,
+    rolId: number,
+    userId: number,
+  ): Promise<void> {
     const existing = await this.usuarioRolRepo.findOne({
       where: { usuarioId, rolId },
     });
@@ -182,7 +256,8 @@ export class UsuarioService {
       throw new BadRequestException('El usuario ya tiene este rol asignado');
     }
     const rol = await this.rolRepo.findOne({ where: { id: rolId } });
-    if (!rol) throw new BadRequestException(`Rol con ID ${rolId} no encontrado`);
+    if (!rol)
+      throw new BadRequestException(`Rol con ID ${rolId} no encontrado`);
 
     const usuarioRol = this.usuarioRolRepo.create({
       usuarioId,
