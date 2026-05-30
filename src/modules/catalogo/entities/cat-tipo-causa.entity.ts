@@ -1,8 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('sga.CAT_TIPO_CAUSA')
 export class CatTipoCausa {
