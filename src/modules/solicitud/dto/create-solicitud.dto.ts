@@ -6,9 +6,11 @@ import {
   IsArray,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { CreateCondenadoDto } from '../../persona/dto/create-condenado.dto';
 
 export class CreateZonaDto {
   @ApiProperty()
@@ -100,9 +102,24 @@ export class CreateSolicitudDto {
   @IsInt()
   tribunalId: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      'ID del condenado existente. Requerido si no se envían datos de condenado nuevo.',
+    required: false,
+  })
+  @IsOptional()
   @IsInt()
-  condenadoId: number;
+  condenadoId?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Datos para crear un nuevo condenado. Si se envía, se crea junto con la solicitud en la misma transacción.',
+    type: CreateCondenadoDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateCondenadoDto)
+  condenado?: CreateCondenadoDto;
 
   @ApiPropertyOptional()
   @IsOptional()
