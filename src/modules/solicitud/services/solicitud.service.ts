@@ -177,7 +177,7 @@ export class SolicitudService {
   async findFactibilidad(solicitudId: number) {
     return this.factibilidadRepo.findOne({
       where: { solicitudId },
-      relations: { motivoNoFactible: true },
+      relations: { tipoFactibilidad: true, motivoNoFactible: true, emitidoPorUsuario: true },
     });
   }
 
@@ -629,6 +629,29 @@ export class SolicitudService {
       emitidoPor: number;
     },
   ) {
+    await this.findOne(solicitudId);
+
+    const tipoFactibilidad = await this.tipoFactibilidadRepo.findOne({
+      where: { id: dto.tipoFactibilidadId, activo: true },
+    });
+    if (!tipoFactibilidad) {
+      throw new BadRequestException(
+        `Tipo de factibilidad con ID ${dto.tipoFactibilidadId} no encontrado`,
+      );
+    }
+
+    if (tipoFactibilidad.requiereMotivo && !dto.motivoNoFactibleId) {
+      throw new BadRequestException(
+        `El tipo de factibilidad "${tipoFactibilidad.codigo}" requiere un motivo de no factibilidad`,
+      );
+    }
+
+    if (!tipoFactibilidad.requiereMotivo && dto.motivoNoFactibleId) {
+      throw new BadRequestException(
+        `El tipo de factibilidad "${tipoFactibilidad.codigo}" no admite motivo de no factibilidad`,
+      );
+    }
+
     const existente = await this.factibilidadRepo.findOne({
       where: { solicitudId },
     });
@@ -646,7 +669,7 @@ export class SolicitudService {
     const factibilidad = this.factibilidadRepo.create({
       solicitudId,
       tipoFactibilidadId: dto.tipoFactibilidadId,
-      motivoNoFactibleId: dto.motivoNoFactibleId,
+      motivoNoFactibleId: dto.motivoNoFactibleId ?? null,
       folioInterno: folio,
       emitidoPor: dto.emitidoPor,
     });
