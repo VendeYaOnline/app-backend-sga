@@ -4,11 +4,12 @@ import {
   BadRequestException,
   ConflictException,
   UnprocessableEntityException,
+  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository, IsNull, In } from 'typeorm';
+import { DataSource, Repository, IsNull } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Solicitud } from '../entities/solicitud.entity';
@@ -20,36 +21,15 @@ import { SolicitudFactibilidad } from '../entities/solicitud-factibilidad.entity
 import { SolicitudSentencia } from '../entities/solicitud-sentencia.entity';
 import { SolicitudEstadoHist } from '../entities/solicitud-estado-hist.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
+import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
+import { CatEstadoSolicitudTransicion } from '../../catalogo/entities/cat-estado-solicitud-transicion.entity';
+import { CatTipoFactibilidad } from '../../catalogo/entities/cat-tipo-factibilidad.entity';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
 import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
-import { EstadoSolicitud } from '../enums/solicitud.enum';
 
-const TRANSICIONES_VALIDAS: Record<string, string[]> = {
-  [EstadoSolicitud.RECEPCIONADA]: [
-    EstadoSolicitud.APROBADA,
-    EstadoSolicitud.DEVUELTA,
-    EstadoSolicitud.ANULADA,
-  ],
-  [EstadoSolicitud.APROBADA]: [
-    EstadoSolicitud.INFORME_EMITIDO,
-    EstadoSolicitud.DEVUELTA,
-    EstadoSolicitud.ANULADA,
-  ],
-  [EstadoSolicitud.INFORME_EMITIDO]: [
-    EstadoSolicitud.INSTALADA,
-    EstadoSolicitud.ANULADA,
-  ],
-  [EstadoSolicitud.INSTALADA]: [
-    EstadoSolicitud.EN_CONTROL,
-    EstadoSolicitud.ANULADA,
-  ],
-  [EstadoSolicitud.EN_CONTROL]: [
-    EstadoSolicitud.CERRADA,
-    EstadoSolicitud.ANULADA,
-  ],
-};
+const ESTADO_INICIAL_CODIGO = 'RECEPCIONADA';
 
 @Injectable()
 export class SolicitudService {
@@ -73,6 +53,12 @@ export class SolicitudService {
     private readonly sentenciaRepo: Repository<SolicitudSentencia>,
     @InjectRepository(SolicitudEstadoHist)
     private readonly estadoHistRepo: Repository<SolicitudEstadoHist>,
+    @InjectRepository(CatEstadoSolicitud)
+    private readonly estadoSolicitudRepo: Repository<CatEstadoSolicitud>,
+    @InjectRepository(CatEstadoSolicitudTransicion)
+    private readonly transicionRepo: Repository<CatEstadoSolicitudTransicion>,
+    @InjectRepository(CatTipoFactibilidad)
+    private readonly tipoFactibilidadRepo: Repository<CatTipoFactibilidad>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -87,8 +73,10 @@ export class SolicitudService {
       .leftJoinAndSelect('s.asignado', 'a')
       .where('s.deletedAt IS NULL');
 
-    if (where.estado)
-      qb.andWhere('s.estadoActual = :estado', { estado: where.estado });
+    if (where.estadoId)
+      qb.andWhere('s.estadoActualId = :estadoId', {
+        estadoId: where.estadoId,
+      });
     if (where.rucCausa)
       qb.andWhere('s.rucCausa LIKE :ruc', { ruc: `%${where.rucCausa}%` });
     if (where.ritCausa)
@@ -143,6 +131,7 @@ export class SolicitudService {
         tipoDiaInicio: true,
         tipoDiaTermino: true,
         asignado: true,
+        estadoActual: true,
       },
     });
     if (!solicitud)
@@ -205,6 +194,15 @@ export class SolicitudService {
     try {
       const manager = queryRunner.manager;
 
+      const estadoInicial = await manager.findOne(CatEstadoSolicitud, {
+        where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
+      });
+      if (!estadoInicial) {
+        throw new InternalServerErrorException(
+          `Estado inicial ${ESTADO_INICIAL_CODIGO} no encontrado en catálogo`,
+        );
+      }
+
       const solicitud = manager.create(Solicitud, {
         tipoCausaId: dto.tipoCausaId,
         rucCausa: dto.rucCausa,
@@ -222,6 +220,7 @@ export class SolicitudService {
         tipoDiaInicioId: dto.tipoDiaInicioId,
         tipoDiaTerminoId: dto.tipoDiaTerminoId,
         conBeacon: dto.conBeacon ?? true,
+        estadoActualId: estadoInicial.id,
         observaciones: dto.observaciones,
         origenCreacion: 'FORMULARIO_WEB',
         motivoOrigen: 'ORIGINAL',
@@ -260,8 +259,8 @@ export class SolicitudService {
 
       const estadoHist = manager.create(SolicitudEstadoHist, {
         solicitudId: saved.id,
-        estadoNuevo: EstadoSolicitud.RECEPCIONADA,
-        estadoAnterior: null,
+        estadoNuevoId: estadoInicial.id,
+        estadoAnteriorId: null,
         usuarioId: userId,
         fechaCambio: new Date(),
       });
@@ -295,13 +294,17 @@ export class SolicitudService {
     userId: number,
   ): Promise<Solicitud> {
     const solicitud = await this.findOne(id);
+
+    const estadoInicial = await this.estadoSolicitudRepo.findOne({
+      where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
+    });
+
     if (
-      ![EstadoSolicitud.RECEPCIONADA].includes(
-        solicitud.estadoActual as EstadoSolicitud,
-      )
+      !estadoInicial ||
+      solicitud.estadoActualId !== estadoInicial.id
     ) {
       throw new UnprocessableEntityException(
-        'Solo se puede editar una solicitud en estado RECEPCIONADA',
+        `Solo se puede editar una solicitud en estado ${ESTADO_INICIAL_CODIGO}`,
       );
     }
     Object.assign(solicitud, dto, { updatedBy: userId });
@@ -312,6 +315,7 @@ export class SolicitudService {
     id: number,
     dto: TransicionEstadoDto,
     userId: number,
+    roleCodes: string[],
   ): Promise<Solicitud> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -326,15 +330,30 @@ export class SolicitudService {
       if (!solicitud)
         throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
 
-      const estadoActual = solicitud.estadoActual;
-      const permitidos = TRANSICIONES_VALIDAS[estadoActual];
-      if (!permitidos || !permitidos.includes(dto.estadoNuevo)) {
+      const estadoOrigenId = solicitud.estadoActualId;
+
+      const transicion = await manager.findOne(CatEstadoSolicitudTransicion, {
+        where: {
+          estadoOrigenId,
+          estadoDestinoId: dto.estadoNuevoId,
+          activo: true,
+        },
+        relations: { estadoDestino: true, rol: true },
+      });
+
+      if (!transicion) {
         throw new UnprocessableEntityException(
-          `No se puede cambiar de ${estadoActual} a ${dto.estadoNuevo}`,
+          `No existe transición configurada del estado ${estadoOrigenId} al estado ${dto.estadoNuevoId}`,
         );
       }
 
-      solicitud.estadoActual = dto.estadoNuevo;
+      if (!roleCodes.includes(transicion.rol.codigo)) {
+        throw new UnprocessableEntityException(
+          `El rol requerido para esta transición es ${transicion.rol.codigo}`,
+        );
+      }
+
+      solicitud.estadoActualId = dto.estadoNuevoId;
       solicitud.estadoAt = new Date();
       solicitud.asignadaA = userId;
       solicitud.asignadaAt = new Date();
@@ -343,8 +362,8 @@ export class SolicitudService {
 
       const estadoHist = manager.create(SolicitudEstadoHist, {
         solicitudId: id,
-        estadoNuevo: dto.estadoNuevo,
-        estadoAnterior: estadoActual,
+        estadoNuevoId: dto.estadoNuevoId,
+        estadoAnteriorId: estadoOrigenId,
         usuarioId: userId,
         motivoCambio: dto.motivo,
         fechaCambio: new Date(),
@@ -353,7 +372,7 @@ export class SolicitudService {
 
       const accion = manager.create(AccionUsuario, {
         usuarioId: userId,
-        tipoAccion: `TRANSICIONAR_${dto.estadoNuevo}`,
+        tipoAccion: `TRANSICIONAR_${transicion.estadoDestino.codigo}`,
         entidad: 'SOLICITUD',
         entidadId: id,
         solicitudId: id,
@@ -363,13 +382,13 @@ export class SolicitudService {
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Solicitud ${id}: ${estadoActual} → ${dto.estadoNuevo} por usuario ${userId}`,
+        `Solicitud ${id}: estado ${estadoOrigenId} → ${dto.estadoNuevoId} por usuario ${userId}`,
       );
 
       this.eventEmitter.emit('solicitud.cambio-estado', {
         solicitudId: id,
-        estadoAnterior: estadoActual,
-        estadoNuevo: dto.estadoNuevo,
+        estadoAnteriorId: estadoOrigenId,
+        estadoNuevoId: dto.estadoNuevoId,
         usuarioId: userId,
       });
 
@@ -517,10 +536,33 @@ export class SolicitudService {
     await this.solicitudDelitoRepo.remove(sd);
   }
 
+  async getTransicionesPermitidas(solicitudId: number, roleCodes: string[]) {
+    const solicitud = await this.findOne(solicitudId);
+
+    const transiciones = await this.transicionRepo.find({
+      where: {
+        estadoOrigenId: solicitud.estadoActualId,
+        activo: true,
+      },
+      relations: { estadoDestino: true, rol: true },
+    });
+
+    return transiciones
+      .filter((t) => roleCodes.includes(t.rol.codigo))
+      .map((t) => ({
+        id: t.id,
+        estadoDestinoId: t.estadoDestinoId,
+        estadoDestinoCodigo: t.estadoDestino.codigo,
+        estadoDestinoDescripcion: t.estadoDestino.descripcionEstado,
+        rolCodigo: t.rol.codigo,
+        rolNombre: t.rol.nombreRol,
+      }));
+  }
+
   async emitirFactibilidad(
     solicitudId: number,
     dto: {
-      tipoFactibilidad: string;
+      tipoFactibilidadId: number;
       motivoNoFactibleId?: number;
       emitidoPor: number;
     },
@@ -541,7 +583,7 @@ export class SolicitudService {
 
     const factibilidad = this.factibilidadRepo.create({
       solicitudId,
-      tipoFactibilidad: dto.tipoFactibilidad,
+      tipoFactibilidadId: dto.tipoFactibilidadId,
       motivoNoFactibleId: dto.motivoNoFactibleId,
       folioInterno: folio,
       emitidoPor: dto.emitidoPor,

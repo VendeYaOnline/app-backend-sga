@@ -15,6 +15,7 @@ import { CatPenaSustitutiva } from '../../catalogo/entities/cat-pena-sustitutiva
 import { CatMedidaControl } from '../../catalogo/entities/cat-medida-control.entity';
 import { CatTipoDia } from '../../catalogo/entities/cat-tipo-dia.entity';
 import { CatTipoCausa } from '../../catalogo/entities/cat-tipo-causa.entity';
+import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 
@@ -85,13 +86,8 @@ export class Solicitud {
   @Column({ name: 'con_beacon', type: 'bit', default: 1 })
   conBeacon: boolean;
 
-  @Column({
-    name: 'estado_actual',
-    type: 'nvarchar',
-    length: 50,
-    default: 'RECEPCIONADA',
-  })
-  estadoActual: string;
+  @Column({ name: 'estado_actual_id', type: 'int' })
+  estadoActualId: number;
 
   @Column({ name: 'estado_at', type: 'datetime2' })
   estadoAt: Date;
@@ -171,4 +167,8 @@ export class Solicitud {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'asignada_a', referencedColumnName: 'id' })
   asignado: Usuario;
+
+  @ManyToOne(() => CatEstadoSolicitud)
+  @JoinColumn({ name: 'estado_actual_id', referencedColumnName: 'id' })
+  estadoActual: CatEstadoSolicitud;
 }

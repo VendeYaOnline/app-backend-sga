@@ -4,10 +4,11 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class FindSolicitudDto extends PaginationDto {
-  @ApiPropertyOptional({ description: 'Filtrar por estado actual' })
+  @ApiPropertyOptional({ description: 'Filtrar por ID de estado actual' })
   @IsOptional()
-  @IsString()
-  estado?: string;
+  @Type(() => Number)
+  @IsInt()
+  estadoId?: number;
 
   @ApiPropertyOptional({ description: 'Filtrar por RUC de la causa' })
   @IsOptional()

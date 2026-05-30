@@ -1,16 +1,14 @@
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TransicionEstadoDto {
-  @ApiProperty({ example: 'APROBADA' })
-  @IsString()
+  @ApiProperty({ example: 2, description: 'ID del estado destino' })
+  @IsInt()
   @IsNotEmpty()
-  @MaxLength(50)
-  estadoNuevo: string;
+  estadoNuevoId: number;
 
   @ApiPropertyOptional({ example: 'Cumple con todos los requisitos' })
   @IsOptional()
-  @IsString()
   @MaxLength(500)
   motivo?: string;
 }

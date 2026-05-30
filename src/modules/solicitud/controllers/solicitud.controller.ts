@@ -54,10 +54,10 @@ export class SolicitudController {
     description: 'Registros por página (default: 20, max: 100)',
   })
   @ApiQuery({
-    name: 'estado',
+    name: 'estadoId',
     required: false,
-    type: String,
-    description: 'Filtrar por estado actual de la solicitud',
+    type: Number,
+    description: 'Filtrar por ID del estado actual de la solicitud',
   })
   @ApiQuery({
     name: 'rucCausa',
@@ -210,7 +210,7 @@ export class SolicitudController {
     @Body() dto: TransicionEstadoDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.solicitudService.cambiarEstado(id, dto, user.sub);
+    return this.solicitudService.cambiarEstado(id, dto, user.sub, user.roles);
   }
 
   @Get(':id/historial')
@@ -227,6 +227,25 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async findHistorial(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudService.findHistorial(id);
+  }
+
+  @Get(':id/transiciones-permitidas')
+  @ApiOperation({
+    summary: 'Consultar transiciones permitidas según estado y rol',
+    description:
+      'Retorna las transiciones de estado disponibles para el usuario autenticado según su rol y el estado actual de la solicitud',
+  })
+  @ApiParam({ name: 'id', description: 'ID de la solicitud', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de transiciones permitidas',
+  })
+  @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
+  async getTransicionesPermitidas(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.solicitudService.getTransicionesPermitidas(id, user.roles);
   }
 
   @Get(':id/zonas')
@@ -500,7 +519,7 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async emitirFactibilidad(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { tipoFactibilidad: string; motivoNoFactibleId?: number },
+    @Body() dto: { tipoFactibilidadId: number; motivoNoFactibleId?: number },
     @CurrentUser() user: JwtPayload,
   ) {
     return this.solicitudService.emitirFactibilidad(id, {

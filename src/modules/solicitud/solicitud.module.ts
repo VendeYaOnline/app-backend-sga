@@ -11,7 +11,9 @@ import { SolicitudFactibilidad } from './entities/solicitud-factibilidad.entity'
 import { SolicitudSentencia } from './entities/solicitud-sentencia.entity';
 import { SolicitudEstadoHist } from './entities/solicitud-estado-hist.entity';
 import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
-import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
+import { CatEstadoSolicitud } from '../catalogo/entities/cat-estado-solicitud.entity';
+import { CatEstadoSolicitudTransicion } from '../catalogo/entities/cat-estado-solicitud-transicion.entity';
+import { CatTipoFactibilidad } from '../catalogo/entities/cat-tipo-factibilidad.entity';
 
 @Module({
   imports: [
@@ -25,7 +27,9 @@ import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
       SolicitudSentencia,
       SolicitudEstadoHist,
       AccionUsuario,
-      CatTipoCausa,
+      CatEstadoSolicitud,
+      CatEstadoSolicitudTransicion,
+      CatTipoFactibilidad,
     ]),
   ],
   controllers: [SolicitudController],
