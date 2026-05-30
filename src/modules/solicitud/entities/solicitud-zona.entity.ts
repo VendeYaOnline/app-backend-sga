@@ -12,6 +12,7 @@ import { Solicitud } from './solicitud.entity';
 import { CatTipoZona } from '../../catalogo/entities/cat-tipo-zona.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
+import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 
 @Entity('sga.SOLICITUD_ZONA')
@@ -60,6 +61,9 @@ export class SolicitudZona {
     nullable: true,
   })
   codigoPostal: string | null;
+
+  @Column({ name: 'tipo_lugar_id', type: 'int', nullable: true })
+  tipoLugarId: number | null;
 
   @Column({ name: 'radio_metros', type: 'int' })
   radioMetros: number;
@@ -116,6 +120,10 @@ export class SolicitudZona {
   @ManyToOne(() => CatTipoZona)
   @JoinColumn({ name: 'tipo_zona_id', referencedColumnName: 'id' })
   tipoZona: CatTipoZona;
+
+  @ManyToOne(() => CatTipoLugar)
+  @JoinColumn({ name: 'tipo_lugar_id', referencedColumnName: 'id' })
+  tipoLugar: CatTipoLugar;
 
   @ManyToOne(() => CatRegion)
   @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })

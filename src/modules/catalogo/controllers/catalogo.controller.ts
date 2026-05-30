@@ -256,4 +256,15 @@ export class CatalogoController {
   findTiposCausa() {
     return this.catalogoService.findTiposCausa();
   }
+
+  @Get('tipos-lugar')
+  @ApiOperation({
+    summary: 'Listar tipos de lugar para zonas IFT',
+    description:
+      'Retorna el catálogo de tipos de lugar donde se ubica una zona (CASA, APARTAMENTO, LOCAL_COMERCIAL, etc.)',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de tipos de lugar' })
+  findTiposLugar() {
+    return this.catalogoService.findTiposLugar();
+  }
 }
