@@ -24,6 +24,7 @@ import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entit
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { CatEstadoSolicitudTransicion } from '../../catalogo/entities/cat-estado-solicitud-transicion.entity';
 import { CatTipoFactibilidad } from '../../catalogo/entities/cat-tipo-factibilidad.entity';
+import { Condenado } from '../../persona/entities/condenado.entity';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
@@ -187,12 +188,50 @@ export class SolicitudService {
   }
 
   async create(dto: CreateSolicitudDto, userId: number): Promise<Solicitud> {
+    if (!dto.condenadoId && !dto.condenado) {
+      throw new BadRequestException(
+        'Debe proporcionar condenadoId o datos de condenado nuevo',
+      );
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const manager = queryRunner.manager;
+
+      let condenadoId = dto.condenadoId;
+
+      if (dto.condenado) {
+        if (dto.condenado.rutCondenado) {
+          const existente = await manager.findOne(Condenado, {
+            where: {
+              rutCondenado: dto.condenado.rutCondenado,
+              deletedAt: IsNull(),
+            },
+          });
+          if (existente) {
+            throw new ConflictException(
+              `Ya existe un condenado con RUT ${dto.condenado.rutCondenado}`,
+            );
+          }
+        }
+
+        const nuevoCondenado = manager.create(Condenado, {
+          ...dto.condenado,
+          createdBy: userId,
+        });
+        const savedCondenado = await manager.save(nuevoCondenado);
+        condenadoId = savedCondenado.id;
+        this.logger.log(
+          `Condenado ${savedCondenado.id} creado junto con solicitud`,
+        );
+      }
+
+      if (!condenadoId) {
+        throw new BadRequestException('No se pudo determinar el condenado');
+      }
 
       const estadoInicial = await manager.findOne(CatEstadoSolicitud, {
         where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
@@ -209,7 +248,7 @@ export class SolicitudService {
         ritCausa: dto.ritCausa,
         rolCausa: dto.rolCausa,
         tribunalId: dto.tribunalId,
-        condenadoId: dto.condenadoId,
+        condenadoId: condenadoId,
         crsId: dto.crsId,
         tipoLeyId: dto.tipoLeyId,
         tipoPenaId: dto.tipoPenaId,

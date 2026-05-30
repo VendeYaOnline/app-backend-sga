@@ -14,6 +14,7 @@ import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
 import { CatEstadoSolicitud } from '../catalogo/entities/cat-estado-solicitud.entity';
 import { CatEstadoSolicitudTransicion } from '../catalogo/entities/cat-estado-solicitud-transicion.entity';
 import { CatTipoFactibilidad } from '../catalogo/entities/cat-tipo-factibilidad.entity';
+import { Condenado } from '../persona/entities/condenado.entity';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CatTipoFactibilidad } from '../catalogo/entities/cat-tipo-factibilidad.
       CatEstadoSolicitud,
       CatEstadoSolicitudTransicion,
       CatTipoFactibilidad,
+      Condenado,
     ]),
   ],
   controllers: [SolicitudController],
