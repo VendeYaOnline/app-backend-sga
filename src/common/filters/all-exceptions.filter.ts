@@ -88,11 +88,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
 
       case 547: {
+        const isCheckConstraint = /CHECK constraint/i.test(errMessage);
+        const message = isCheckConstraint
+          ? `Datos inválidos: la combinación de campos no cumple la restricción "${constraintName}"`
+          : 'El registro referenciado no existe o no puede ser modificado porque está en uso';
         return response.status(HttpStatus.BAD_REQUEST).json({
           statusCode: HttpStatus.BAD_REQUEST,
           error: 'Bad Request',
-          message:
-            'El registro referenciado no existe o no puede ser modificado porque está en uso',
+          message,
           errors: [{ constraint: constraintName, table: tableName }],
         });
       }

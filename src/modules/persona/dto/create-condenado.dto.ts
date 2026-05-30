@@ -21,12 +21,14 @@ export class CreateCondenadoDto {
 
   @ApiPropertyOptional()
   @ValidateIf((o) => !o.esExtranjero)
+  @IsNotEmpty({ message: 'El RUT del condenado es obligatorio para personas no extranjeras' })
   @IsString()
   @MaxLength(12)
   rutCondenado?: string;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => o.esExtranjero)
+  @ValidateIf((o) => o.esExtranjero === true)
+  @IsNotEmpty({ message: 'El pasaporte es obligatorio para personas extranjeras' })
   @IsString()
   @MaxLength(50)
   pasaporte?: string;
