@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository, IsNull } from 'typeorm';
+import { DataSource, Repository, IsNull, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Solicitud } from '../entities/solicitud.entity';
@@ -24,6 +24,7 @@ import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entit
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { CatEstadoSolicitudTransicion } from '../../catalogo/entities/cat-estado-solicitud-transicion.entity';
 import { CatTipoFactibilidad } from '../../catalogo/entities/cat-tipo-factibilidad.entity';
+import { CatRol } from '../../auth/entities/cat-rol.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
@@ -372,24 +373,36 @@ export class SolicitudService {
 
       const estadoOrigenId = solicitud.estadoActualId;
 
+      const roles = await manager.find(CatRol, {
+        where: { codigo: In(roleCodes) },
+      });
+      const roleIds = roles.map((r) => r.id);
+
+      if (roleIds.length === 0) {
+        throw new UnprocessableEntityException(
+          'El usuario no tiene roles asignados',
+        );
+      }
+
       const transicion = await manager.findOne(CatEstadoSolicitudTransicion, {
         where: {
           estadoOrigenId,
           estadoDestinoId: dto.estadoNuevoId,
+          rolId: In(roleIds),
           activo: true,
         },
         relations: { estadoDestino: true, rol: true },
       });
 
       if (!transicion) {
+        const destino = await manager.findOne(CatEstadoSolicitud, {
+          where: { id: dto.estadoNuevoId },
+        });
+        const origen = await manager.findOne(CatEstadoSolicitud, {
+          where: { id: estadoOrigenId },
+        });
         throw new UnprocessableEntityException(
-          `No existe transición configurada del estado ${estadoOrigenId} al estado ${dto.estadoNuevoId}`,
-        );
-      }
-
-      if (!roleCodes.includes(transicion.rol.codigo)) {
-        throw new UnprocessableEntityException(
-          `El rol requerido para esta transición es ${transicion.rol.codigo}`,
+          `No existe transición de ${origen?.codigo ?? estadoOrigenId} a ${destino?.codigo ?? dto.estadoNuevoId} para sus roles (${roleCodes.join(', ')})`,
         );
       }
 
@@ -579,24 +592,33 @@ export class SolicitudService {
   async getTransicionesPermitidas(solicitudId: number, roleCodes: string[]) {
     const solicitud = await this.findOne(solicitudId);
 
+    const roles = await this.dataSource.getRepository(CatRol).find({
+      where: { codigo: In(roleCodes) },
+    });
+    const roleIds = roles.map((r) => r.id);
+
+    if (roleIds.length === 0) return { data: [], message: 'Operación exitosa' };
+
     const transiciones = await this.transicionRepo.find({
       where: {
         estadoOrigenId: solicitud.estadoActualId,
+        rolId: In(roleIds),
         activo: true,
       },
       relations: { estadoDestino: true, rol: true },
     });
 
-    return transiciones
-      .filter((t) => roleCodes.includes(t.rol.codigo))
-      .map((t) => ({
+    return {
+      data: transiciones.map((t) => ({
         id: t.id,
         estadoDestinoId: t.estadoDestinoId,
         estadoDestinoCodigo: t.estadoDestino.codigo,
         estadoDestinoDescripcion: t.estadoDestino.descripcionEstado,
         rolCodigo: t.rol.codigo,
         rolNombre: t.rol.nombreRol,
-      }));
+      })),
+      message: 'Operación exitosa',
+    };
   }
 
   async emitirFactibilidad(
