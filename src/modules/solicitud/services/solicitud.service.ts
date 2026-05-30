@@ -260,6 +260,7 @@ export class SolicitudService {
         tipoDiaTerminoId: dto.tipoDiaTerminoId,
         conBeacon: dto.conBeacon ?? true,
         estadoActualId: estadoInicial.id,
+        estadoAt: new Date(),
         observaciones: dto.observaciones,
         origenCreacion: 'FORMULARIO_WEB',
         motivoOrigen: 'ORIGINAL',
