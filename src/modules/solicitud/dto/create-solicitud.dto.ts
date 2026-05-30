@@ -64,6 +64,13 @@ export class CreateZonaDto {
   @IsOptional()
   @IsBoolean()
   esReservada?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)',
+  })
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
 }
 
 export class CreateSolicitudDto {

@@ -24,6 +24,7 @@ import { CatIdentificacion } from './entities/cat-identificacion.entity';
 import { CatParentesco } from './entities/cat-parentesco.entity';
 import { CatSexo } from './entities/cat-sexo.entity';
 import { CatTipoCausa } from './entities/cat-tipo-causa.entity';
+import { CatTipoLugar } from './entities/cat-tipo-lugar.entity';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { CatTipoCausa } from './entities/cat-tipo-causa.entity';
       CatParentesco,
       CatSexo,
       CatTipoCausa,
+      CatTipoLugar,
     ]),
   ],
   controllers: [CatalogoController],
