@@ -597,7 +597,7 @@ export class SolicitudService {
     });
     const roleIds = roles.map((r) => r.id);
 
-    if (roleIds.length === 0) return { data: [], message: 'Operación exitosa' };
+    if (roleIds.length === 0) return [];
 
     const transiciones = await this.transicionRepo.find({
       where: {
@@ -605,20 +605,20 @@ export class SolicitudService {
         rolId: In(roleIds),
         activo: true,
       },
-      relations: { estadoDestino: true, rol: true },
+      relations: { estadoOrigen: true, estadoDestino: true, rol: true },
     });
 
-    return {
-      data: transiciones.map((t) => ({
-        id: t.id,
-        estadoDestinoId: t.estadoDestinoId,
-        estadoDestinoCodigo: t.estadoDestino.codigo,
-        estadoDestinoDescripcion: t.estadoDestino.descripcionEstado,
-        rolCodigo: t.rol.codigo,
-        rolNombre: t.rol.nombreRol,
-      })),
-      message: 'Operación exitosa',
-    };
+    return transiciones.map((t) => ({
+      id: t.id,
+      estadoOrigenId: t.estadoOrigenId,
+      estadoOrigenCodigo: t.estadoOrigen.codigo,
+      estadoOrigenDescripcion: t.estadoOrigen.descripcionEstado,
+      estadoDestinoId: t.estadoDestinoId,
+      estadoDestinoCodigo: t.estadoDestino.codigo,
+      estadoDestinoDescripcion: t.estadoDestino.descripcionEstado,
+      rolCodigo: t.rol.codigo,
+      rolNombre: t.rol.nombreRol,
+    }));
   }
 
   async emitirFactibilidad(
