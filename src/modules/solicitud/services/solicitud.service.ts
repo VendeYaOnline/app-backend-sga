@@ -671,6 +671,7 @@ export class SolicitudService {
       tipoFactibilidadId: dto.tipoFactibilidadId,
       motivoNoFactibleId: dto.motivoNoFactibleId ?? null,
       folioInterno: folio,
+      fechaEmision: new Date(),
       emitidoPor: dto.emitidoPor,
     });
     return this.factibilidadRepo.save(factibilidad);

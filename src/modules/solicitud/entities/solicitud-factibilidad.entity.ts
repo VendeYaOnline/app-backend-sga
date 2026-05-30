@@ -27,7 +27,11 @@ export class SolicitudFactibilidad {
   @Column({ name: 'folio_interno', type: 'bigint' })
   folioInterno: number;
 
-  @Column({ name: 'fecha_emision', type: 'datetime2' })
+  @Column({
+    name: 'fecha_emision',
+    type: 'datetime2',
+    default: () => 'GETUTCDATE()',
+  })
   fechaEmision: Date;
 
   @Column({ name: 'emitido_por', type: 'int', nullable: true })
