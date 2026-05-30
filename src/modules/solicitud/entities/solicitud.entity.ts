@@ -89,7 +89,11 @@ export class Solicitud {
   @Column({ name: 'estado_actual_id', type: 'int' })
   estadoActualId: number;
 
-  @Column({ name: 'estado_at', type: 'datetime2' })
+  @Column({
+    name: 'estado_at',
+    type: 'datetime2',
+    default: () => 'GETUTCDATE()',
+  })
   estadoAt: Date;
 
   @Column({ name: 'asignada_a', type: 'int', nullable: true })
