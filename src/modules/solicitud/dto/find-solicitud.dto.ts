@@ -46,7 +46,7 @@ export class FindSolicitudDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Buscar por RUN del condenado' })
   @IsOptional()
   @IsString()
-  rutCondenado?: string;
+  runCondenado?: string;
 
   @ApiPropertyOptional({ description: 'Filtrar desde fecha (YYYY-MM-DD)' })
   @IsOptional()

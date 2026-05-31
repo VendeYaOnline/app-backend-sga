@@ -26,12 +26,12 @@ export class Condenado {
   tipoIdentificacionId: number;
 
   @Column({
-    name: 'rut_condenado',
+    name: 'run_condenado',
     type: 'nvarchar',
     length: 12,
     nullable: true,
   })
-  rutCondenado: string | null;
+  runCondenado: string | null;
 
   @Column({ name: 'pasaporte', type: 'nvarchar', length: 50, nullable: true })
   pasaporte: string | null;

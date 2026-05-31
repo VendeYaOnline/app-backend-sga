@@ -4,7 +4,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class FindCondenadoDto extends PaginationDto {
-  @ApiPropertyOptional({ description: 'Buscar por RUT, nombre o apellido' })
+  @ApiPropertyOptional({ description: 'Buscar por RUN, nombre o apellido' })
   @IsOptional()
   @IsString()
   search?: string;
@@ -12,7 +12,7 @@ export class FindCondenadoDto extends PaginationDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  rutCondenado?: string;
+  runCondenado?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

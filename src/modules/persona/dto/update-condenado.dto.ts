@@ -22,7 +22,7 @@ export class UpdateCondenadoDto {
   @IsOptional()
   @IsString()
   @MaxLength(12)
-  rutCondenado?: string;
+  runCondenado?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

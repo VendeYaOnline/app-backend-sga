@@ -165,7 +165,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       UQ_CAT_COMUNA_CODIGO: 'código de comuna',
       UQ_CAT_TRIBUNAL_CODIGOS: 'códigos de tribunal',
       UQ_CAT_CRS_CODIGO: 'código de CRS',
-      UQ_CONDENADO: 'RUT/pasaporte',
+      UQ_CONDENADO: 'RUN/pasaporte',
       UQ_SOLICITUD_FACTIBILIDAD_SOLICITUD: 'solicitud (ya tiene factibilidad)',
       UQ_SOLICITUD_FACTIBILIDAD_FOLIO: 'folio interno',
       UQ_SOLICITUD_VICTIMA: 'asociación solicitud-víctima',

@@ -92,9 +92,9 @@ export class SolicitudService {
       qb.andWhere('s.origenCreacion = :origen', {
         origen: where.origenCreacion,
       });
-    if (where.rutCondenado)
-      qb.andWhere('c.rutCondenado LIKE :rut', {
-        rut: `%${where.rutCondenado}%`,
+    if (where.runCondenado)
+      qb.andWhere('c.runCondenado LIKE :rut', {
+        rut: `%${where.runCondenado}%`,
       });
     if (where.fechaDesde)
       qb.andWhere('s.createdAt >= :desde', { desde: where.fechaDesde });
@@ -205,16 +205,16 @@ export class SolicitudService {
       let condenadoId = dto.condenadoId;
 
       if (dto.condenado) {
-        if (dto.condenado.rutCondenado) {
+        if (dto.condenado.runCondenado) {
           const existente = await manager.findOne(Condenado, {
             where: {
-              rutCondenado: dto.condenado.rutCondenado,
+              runCondenado: dto.condenado.runCondenado,
               deletedAt: IsNull(),
             },
           });
           if (existente) {
             throw new ConflictException(
-              `Ya existe un condenado con RUT ${dto.condenado.rutCondenado}`,
+              `Ya existe un condenado con RUN ${dto.condenado.runCondenado}`,
             );
           }
         }

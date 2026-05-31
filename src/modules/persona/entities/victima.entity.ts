@@ -22,8 +22,8 @@ export class Victima {
   @Column({ name: 'tipo_identificacion_id', type: 'int', nullable: true })
   tipoIdentificacionId: number | null;
 
-  @Column({ name: 'rut_victima', type: 'nvarchar', length: 12, nullable: true })
-  rutVictima: string | null;
+  @Column({ name: 'run_victima', type: 'nvarchar', length: 12, nullable: true })
+  runVictima: string | null;
 
   @Column({
     name: 'pasaporte_victima',

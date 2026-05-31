@@ -97,10 +97,10 @@ export class SolicitudController {
     description: 'Filtrar por origen de creación de la solicitud',
   })
   @ApiQuery({
-    name: 'rutCondenado',
+    name: 'runCondenado',
     required: false,
     type: String,
-    description: 'Filtrar por RUT del condenado (búsqueda parcial)',
+    description: 'Filtrar por RUN del condenado (búsqueda parcial)',
   })
   @ApiQuery({
     name: 'fechaDesde',

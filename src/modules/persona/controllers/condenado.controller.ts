@@ -39,7 +39,7 @@ export class CondenadoController {
   @ApiOperation({
     summary: 'Buscar condenados con filtros',
     description:
-      'Retorna lista paginada de condenados con filtros por búsqueda, RUT, pasaporte y CRS',
+      'Retorna lista paginada de condenados con filtros por búsqueda, RUN, pasaporte y CRS',
   })
   @ApiQuery({
     name: 'page',
@@ -57,13 +57,13 @@ export class CondenadoController {
     name: 'search',
     required: false,
     type: String,
-    description: 'Buscar por nombres, apellidos o RUT',
+    description: 'Buscar por nombres, apellidos o RUN',
   })
   @ApiQuery({
-    name: 'rutCondenado',
+    name: 'runCondenado',
     required: false,
     type: String,
-    description: 'Filtrar por RUT del condenado',
+    description: 'Filtrar por RUN del condenado',
   })
   @ApiQuery({
     name: 'pasaporte',
@@ -103,7 +103,7 @@ export class CondenadoController {
       'Crea un registro de condenado con sus datos personales y de identificación',
   })
   @ApiResponse({ status: 201, description: 'Condenado creado exitosamente' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o RUT duplicado' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o RUN duplicado' })
   async create(
     @Body() dto: CreateCondenadoDto,
     @CurrentUser() user: JwtPayload,

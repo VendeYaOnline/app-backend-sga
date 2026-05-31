@@ -35,7 +35,7 @@ export class PersonaService {
       page = 1,
       limit = 20,
       search,
-      rutCondenado,
+      runCondenado,
       pasaporte,
       crsId,
     } = filters;
@@ -51,12 +51,12 @@ export class PersonaService {
 
     if (search) {
       qb.andWhere(
-        '(c.rutCondenado LIKE :s OR c.pasaporte LIKE :s OR c.nombres LIKE :s OR c.apellidoPaterno LIKE :s)',
+        '(c.runCondenado LIKE :s OR c.pasaporte LIKE :s OR c.nombres LIKE :s OR c.apellidoPaterno LIKE :s)',
         { s: `%${search}%` },
       );
     }
-    if (rutCondenado) {
-      qb.andWhere('c.rutCondenado LIKE :rut', { rut: `%${rutCondenado}%` });
+    if (runCondenado) {
+      qb.andWhere('c.runCondenado LIKE :rut', { rut: `%${runCondenado}%` });
     }
     if (pasaporte) {
       qb.andWhere('c.pasaporte LIKE :pass', { pass: `%${pasaporte}%` });
@@ -97,9 +97,9 @@ export class PersonaService {
     return condenado;
   }
 
-  async findCondenadoByRut(rut: string): Promise<Condenado | null> {
+  async findCondenadoByRun(rut: string): Promise<Condenado | null> {
     return this.condenadoRepo.findOne({
-      where: { rutCondenado: rut, deletedAt: IsNull() },
+      where: { runCondenado: rut, deletedAt: IsNull() },
     });
   }
 
@@ -114,11 +114,11 @@ export class PersonaService {
     dto: CreateCondenadoDto,
     userId: number,
   ): Promise<Condenado> {
-    if (dto.rutCondenado) {
-      const existente = await this.findCondenadoByRut(dto.rutCondenado);
+    if (dto.runCondenado) {
+      const existente = await this.findCondenadoByRun(dto.runCondenado);
       if (existente) {
         throw new ConflictException(
-          `Ya existe un condenado con RUT ${dto.rutCondenado}`,
+          `Ya existe un condenado con RUN ${dto.runCondenado}`,
         );
       }
     }
@@ -167,7 +167,7 @@ export class PersonaService {
   }
 
   async findVictimas(filters: any) {
-    const { page = 1, limit = 20, search, rutVictima, datoReservado } = filters;
+    const { page = 1, limit = 20, search, runVictima, datoReservado } = filters;
 
     const qb = this.victimaRepo
       .createQueryBuilder('v')
@@ -177,12 +177,12 @@ export class PersonaService {
 
     if (search) {
       qb.andWhere(
-        '(v.rutVictima LIKE :s OR v.nombres LIKE :s OR v.apellidoPaterno LIKE :s)',
+        '(v.runVictima LIKE :s OR v.nombres LIKE :s OR v.apellidoPaterno LIKE :s)',
         { s: `%${search}%` },
       );
     }
-    if (rutVictima) {
-      qb.andWhere('v.rutVictima LIKE :rut', { rut: `%${rutVictima}%` });
+    if (runVictima) {
+      qb.andWhere('v.runVictima LIKE :rut', { rut: `%${runVictima}%` });
     }
 
     qb.orderBy('v.apellidoPaterno', 'ASC');
@@ -266,7 +266,7 @@ export class PersonaService {
   private maskVictimaData(victima: Victima): Victima {
     return {
       ...victima,
-      rutVictima: '***',
+      runVictima: '***',
       pasaporteVictima: '***',
       nombres: '***',
       apellidoPaterno: '***',

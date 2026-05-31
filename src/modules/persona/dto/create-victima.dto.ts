@@ -23,7 +23,7 @@ export class CreateVictimaDto {
   @IsOptional()
   @IsString()
   @MaxLength(12)
-  rutVictima?: string;
+  runVictima?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

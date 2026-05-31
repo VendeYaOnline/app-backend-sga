@@ -39,7 +39,7 @@ export class VictimaController {
   @ApiOperation({
     summary: 'Buscar víctimas con filtros',
     description:
-      'Retorna lista paginada de víctimas con filtros por búsqueda y RUT',
+      'Retorna lista paginada de víctimas con filtros por búsqueda y RUN',
   })
   @ApiQuery({
     name: 'page',
@@ -57,13 +57,13 @@ export class VictimaController {
     name: 'search',
     required: false,
     type: String,
-    description: 'Buscar por nombres, apellidos o RUT',
+    description: 'Buscar por nombres, apellidos o RUN',
   })
   @ApiQuery({
-    name: 'rutVictima',
+    name: 'runVictima',
     required: false,
     type: String,
-    description: 'Filtrar por RUT de la víctima',
+    description: 'Filtrar por RUN de la víctima',
   })
   @ApiResponse({ status: 200, description: 'Lista paginada de víctimas' })
   async findAll(@Query() filters: PaginationDto) {
@@ -91,7 +91,7 @@ export class VictimaController {
       'Crea un registro de víctima con sus datos personales y de identificación',
   })
   @ApiResponse({ status: 201, description: 'Víctima creada exitosamente' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o RUT duplicado' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o RUN duplicado' })
   async create(@Body() dto: CreateVictimaDto, @CurrentUser() user: JwtPayload) {
     return this.personaService.createVictima(dto, user.sub);
   }
