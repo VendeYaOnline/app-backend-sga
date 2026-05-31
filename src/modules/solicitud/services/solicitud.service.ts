@@ -114,7 +114,7 @@ export class SolicitudService {
         .innerJoinAndSelect('seh.estadoNuevo', 'estado')
         .where('seh.solicitudId IN (:...ids)', { ids: solicitudIds })
         .andWhere(
-          'seh.fechaCambio = (SELECT MAX(seh2.fechaCambio) FROM sga.SOLICITUD_ESTADO_HIST seh2 WHERE seh2.solicitud_id = seh.solicitud_id)',
+          'seh.fechaCambio = (SELECT MAX(seh2.fecha_cambio) FROM sga.SOLICITUD_ESTADO_HIST seh2 WHERE seh2.solicitud_id = seh.solicitud_id)',
         )
         .getMany();
 
