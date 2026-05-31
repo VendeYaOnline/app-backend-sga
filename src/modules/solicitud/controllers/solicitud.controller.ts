@@ -25,6 +25,7 @@ import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
 import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
 import { CreateFactibilidadDto } from '../dto/create-factibilidad.dto';
+import { CreateSolicitudVictimaDto } from '../dto/create-solicitud-victima.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
@@ -434,7 +435,7 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async addVictima(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { victimaId: number; radioProhibicionMetros?: number },
+    @Body() dto: CreateSolicitudVictimaDto,
   ) {
     return this.solicitudService.addVictima(
       id,

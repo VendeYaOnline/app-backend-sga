@@ -11,6 +11,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { CreateCondenadoDto } from '../../persona/dto/create-condenado.dto';
+import { CreateSolicitudVictimaDto } from './create-solicitud-victima.dto';
 
 export class CreateZonaDto {
   @ApiProperty()
@@ -188,8 +189,10 @@ export class CreateSolicitudDto {
   @IsInt({ each: true })
   delitoIds?: number[];
 
-  @ApiPropertyOptional({ type: [Object] })
+  @ApiPropertyOptional({ type: [CreateSolicitudVictimaDto] })
   @IsOptional()
   @IsArray()
-  victimas?: { victimaId: number; radioProhibicionMetros?: number }[];
+  @ValidateNested({ each: true })
+  @Type(() => CreateSolicitudVictimaDto)
+  victimas?: CreateSolicitudVictimaDto[];
 }
