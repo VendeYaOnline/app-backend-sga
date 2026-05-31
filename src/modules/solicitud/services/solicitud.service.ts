@@ -71,6 +71,7 @@ export class SolicitudService {
       .leftJoinAndSelect('s.tribunal', 't')
       .leftJoinAndSelect('s.crs', 'crs')
       .leftJoinAndSelect('s.asignado', 'a')
+      .leftJoinAndSelect('s.estadoActual', 'ea')
       .where('s.deletedAt IS NULL');
 
     if (where.estadoId)
@@ -106,40 +107,31 @@ export class SolicitudService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    if (data.length > 0) {
-      const solicitudIds = data.map((s) => s.id);
-
-      const latestHist = await this.estadoHistRepo
-        .createQueryBuilder('seh')
-        .innerJoinAndSelect('seh.estadoNuevo', 'estado')
-        .where('seh.solicitudId IN (:...ids)', { ids: solicitudIds })
-        .andWhere(
-          'seh.fechaCambio = (SELECT MAX(seh2.fecha_cambio) FROM sga.SOLICITUD_ESTADO_HIST seh2 WHERE seh2.solicitud_id = seh.solicitud_id)',
-        )
-        .getMany();
-
-      const estadoMap = new Map(
-        latestHist.map((h) => [h.solicitudId, h.estadoNuevo]),
-      );
-
-      const enrichedData = data.map((s) => ({
-        ...s,
-        estadoActual: estadoMap.get(s.id) ?? null,
-      }));
-
-      return {
-        data: enrichedData,
-        meta: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
+    if (data.length === 0) {
+      return { data, meta: { total, page, limit, totalPages: 0 } };
     }
 
+    const solicitudIds = data.map((s) => s.id);
+
+    const latestHist = await this.estadoHistRepo
+      .createQueryBuilder('seh')
+      .innerJoinAndSelect('seh.estadoNuevo', 'estado')
+      .leftJoinAndSelect('seh.usuario', 'u')
+      .where('seh.solicitudId IN (:...ids)', { ids: solicitudIds })
+      .andWhere(
+        'seh.id = (SELECT TOP 1 seh2.id FROM sga.SOLICITUD_ESTADO_HIST seh2 WHERE seh2.solicitud_id = seh.solicitud_id ORDER BY seh2.fecha_cambio DESC)',
+      )
+      .getMany();
+
+    const histMap = new Map(latestHist.map((h) => [h.solicitudId, h]));
+
+    const enrichedData = data.map((s) => ({
+      ...s,
+      ultimoHistorialEstado: histMap.get(s.id) ?? null,
+    }));
+
     return {
-      data,
+      data: enrichedData,
       meta: {
         total,
         page,
