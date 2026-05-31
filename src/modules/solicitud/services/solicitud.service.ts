@@ -25,6 +25,7 @@ import { CatEstadoSolicitudTransicion } from '../../catalogo/entities/cat-estado
 import { CatTipoFactibilidad } from '../../catalogo/entities/cat-tipo-factibilidad.entity';
 import { CatRol } from '../../auth/entities/cat-rol.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
+import { Victima } from '../../persona/entities/victima.entity';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
@@ -279,14 +280,43 @@ export class SolicitudService {
       }
 
       if (dto.victimas?.length) {
-        const vinculos = dto.victimas.map((v) =>
-          manager.create(SolicitudVictima, {
+        for (const v of dto.victimas) {
+          let victimaId = v.victimaId;
+
+          if (!victimaId) {
+            if (!v.nombres || !v.apellidoPaterno) {
+              throw new BadRequestException(
+                'Cada víctima debe tener victimaId o al menos nombres y apellidoPaterno para crearla',
+                );
+            }
+            const nuevaVictima = manager.create(Victima, {
+              esExtranjero: v.esExtranjero ?? false,
+              tipoIdentificacionId: v.tipoIdentificacionId,
+              runVictima: v.runVictima,
+              pasaporteVictima: v.pasaporteVictima,
+              nombres: v.nombres,
+              apellidoPaterno: v.apellidoPaterno,
+              apellidoMaterno: v.apellidoMaterno,
+              sexoId: v.sexoId,
+              emailVictima: v.emailVictima,
+              datoReservado: v.datoReservado ?? false,
+              consentimiento: v.consentimiento,
+              createdBy: userId,
+            });
+            const savedVictima = await manager.save(nuevaVictima);
+            victimaId = savedVictima.id;
+            this.logger.log(
+              `Víctima ${savedVictima.id} creada junto con solicitud`,
+            );
+          }
+
+          const vinculo = manager.create(SolicitudVictima, {
             solicitudId: saved.id,
-            victimaId: v.victimaId,
+            victimaId,
             radioProhibicionMetros: v.radioProhibicionMetros,
-          }),
-        );
-        await manager.save(vinculos);
+          });
+          await manager.save(vinculo);
+        }
       }
 
       const estadoHist = manager.create(SolicitudEstadoHist, {
