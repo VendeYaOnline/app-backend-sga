@@ -25,7 +25,7 @@ export class UpdateUsuarioDto {
   @IsOptional()
   @IsString()
   @MaxLength(12)
-  rut?: string;
+  run?: string;
 
   @ApiPropertyOptional({ example: 'Juan' })
   @IsOptional()

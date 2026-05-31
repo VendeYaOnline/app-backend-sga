@@ -42,5 +42,5 @@ export class SetupDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(12)
-  rut: string;
+  run: string;
 }

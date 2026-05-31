@@ -33,12 +33,12 @@ export class SolicitudSolicitante {
   apellidoMaterno: string | null;
 
   @Column({
-    name: 'rut_solicitante',
+    name: 'run_solicitante',
     type: 'nvarchar',
     length: 20,
     nullable: true,
   })
-  rutSolicitante: string | null;
+  runSolicitante: string | null;
 
   @Column({
     name: 'email_solicitante',

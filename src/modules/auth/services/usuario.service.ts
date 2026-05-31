@@ -42,7 +42,7 @@ export class UsuarioService {
         'u.id',
         'u.username',
         'u.email',
-        'u.rut',
+        'u.run',
         'u.nombres',
         'u.apellidoPaterno',
         'u.apellidoMaterno',
@@ -71,7 +71,7 @@ export class UsuarioService {
 
     if (search) {
       qb.andWhere(
-        '(u.username LIKE :s OR u.email LIKE :s OR u.nombres LIKE :s OR u.apellidoPaterno LIKE :s OR u.rut LIKE :s)',
+        '(u.username LIKE :s OR u.email LIKE :s OR u.nombres LIKE :s OR u.apellidoPaterno LIKE :s OR u.run LIKE :s)',
         { s: `%${search}%` },
       );
     }
@@ -121,7 +121,7 @@ export class UsuarioService {
         id: true,
         username: true,
         email: true,
-        rut: true,
+        run: true,
         nombres: true,
         apellidoPaterno: true,
         apellidoMaterno: true,
@@ -156,9 +156,9 @@ export class UsuarioService {
     });
   }
 
-  async findByRut(rut: string): Promise<Usuario | null> {
+  async findByRun(run: string): Promise<Usuario | null> {
     return this.usuarioRepo.findOne({
-      where: { rut, deletedAt: IsNull() },
+      where: { run, deletedAt: IsNull() },
     });
   }
 
@@ -193,9 +193,9 @@ export class UsuarioService {
       throw new BadRequestException(`El email "${dto.email}" ya existe`);
     }
 
-    const existingRut = await this.findByRut(dto.rut);
-    if (existingRut) {
-      throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
+    const existingRun = await this.findByRun(dto.run);
+    if (existingRun) {
+      throw new ConflictException(`El RUN "${dto.run}" ya está registrado`);
     }
 
     const usuario = this.usuarioRepo.create({
@@ -227,10 +227,10 @@ export class UsuarioService {
         throw new BadRequestException(`El email "${dto.email}" ya existe`);
     }
 
-    if (dto.rut && dto.rut !== usuario.rut) {
-      const existing = await this.findByRut(dto.rut);
+    if (dto.run && dto.run !== usuario.run) {
+      const existing = await this.findByRun(dto.run);
       if (existing)
-        throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
+        throw new ConflictException(`El RUN "${dto.run}" ya está registrado`);
     }
 
     Object.assign(usuario, dto, { updatedBy: userId });

@@ -14,6 +14,7 @@ import { CatTipoLey } from '../../catalogo/entities/cat-tipo-ley.entity';
 import { CatPenaSustitutiva } from '../../catalogo/entities/cat-pena-sustitutiva.entity';
 import { CatMedidaControl } from '../../catalogo/entities/cat-medida-control.entity';
 import { CatTipoDia } from '../../catalogo/entities/cat-tipo-dia.entity';
+import { CatTipoHorario } from '../../catalogo/entities/cat-tipo-horario.entity';
 import { CatTipoCausa } from '../../catalogo/entities/cat-tipo-causa.entity';
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
@@ -159,6 +160,10 @@ export class Solicitud {
   @ManyToOne(() => CatMedidaControl)
   @JoinColumn({ name: 'medida_control_id', referencedColumnName: 'id' })
   medidaControl: CatMedidaControl;
+
+  @ManyToOne(() => CatTipoHorario)
+  @JoinColumn({ name: 'tipo_horario_id', referencedColumnName: 'id' })
+  tipoHorario: CatTipoHorario;
 
   @ManyToOne(() => CatTipoDia)
   @JoinColumn({ name: 'tipo_dia_inicio_id', referencedColumnName: 'id' })

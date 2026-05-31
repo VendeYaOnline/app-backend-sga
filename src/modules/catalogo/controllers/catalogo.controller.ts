@@ -267,4 +267,15 @@ export class CatalogoController {
   findTiposLugar() {
     return this.catalogoService.findTiposLugar();
   }
+
+  @Get('tipos-horario')
+  @ApiOperation({
+    summary: 'Listar tipos de horario de cumplimiento',
+    description:
+      'Retorna el catálogo de tipos de horario para monitoreo (DIURNO, NOCTURNO, FIN_SEMANA, TODOS)',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de tipos de horario' })
+  findTiposHorario() {
+    return this.catalogoService.findTiposHorario();
+  }
 }

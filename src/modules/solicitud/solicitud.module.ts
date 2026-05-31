@@ -8,7 +8,6 @@ import { SolicitudVictima } from './entities/solicitud-victima.entity';
 import { SolicitudDelito } from './entities/solicitud-delito.entity';
 import { SolicitudZona } from './entities/solicitud-zona.entity';
 import { SolicitudFactibilidad } from './entities/solicitud-factibilidad.entity';
-import { SolicitudSentencia } from './entities/solicitud-sentencia.entity';
 import { SolicitudEstadoHist } from './entities/solicitud-estado-hist.entity';
 import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
 import { CatEstadoSolicitud } from '../catalogo/entities/cat-estado-solicitud.entity';
@@ -25,7 +24,6 @@ import { Condenado } from '../persona/entities/condenado.entity';
       SolicitudDelito,
       SolicitudZona,
       SolicitudFactibilidad,
-      SolicitudSentencia,
       SolicitudEstadoHist,
       AccionUsuario,
       CatEstadoSolicitud,

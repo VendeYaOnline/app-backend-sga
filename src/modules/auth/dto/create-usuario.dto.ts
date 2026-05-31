@@ -26,7 +26,7 @@ export class CreateUsuarioDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(12)
-  rut: string;
+  run: string;
 
   @ApiProperty({ example: 'Juan' })
   @IsString()

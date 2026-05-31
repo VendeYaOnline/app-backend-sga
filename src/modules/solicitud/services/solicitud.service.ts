@@ -18,7 +18,6 @@ import { SolicitudVictima } from '../entities/solicitud-victima.entity';
 import { SolicitudDelito } from '../entities/solicitud-delito.entity';
 import { SolicitudZona } from '../entities/solicitud-zona.entity';
 import { SolicitudFactibilidad } from '../entities/solicitud-factibilidad.entity';
-import { SolicitudSentencia } from '../entities/solicitud-sentencia.entity';
 import { SolicitudEstadoHist } from '../entities/solicitud-estado-hist.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
@@ -51,8 +50,6 @@ export class SolicitudService {
     private readonly solicitudZonaRepo: Repository<SolicitudZona>,
     @InjectRepository(SolicitudFactibilidad)
     private readonly factibilidadRepo: Repository<SolicitudFactibilidad>,
-    @InjectRepository(SolicitudSentencia)
-    private readonly sentenciaRepo: Repository<SolicitudSentencia>,
     @InjectRepository(SolicitudEstadoHist)
     private readonly estadoHistRepo: Repository<SolicitudEstadoHist>,
     @InjectRepository(CatEstadoSolicitud)
@@ -129,6 +126,7 @@ export class SolicitudService {
         tipoCausa: true,
         tipoLey: true,
         tipoPena: true,
+        tipoHorario: true,
         medidaControl: true,
         tipoDiaInicio: true,
         tipoDiaTermino: true,
@@ -178,13 +176,6 @@ export class SolicitudService {
     return this.factibilidadRepo.findOne({
       where: { solicitudId },
       relations: { tipoFactibilidad: true, motivoNoFactible: true, emitidoPorUsuario: true },
-    });
-  }
-
-  async findSentencia(solicitudId: number) {
-    return this.sentenciaRepo.findOne({
-      where: { solicitudId },
-      relations: { tipoPena: true, motivoNoCumple: true },
     });
   }
 
@@ -675,17 +666,5 @@ export class SolicitudService {
       emitidoPor: dto.emitidoPor,
     });
     return this.factibilidadRepo.save(factibilidad);
-  }
-
-  async upsertSentencia(solicitudId: number, dto: any) {
-    const existente = await this.sentenciaRepo.findOne({
-      where: { solicitudId },
-    });
-    if (existente) {
-      Object.assign(existente, dto);
-      return this.sentenciaRepo.save(existente);
-    }
-    const nueva = this.sentenciaRepo.create({ solicitudId, ...dto });
-    return this.sentenciaRepo.save(nueva);
   }
 }

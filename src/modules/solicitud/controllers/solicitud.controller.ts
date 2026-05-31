@@ -540,36 +540,4 @@ export class SolicitudController {
   async findFactibilidad(@Param('id', ParseIntPipe) id: number) {
     return this.solicitudService.findFactibilidad(id);
   }
-
-  @Get(':id/sentencia')
-  @ApiOperation({
-    summary: 'Ver datos de sentencia asociada',
-    description: 'Retorna la sentencia judicial vinculada a la solicitud',
-  })
-  @ApiParam({ name: 'id', description: 'ID de la solicitud', type: Number })
-  @ApiResponse({ status: 200, description: 'Datos de la sentencia' })
-  @ApiResponse({
-    status: 404,
-    description: 'Solicitud o sentencia no encontrada',
-  })
-  async findSentencia(@Param('id', ParseIntPipe) id: number) {
-    return this.solicitudService.findSentencia(id);
-  }
-
-  @Put(':id/sentencia')
-  @ApiOperation({
-    summary: 'Crear/actualizar sentencia de la solicitud',
-    description:
-      'Crea o actualiza los datos de la sentencia judicial asociada a la solicitud',
-  })
-  @ApiParam({ name: 'id', description: 'ID de la solicitud', type: Number })
-  @ApiResponse({ status: 200, description: 'Sentencia guardada exitosamente' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos' })
-  @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
-  async upsertSentencia(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: any,
-  ) {
-    return this.solicitudService.upsertSentencia(id, dto);
-  }
 }

@@ -25,6 +25,7 @@ import { CatParentesco } from './entities/cat-parentesco.entity';
 import { CatSexo } from './entities/cat-sexo.entity';
 import { CatTipoCausa } from './entities/cat-tipo-causa.entity';
 import { CatTipoLugar } from './entities/cat-tipo-lugar.entity';
+import { CatTipoHorario } from './entities/cat-tipo-horario.entity';
 import { CatEstadoSolicitud } from './entities/cat-estado-solicitud.entity';
 import { CatEstadoSolicitudTransicion } from './entities/cat-estado-solicitud-transicion.entity';
 import { CatTipoFactibilidad } from './entities/cat-tipo-factibilidad.entity';
@@ -55,6 +56,7 @@ import { CatTipoFactibilidad } from './entities/cat-tipo-factibilidad.entity';
       CatSexo,
       CatTipoCausa,
       CatTipoLugar,
+      CatTipoHorario,
       CatEstadoSolicitud,
       CatEstadoSolicitudTransicion,
       CatTipoFactibilidad,

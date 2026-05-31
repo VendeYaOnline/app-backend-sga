@@ -159,7 +159,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const mapping: Record<string, string> = {
       UQ_USUARIO_USERNAME: 'username',
       UQ_USUARIO_EMAIL: 'email',
-      UQ_USUARIO_RUT: 'RUT',
+      UQ_USUARIO_RUN: 'RUN',
       PK_USUARIO: 'ID',
       UQ_CAT_REGION_CODIGO: 'código de región',
       UQ_CAT_COMUNA_CODIGO: 'código de comuna',

@@ -23,8 +23,8 @@ export class Usuario {
   @Column({ name: 'email', type: 'nvarchar', length: 255 })
   email: string;
 
-  @Column({ name: 'rut', type: 'nvarchar', length: 12 })
-  rut: string;
+  @Column({ name: 'run', type: 'nvarchar', length: 12 })
+  run: string;
 
   @Column({ name: 'nombres', type: 'nvarchar', length: 100 })
   nombres: string;

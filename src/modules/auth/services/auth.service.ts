@@ -128,7 +128,7 @@ export class AuthService {
       id: usuario.id,
       username: usuario.username,
       email: usuario.email,
-      rut: usuario.rut,
+      run: usuario.run,
       nombres: usuario.nombres,
       apellidoPaterno: usuario.apellidoPaterno,
       apellidoMaterno: usuario.apellidoMaterno,
@@ -326,11 +326,11 @@ export class AuthService {
         );
       }
 
-      const existenteRut = await manager.findOne(Usuario, {
-        where: { rut: dto.rut },
+      const existenteRun = await manager.findOne(Usuario, {
+        where: { run: dto.run },
       });
-      if (existenteRut) {
-        throw new ConflictException(`El RUT "${dto.rut}" ya está registrado`);
+      if (existenteRun) {
+        throw new ConflictException(`El RUN "${dto.run}" ya está registrado`);
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -339,7 +339,7 @@ export class AuthService {
       const adminUser = manager.create(Usuario, {
         username: dto.username,
         email: dto.email,
-        rut: dto.rut,
+        run: dto.run,
         nombres: dto.nombres,
         apellidoPaterno: dto.apellidoPaterno,
         passHash,

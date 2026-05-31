@@ -60,6 +60,7 @@ import { CatParentesco } from '../src/modules/catalogo/entities/cat-parentesco.e
 import { CatSexo } from '../src/modules/catalogo/entities/cat-sexo.entity';
 import { CatTipoCausa } from '../src/modules/catalogo/entities/cat-tipo-causa.entity';
 import { CatTipoLugar } from '../src/modules/catalogo/entities/cat-tipo-lugar.entity';
+import { CatTipoHorario } from '../src/modules/catalogo/entities/cat-tipo-horario.entity';
 import { CatEstadoSolicitud } from '../src/modules/catalogo/entities/cat-estado-solicitud.entity';
 import { CatEstadoSolicitudTransicion } from '../src/modules/catalogo/entities/cat-estado-solicitud-transicion.entity';
 import { CatTipoFactibilidad } from '../src/modules/catalogo/entities/cat-tipo-factibilidad.entity';
@@ -71,7 +72,6 @@ import { SolicitudEstadoHist } from '../src/modules/solicitud/entities/solicitud
 import { SolicitudZona } from '../src/modules/solicitud/entities/solicitud-zona.entity';
 import { SolicitudVictima } from '../src/modules/solicitud/entities/solicitud-victima.entity';
 import { SolicitudSolicitante } from '../src/modules/solicitud/entities/solicitud-solicitante.entity';
-import { SolicitudSentencia } from '../src/modules/solicitud/entities/solicitud-sentencia.entity';
 
 import { Condenado } from '../src/modules/persona/entities/condenado.entity';
 import { Victima } from '../src/modules/persona/entities/victima.entity';
@@ -139,6 +139,7 @@ const entities = [
   CatEstadoSolicitud,
   CatEstadoSolicitudTransicion,
   CatTipoFactibilidad,
+  CatTipoHorario,
 
   Solicitud,
   SolicitudDelito,
@@ -147,7 +148,6 @@ const entities = [
   SolicitudZona,
   SolicitudVictima,
   SolicitudSolicitante,
-  SolicitudSentencia,
 
   Condenado,
   Victima,
