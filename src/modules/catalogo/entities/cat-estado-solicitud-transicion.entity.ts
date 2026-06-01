@@ -4,11 +4,13 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { CatEstadoSolicitud } from './cat-estado-solicitud.entity';
 import { CatRol } from '../../auth/entities/cat-rol.entity';
 
 @Entity('sga.CAT_ESTADO_SOLICITUD_TRANSICION')
+@Unique(['estadoOrigenId', 'estadoDestinoId', 'rolId'])
 export class CatEstadoSolicitudTransicion {
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number;

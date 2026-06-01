@@ -18,7 +18,10 @@ export class UpdateCambioDomicilioDto {
   @IsIn(['FACTIBLE', 'NO_FACTIBLE', 'NO_RECOMENDABLE'])
   factibilidadCd?: string;
 
-  @ApiPropertyOptional({ description: 'ID del motivo de no factibilidad (FK a CAT_MOTIVO_NO_FACTIBLE)' })
+  @ApiPropertyOptional({
+    description:
+      'ID del motivo de no factibilidad (FK a CAT_MOTIVO_NO_FACTIBLE)',
+  })
   @IsOptional()
   @IsInt()
   motivoNoFactibleId?: number;
@@ -28,7 +31,9 @@ export class UpdateCambioDomicilioDto {
   @IsBoolean()
   revalidar?: boolean;
 
-  @ApiPropertyOptional({ description: 'Indica si el cambio fue visto/revisado' })
+  @ApiPropertyOptional({
+    description: 'Indica si el cambio fue visto/revisado',
+  })
   @IsOptional()
   @IsBoolean()
   visto?: boolean;

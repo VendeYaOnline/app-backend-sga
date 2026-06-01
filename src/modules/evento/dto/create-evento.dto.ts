@@ -15,6 +15,13 @@ export class CreateEventoDto {
   @IsInt()
   asignadoA?: number;
 
+  @ApiPropertyOptional({
+    description: 'FK al evento padre (ej: decreto que origina una instalación)',
+  })
+  @IsOptional()
+  @IsInt()
+  eventoPadreId?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()

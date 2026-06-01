@@ -10,12 +10,16 @@ import {
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateProcesoDto {
-  @ApiPropertyOptional({ description: 'ID del técnico asignado (FK a USUARIO)' })
+  @ApiPropertyOptional({
+    description: 'ID del técnico asignado (FK a USUARIO)',
+  })
   @IsOptional()
   @IsInt()
   tecnicoId?: number;
 
-  @ApiPropertyOptional({ description: 'ID del CRS donde se ejecuta el proceso' })
+  @ApiPropertyOptional({
+    description: 'ID del CRS donde se ejecuta el proceso',
+  })
   @IsOptional()
   @IsInt()
   crsId?: number;
@@ -30,13 +34,18 @@ export class UpdateProcesoDto {
   @IsInt()
   comunaId?: number;
 
-  @ApiPropertyOptional({ description: 'Dirección donde se ejecuta el proceso', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Dirección donde se ejecuta el proceso',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   direccionProceso?: string;
 
-  @ApiPropertyOptional({ description: 'Fecha y hora programada para el proceso (ISO 8601)' })
+  @ApiPropertyOptional({
+    description: 'Fecha y hora programada para el proceso (ISO 8601)',
+  })
   @IsOptional()
   @IsDateString()
   fechaProgramada?: string;
@@ -50,12 +59,17 @@ export class UpdateProcesoDto {
   @IsIn(['CONDENADO', 'VICTIMA'])
   paraQuien?: string;
 
-  @ApiPropertyOptional({ description: 'ID del proceso origen (para reintentos)' })
+  @ApiPropertyOptional({
+    description: 'ID del proceso origen (para reintentos)',
+  })
   @IsOptional()
   @IsInt()
   procesoOrigenId?: number;
 
-  @ApiPropertyOptional({ description: 'Número de intento (1 para el primero)', minimum: 1 })
+  @ApiPropertyOptional({
+    description: 'Número de intento (1 para el primero)',
+    minimum: 1,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

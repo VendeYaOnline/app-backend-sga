@@ -14,6 +14,16 @@ export class UpdateAgendamientoDto {
   @IsDateString()
   fechaAgendada?: string;
 
+  @ApiPropertyOptional({ description: 'Hora inicio del rango (HH:mm:ss)' })
+  @IsOptional()
+  @IsString()
+  horaInicioRango?: string;
+
+  @ApiPropertyOptional({ description: 'Hora fin del rango (HH:mm:ss)' })
+  @IsOptional()
+  @IsString()
+  horaFinRango?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

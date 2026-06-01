@@ -73,6 +73,7 @@ export class EventoService {
       .leftJoinAndSelect('e.tipoEvento', 'te')
       .leftJoinAndSelect('e.solicitud', 's')
       .leftJoinAndSelect('e.asignado', 'a')
+      .leftJoinAndSelect('e.eventoPadre', 'ep')
       .where('e.deletedAt IS NULL');
 
     if (solicitudId) qb.andWhere('e.solicitudId = :sid', { sid: solicitudId });
@@ -101,7 +102,12 @@ export class EventoService {
   async findOne(id: number) {
     const evento = await this.eventoRepo.findOne({
       where: { id, deletedAt: IsNull() },
-      relations: { tipoEvento: true, solicitud: true, asignado: true },
+      relations: {
+        tipoEvento: true,
+        solicitud: true,
+        asignado: true,
+        eventoPadre: true,
+      },
     });
     if (!evento)
       throw new NotFoundException(`Evento con ID ${id} no encontrado`);
@@ -158,6 +164,7 @@ export class EventoService {
         origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
         fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
         asignadoA: dto.asignadoA,
+        eventoPadreId: dto.eventoPadreId ?? null,
         observaciones: dto.observaciones,
         createdBy: userId,
       });
@@ -208,14 +215,14 @@ export class EventoService {
       const manager = queryRunner.manager;
       const saved: Evento[] = [];
 
-      const condDtos = dtos.filter(
-        (d) => d.proceso?.paraQuien === 'CONDENADO',
-      );
+      const condDtos = dtos.filter((d) => d.proceso?.paraQuien === 'CONDENADO');
       const victimaDtos = dtos.filter(
         (d) => d.proceso?.paraQuien === 'VICTIMA',
       );
       const otros = dtos.filter(
-        (d) => d.proceso?.paraQuien !== 'CONDENADO' && d.proceso?.paraQuien !== 'VICTIMA',
+        (d) =>
+          d.proceso?.paraQuien !== 'CONDENADO' &&
+          d.proceso?.paraQuien !== 'VICTIMA',
       );
 
       let condEventoId: number | null = null;
@@ -245,7 +252,12 @@ export class EventoService {
       const ids = saved.map((e) => e.id);
       return this.eventoRepo.find({
         where: { id: In(ids), deletedAt: IsNull() },
-        relations: { tipoEvento: true, solicitud: true, asignado: true },
+        relations: {
+          tipoEvento: true,
+          solicitud: true,
+          asignado: true,
+          eventoPadre: true,
+        },
       });
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -283,11 +295,9 @@ export class EventoService {
       'INCOMPETENCIA',
     ].includes(codigo);
 
-    const esProceso = [
-      'INSTALACION',
-      'DESINSTALACION',
-      'SOPORTE',
-    ].includes(codigo);
+    const esProceso = ['INSTALACION', 'DESINSTALACION', 'SOPORTE'].includes(
+      codigo,
+    );
 
     if (dto.resolucion && !esResolucion) {
       throw new BadRequestException(
@@ -308,6 +318,7 @@ export class EventoService {
       origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
       fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
       asignadoA: dto.asignadoA,
+      eventoPadreId: dto.eventoPadreId ?? null,
       observaciones: dto.observaciones,
       createdBy: userId,
     });
@@ -342,6 +353,8 @@ export class EventoService {
         const agendamiento = manager.create(Agendamiento, {
           eventoId: saved.id,
           fechaAgendada: new Date(agData.fechaAgendada),
+          horaInicioRango: agData.horaInicioRango ?? null,
+          horaFinRango: agData.horaFinRango ?? null,
           asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
           crsId: agData.crsId ?? dto.proceso.crsId ?? null,
           direccionAgenda:

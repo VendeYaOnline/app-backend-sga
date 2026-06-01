@@ -24,6 +24,12 @@ export class Agendamiento {
   @Column({ name: 'fecha_agendada', type: 'datetime2' })
   fechaAgendada: Date;
 
+  @Column({ name: 'hora_inicio_rango', type: 'time', nullable: true })
+  horaInicioRango: string | null;
+
+  @Column({ name: 'hora_fin_rango', type: 'time', nullable: true })
+  horaFinRango: string | null;
+
   @Column({ name: 'asignado_a', type: 'int', nullable: true })
   asignadoA: number | null;
 

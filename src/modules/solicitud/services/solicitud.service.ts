@@ -201,7 +201,11 @@ export class SolicitudService {
   async findFactibilidad(solicitudId: number) {
     return this.factibilidadRepo.findOne({
       where: { solicitudId },
-      relations: { tipoFactibilidad: true, motivoNoFactible: true, emitidoPorUsuario: true },
+      relations: {
+        tipoFactibilidad: true,
+        motivoNoFactible: true,
+        emitidoPorUsuario: true,
+      },
     });
   }
 
@@ -312,7 +316,7 @@ export class SolicitudService {
             if (!v.nombres || !v.apellidoPaterno) {
               throw new BadRequestException(
                 'Cada víctima debe tener victimaId o al menos nombres y apellidoPaterno para crearla',
-                );
+              );
             }
             const nuevaVictima = manager.create(Victima, {
               esExtranjero: v.esExtranjero ?? false,
@@ -386,10 +390,7 @@ export class SolicitudService {
       where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
     });
 
-    if (
-      !estadoInicial ||
-      solicitud.estadoActualId !== estadoInicial.id
-    ) {
+    if (!estadoInicial || solicitud.estadoActualId !== estadoInicial.id) {
       throw new UnprocessableEntityException(
         `Solo se puede editar una solicitud en estado ${ESTADO_INICIAL_CODIGO}`,
       );

@@ -15,7 +15,9 @@ export class UpdateResolucionDto {
   @IsInt()
   tribunalId?: number;
 
-  @ApiPropertyOptional({ description: 'ID del tipo de causa (FK a CAT_TIPO_CAUSA)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de causa (FK a CAT_TIPO_CAUSA)',
+  })
   @IsOptional()
   @IsInt()
   tipoCausaId?: number;
@@ -38,7 +40,9 @@ export class UpdateResolucionDto {
   @MaxLength(50)
   crrIdPjud?: string;
 
-  @ApiPropertyOptional({ description: 'ID del tipo de ley (FK a CAT_TIPO_LEY)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de ley (FK a CAT_TIPO_LEY)',
+  })
   @IsOptional()
   @IsInt()
   tipoLeyId?: number;
@@ -54,17 +58,23 @@ export class UpdateResolucionDto {
   @Min(1)
   numPena?: number;
 
-  @ApiPropertyOptional({ description: 'ID del tipo de pena sustitutiva (FK a CAT_PENA_SUSTITUTIVA)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de pena sustitutiva (FK a CAT_PENA_SUSTITUTIVA)',
+  })
   @IsOptional()
   @IsInt()
   tipoPenaId?: number;
 
-  @ApiPropertyOptional({ description: 'Fecha de dicto de sentencia (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Fecha de dicto de sentencia (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   fechaDicto?: string;
 
-  @ApiPropertyOptional({ description: 'Fecha de recepción en CRS (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Fecha de recepción en CRS (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   fechaRecepcionCrs?: string;
@@ -87,7 +97,9 @@ export class UpdateResolucionDto {
   @Min(0)
   diasMonitoreo?: number;
 
-  @ApiPropertyOptional({ description: 'Indica si la sentencia está ejecutoriada' })
+  @ApiPropertyOptional({
+    description: 'Indica si la sentencia está ejecutoriada',
+  })
   @IsOptional()
   @IsBoolean()
   ejecutoriada?: boolean;
@@ -98,22 +110,30 @@ export class UpdateResolucionDto {
   @Min(1)
   plazoMonitoreoDias?: number;
 
-  @ApiPropertyOptional({ description: 'Fecha de inicio de monitoreo (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Fecha de inicio de monitoreo (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   fechaInicioMonitoreo?: string;
 
-  @ApiPropertyOptional({ description: 'Fecha de término anterior (para prórrogas, YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Fecha de término anterior (para prórrogas, YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   fechaTerminoAnterior?: string;
 
-  @ApiPropertyOptional({ description: 'Nueva fecha de término (para prórrogas, YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    description: 'Nueva fecha de término (para prórrogas, YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   fechaTerminoNueva?: string;
 
-  @ApiPropertyOptional({ description: 'Consentimiento de la víctima para monitoreo' })
+  @ApiPropertyOptional({
+    description: 'Consentimiento de la víctima para monitoreo',
+  })
   @IsOptional()
   @IsBoolean()
   victimaConsentimiento?: boolean;
