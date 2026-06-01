@@ -206,7 +206,32 @@ export class EventoService {
       const manager = queryRunner.manager;
       const saved: Evento[] = [];
 
-      for (const dto of dtos) {
+      const condDtos = dtos.filter(
+        (d) => d.proceso?.paraQuien === 'CONDENADO',
+      );
+      const victimaDtos = dtos.filter(
+        (d) => d.proceso?.paraQuien === 'VICTIMA',
+      );
+      const otros = dtos.filter(
+        (d) => d.proceso?.paraQuien !== 'CONDENADO' && d.proceso?.paraQuien !== 'VICTIMA',
+      );
+
+      let condEventoId: number | null = null;
+
+      for (const dto of condDtos) {
+        const evento = await this.crearEventoConHijas(dto, userId, manager);
+        saved.push(evento);
+        if (!condEventoId) condEventoId = evento.id;
+      }
+
+      for (const dto of victimaDtos) {
+        if (condEventoId) {
+          dto.proceso = { ...dto.proceso!, procesoOrigenId: condEventoId };
+        }
+        saved.push(await this.crearEventoConHijas(dto, userId, manager));
+      }
+
+      for (const dto of otros) {
         saved.push(await this.crearEventoConHijas(dto, userId, manager));
       }
 
