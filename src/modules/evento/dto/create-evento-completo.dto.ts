@@ -25,13 +25,13 @@ export class CreateResolucionInlineDto {
   @IsInt()
   tipoCausaId?: number;
 
-  @ApiPropertyOptional({ description: 'RUC de la resolución', maxLength: 50 })
+  @ApiPropertyOptional({ description: 'RUC de la resolucion', maxLength: 50 })
   @IsOptional()
   @IsString()
   @MaxLength(50)
   rucRes?: string;
 
-  @ApiPropertyOptional({ description: 'RIT de la resolución', maxLength: 50 })
+  @ApiPropertyOptional({ description: 'RIT de la resolucion', maxLength: 50 })
   @IsOptional()
   @IsString()
   @MaxLength(50)
@@ -55,20 +55,11 @@ export class CreateResolucionInlineDto {
   @IsInt()
   crsId?: number;
 
-  @ApiPropertyOptional({ description: 'ID de la región' })
+  @ApiPropertyOptional({ description: 'Numero de pena' })
   @IsOptional()
   @IsInt()
-  regionId?: number;
-
-  @ApiPropertyOptional({ description: 'ID de la comuna' })
-  @IsOptional()
-  @IsInt()
-  comunaId?: number;
-
-  @ApiPropertyOptional({ description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)' })
-  @IsOptional()
-  @IsInt()
-  tipoLugarId?: number;
+  @Min(1)
+  numPena?: number;
 
   @ApiPropertyOptional({
     description: 'ID del tipo de pena sustitutiva (FK a CAT_PENA_SUSTITUTIVA)',
@@ -85,38 +76,38 @@ export class CreateResolucionInlineDto {
   fechaDicto?: string;
 
   @ApiPropertyOptional({
-    description: 'Fecha de recepción en CRS (YYYY-MM-DD)',
+    description: 'Fecha de recepcion en CRS (YYYY-MM-DD)',
   })
   @IsOptional()
   @IsDateString()
   fechaRecepcionCrs?: string;
 
-  @ApiPropertyOptional({ description: 'Días de condena' })
+  @ApiPropertyOptional({ description: 'Dias de condena' })
   @IsOptional()
   @IsInt()
   @Min(0)
   diasCondena?: number;
 
-  @ApiPropertyOptional({ description: 'Días de abono', default: 0 })
+  @ApiPropertyOptional({ description: 'Dias de abono', default: 0 })
   @IsOptional()
   @IsInt()
   @Min(0)
   diasAbono?: number;
 
-  @ApiPropertyOptional({ description: 'Días efectivos de monitoreo' })
+  @ApiPropertyOptional({ description: 'Dias efectivos de monitoreo' })
   @IsOptional()
   @IsInt()
   @Min(0)
   diasMonitoreo?: number;
 
   @ApiPropertyOptional({
-    description: 'Indica si la sentencia está ejecutoriada',
+    description: 'Indica si la sentencia esta ejecutoriada',
   })
   @IsOptional()
   @IsBoolean()
   ejecutoriada?: boolean;
 
-  @ApiPropertyOptional({ description: 'Plazo de monitoreo en días' })
+  @ApiPropertyOptional({ description: 'Plazo de monitoreo en dias' })
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -130,21 +121,21 @@ export class CreateResolucionInlineDto {
   fechaInicioMonitoreo?: string;
 
   @ApiPropertyOptional({
-    description: 'Fecha de término anterior (para prórrogas, YYYY-MM-DD)',
+    description: 'Fecha de termino anterior (para prorrogas, YYYY-MM-DD)',
   })
   @IsOptional()
   @IsDateString()
   fechaTerminoAnterior?: string;
 
   @ApiPropertyOptional({
-    description: 'Nueva fecha de término (para prórrogas, YYYY-MM-DD)',
+    description: 'Nueva fecha de termino (para prorrogas, YYYY-MM-DD)',
   })
   @IsOptional()
   @IsDateString()
   fechaTerminoNueva?: string;
 
   @ApiPropertyOptional({
-    description: 'Consentimiento de la víctima para monitoreo',
+    description: 'Consentimiento de la victima para monitoreo',
   })
   @IsOptional()
   @IsBoolean()
@@ -166,7 +157,7 @@ export class CreateAgendamientoInlineDto {
   @IsString()
   horaFinRango?: string;
 
-  @ApiPropertyOptional({ description: 'ID del técnico asignado' })
+  @ApiPropertyOptional({ description: 'ID del tecnico asignado' })
   @IsOptional()
   @IsInt()
   asignadoA?: number;
@@ -176,8 +167,23 @@ export class CreateAgendamientoInlineDto {
   @IsInt()
   crsId?: number;
 
+  @ApiPropertyOptional({ description: 'ID de la region donde se realiza la visita' })
+  @IsOptional()
+  @IsInt()
+  regionId?: number;
+
+  @ApiPropertyOptional({ description: 'ID de la comuna donde se realiza la visita' })
+  @IsOptional()
+  @IsInt()
+  comunaId?: number;
+
+  @ApiPropertyOptional({ description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)' })
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
+
   @ApiPropertyOptional({
-    description: 'Dirección de la agenda',
+    description: 'Direccion de la agenda',
     maxLength: 500,
   })
   @IsOptional()
@@ -197,7 +203,7 @@ export class CreateAgendamientoInlineDto {
 
 export class CreateProcesoInlineDto {
   @ApiPropertyOptional({
-    description: 'ID del técnico asignado (FK a USUARIO)',
+    description: 'ID del tecnico asignado (FK a USUARIO)',
   })
   @IsOptional()
   @IsInt()
@@ -210,7 +216,7 @@ export class CreateProcesoInlineDto {
   @IsInt()
   crsId?: number;
 
-  @ApiPropertyOptional({ description: 'ID de la región' })
+  @ApiPropertyOptional({ description: 'ID de la region' })
   @IsOptional()
   @IsInt()
   regionId?: number;
@@ -221,7 +227,7 @@ export class CreateProcesoInlineDto {
   comunaId?: number;
 
   @ApiPropertyOptional({
-    description: 'Dirección donde se ejecuta el proceso',
+    description: 'Direccion donde se ejecuta el proceso',
     maxLength: 500,
   })
   @IsOptional()
@@ -237,7 +243,7 @@ export class CreateProcesoInlineDto {
   fechaProgramada?: string;
 
   @ApiPropertyOptional({
-    description: 'Para quién es el proceso',
+    description: 'Para quien es el proceso',
     enum: ['CONDENADO', 'VICTIMA'],
     default: 'CONDENADO',
   })
@@ -247,14 +253,14 @@ export class CreateProcesoInlineDto {
 
   @ApiPropertyOptional({
     description:
-      'ID del proceso padre (FK a EVENTO, para vincular procesos de víctimas al del condenado)',
+      'ID del proceso padre (FK a EVENTO, para vincular procesos de victimas al del condenado)',
   })
   @IsOptional()
   @IsInt()
   procesoPadreId?: number;
 
   @ApiPropertyOptional({
-    description: 'Número de intento (1 para el primero)',
+    description: 'Numero de intento (1 para el primero)',
     minimum: 1,
   })
   @IsOptional()
@@ -286,7 +292,7 @@ export class CreateEventoCompletoDto {
   asignadoA?: number;
 
   @ApiPropertyOptional({
-    description: 'FK al evento padre (ej: decreto que origina una instalación)',
+    description: 'FK al evento padre (ej: decreto que origina una instalacion)',
   })
   @IsOptional()
   @IsInt()
@@ -298,7 +304,7 @@ export class CreateEventoCompletoDto {
   fechaEvento?: string;
 
   @ApiPropertyOptional({
-    description: 'Origen de creación del evento',
+    description: 'Origen de creacion del evento',
     default: 'FORMULARIO_WEB',
   })
   @IsOptional()
@@ -312,7 +318,7 @@ export class CreateEventoCompletoDto {
 
   @ApiPropertyOptional({
     description:
-      'Datos de resolución judicial (solo para tipos de evento de categoría Resolución)',
+      'Datos de resolucion judicial (solo para tipos de evento de categoria Resolucion)',
   })
   @IsOptional()
   @ValidateNested()
@@ -321,7 +327,7 @@ export class CreateEventoCompletoDto {
 
   @ApiPropertyOptional({
     description:
-      'Datos de proceso en terreno (solo para tipos de evento de categoría Proceso)',
+      'Datos de proceso en terreno (solo para tipos de evento de categoria Proceso)',
   })
   @IsOptional()
   @ValidateNested()
