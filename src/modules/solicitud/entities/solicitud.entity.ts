@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { CatTribunal } from '../../catalogo/entities/cat-tribunal.entity';
@@ -19,6 +20,7 @@ import { CatTipoCausa } from '../../catalogo/entities/cat-tipo-causa.entity';
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
+import { SolicitudVictima } from './solicitud-victima.entity';
 
 @Entity('sga.SOLICITUD')
 export class Solicitud {
@@ -180,4 +182,7 @@ export class Solicitud {
   @ManyToOne(() => CatEstadoSolicitud)
   @JoinColumn({ name: 'estado_actual_id', referencedColumnName: 'id' })
   estadoActual: CatEstadoSolicitud;
+
+  @OneToMany(() => SolicitudVictima, (sv) => sv.solicitud)
+  solicitudVictimas: SolicitudVictima[];
 }

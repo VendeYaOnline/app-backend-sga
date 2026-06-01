@@ -5,6 +5,7 @@ import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatMotivoNoRealizado } from '../../catalogo/entities/cat-motivo-no-realizado.entity';
+import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 
 @Entity('sga.PROCESO')
 export class Proceso {
@@ -118,4 +119,8 @@ export class Proceso {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'cerrado_by', referencedColumnName: 'id' })
   cerradoPor: Usuario;
+
+  @ManyToOne(() => Agendamiento)
+  @JoinColumn({ name: 'agendamiento_id', referencedColumnName: 'id' })
+  agendamiento: Agendamiento;
 }

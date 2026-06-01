@@ -71,6 +71,8 @@ export class SolicitudService {
       .leftJoinAndSelect('s.tribunal', 't')
       .leftJoinAndSelect('s.crs', 'crs')
       .leftJoinAndSelect('s.asignado', 'a')
+      .leftJoinAndSelect('s.solicitudVictimas', 'sv')
+      .leftJoinAndSelect('sv.victima', 'v')
       .where('s.deletedAt IS NULL');
 
     if (where.estadoId)
@@ -155,6 +157,7 @@ export class SolicitudService {
         tipoDiaInicio: true,
         tipoDiaTermino: true,
         asignado: true,
+        solicitudVictimas: { victima: true },
       },
     });
     if (!solicitud)

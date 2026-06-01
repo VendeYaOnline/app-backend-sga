@@ -125,6 +125,7 @@ export class EventoService {
         region: true,
         comuna: true,
         motivoNoRealizado: true,
+        agendamiento: true,
       },
     });
   }
