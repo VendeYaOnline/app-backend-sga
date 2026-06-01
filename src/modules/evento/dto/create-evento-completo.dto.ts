@@ -122,6 +122,34 @@ export class CreateResolucionInlineDto {
   victimaConsentimiento?: boolean;
 }
 
+export class CreateAgendamientoInlineDto {
+  @ApiProperty({ description: 'Fecha y hora agendada (ISO 8601)' })
+  @IsDateString()
+  fechaAgendada: string;
+
+  @ApiPropertyOptional({ description: 'ID del técnico asignado' })
+  @IsOptional()
+  @IsInt()
+  asignadoA?: number;
+
+  @ApiPropertyOptional({ description: 'ID del CRS' })
+  @IsOptional()
+  @IsInt()
+  crsId?: number;
+
+  @ApiPropertyOptional({ description: 'Dirección de la agenda', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  direccionAgenda?: string;
+
+  @ApiPropertyOptional({ description: 'Notas del agendamiento', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  notas?: string;
+}
+
 export class CreateProcesoInlineDto {
   @ApiPropertyOptional({ description: 'ID del técnico asignado (FK a USUARIO)' })
   @IsOptional()
@@ -163,16 +191,22 @@ export class CreateProcesoInlineDto {
   @IsIn(['CONDENADO', 'VICTIMA'])
   paraQuien?: string;
 
-  @ApiPropertyOptional({ description: 'ID del proceso origen (para reintentos)' })
+  @ApiPropertyOptional({ description: 'ID del proceso padre (FK a EVENTO, para vincular procesos de víctimas al del condenado)' })
   @IsOptional()
   @IsInt()
-  procesoOrigenId?: number;
+  procesoPadreId?: number;
 
   @ApiPropertyOptional({ description: 'Número de intento (1 para el primero)', minimum: 1 })
   @IsOptional()
   @IsInt()
   @Min(1)
   numeroIntento?: number;
+
+  @ApiPropertyOptional({ description: 'Datos de agendamiento a crear junto con el proceso' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateAgendamientoInlineDto)
+  agendamiento?: CreateAgendamientoInlineDto;
 }
 
 export class CreateEventoCompletoDto {

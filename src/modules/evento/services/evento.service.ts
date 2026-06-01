@@ -18,6 +18,7 @@ import { Proceso } from '../entities/proceso.entity';
 import { ProcesoSoporteDetalle } from '../entities/proceso-soporte-detalle.entity';
 import { ProcesoSoporteMotivo } from '../entities/proceso-soporte-motivo.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
+import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -226,7 +227,7 @@ export class EventoService {
 
       for (const dto of victimaDtos) {
         if (condEventoId) {
-          dto.proceso = { ...dto.proceso!, procesoOrigenId: condEventoId };
+          dto.proceso = { ...dto.proceso!, procesoPadreId: condEventoId };
         }
         saved.push(await this.crearEventoConHijas(dto, userId, manager));
       }
@@ -323,9 +324,11 @@ export class EventoService {
     }
 
     if (dto.proceso) {
+      const { agendamiento: agData, ...procesoData } = dto.proceso as any;
+
       const proceso = manager.create(Proceso, {
         eventoId: saved.id,
-        ...dto.proceso,
+        ...procesoData,
         paraQuien: dto.proceso.paraQuien || 'CONDENADO',
         numeroIntento: dto.proceso.numeroIntento || 1,
       });
@@ -333,6 +336,28 @@ export class EventoService {
       this.logger.log(
         `Proceso creado para evento ${saved.id} (tipo: ${codigo}, para: ${proceso.paraQuien})`,
       );
+
+      if (agData) {
+        const agendamiento = manager.create(Agendamiento, {
+          eventoId: saved.id,
+          fechaAgendada: new Date(agData.fechaAgendada),
+          asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
+          crsId: agData.crsId ?? dto.proceso.crsId ?? null,
+          direccionAgenda:
+            agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
+          paraCondenado: dto.proceso.paraQuien === 'CONDENADO',
+          notas: agData.notas ?? null,
+          estadoAgenda: 'PROGRAMADO',
+          createdBy: userId,
+        });
+        const savedAgenda = await manager.save(agendamiento);
+
+        proceso.agendamientoId = savedAgenda.id;
+        await manager.save(proceso);
+        this.logger.log(
+          `Agendamiento ${savedAgenda.id} creado y vinculado a proceso ${saved.id}`,
+        );
+      }
     }
 
     const accion = manager.create(AccionUsuario, {
