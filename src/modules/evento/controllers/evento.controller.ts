@@ -31,6 +31,7 @@ import { UpdateProcesoDto } from '../dto/update-proceso.dto';
 import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
 import { EjecutarValidacionDto } from '../dto/validacion.dto';
 import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
+import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -79,6 +80,23 @@ export class EventoController {
   @ApiBody({ type: CreateEventoDto })
   async create(@Body() dto: any, @CurrentUser() user: JwtPayload) {
     return this.eventoService.create(dto, user.sub);
+  }
+
+  @Post('eventos/completo')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Crear evento con resolución o proceso en una sola llamada',
+    description:
+      'Crea un evento, sus validaciones automáticas y, opcionalmente, los datos de resolución o proceso asociados. Todo en una sola transacción.',
+  })
+  @ApiResponse({ status: 201, description: 'Evento creado exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos' })
+  @ApiBody({ type: CreateEventoCompletoDto })
+  async createCompleto(
+    @Body() dto: CreateEventoCompletoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventoService.createCompleto(dto, user.sub);
   }
 
   @Put('eventos/:id')

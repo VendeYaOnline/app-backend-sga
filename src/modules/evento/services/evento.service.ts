@@ -21,6 +21,7 @@ import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entit
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 
 @Injectable()
 export class EventoService {
@@ -174,6 +175,105 @@ export class EventoService {
         });
         await manager.save(validacion);
       }
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Evento ${saved.id} (tipo ${dto.tipoEventoId}) creado por usuario ${userId}`,
+      );
+
+      return this.findOne(saved.id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createCompleto(
+    dto: CreateEventoCompletoDto,
+    userId: number,
+  ): Promise<Evento> {
+    if (dto.resolucion && dto.proceso) {
+      throw new BadRequestException(
+        'No se pueden enviar resolución y proceso en el mismo evento. Use uno solo.',
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const tipoEvento = await this.tipoEventoRepo.findOne({
+        where: { id: dto.tipoEventoId },
+      });
+      if (!tipoEvento) {
+        throw new BadRequestException('Tipo de evento no encontrado');
+      }
+
+      const evento = manager.create(Evento, {
+        tipoEventoId: dto.tipoEventoId,
+        solicitudId: dto.solicitudId,
+        estadoEvento: 'PENDIENTE',
+        origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
+        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
+        asignadoA: dto.asignadoA,
+        observaciones: dto.observaciones,
+        createdBy: userId,
+      });
+      const saved = await manager.save(evento);
+
+      const validacionesConfig = await this.tipoEventoValidacionRepo.find({
+        where: { tipoEventoId: dto.tipoEventoId, activo: true },
+        order: { orden: 'ASC' },
+      });
+
+      for (const config of validacionesConfig) {
+        const validacion = manager.create(EventoValidacion, {
+          eventoId: saved.id,
+          tipoEventoValidacionId: config.id,
+          rolId: config.rolId,
+          estado: 'PENDIENTE',
+        });
+        await manager.save(validacion);
+      }
+
+      if (dto.resolucion) {
+        const resolucion = manager.create(Resolucion, {
+          eventoId: saved.id,
+          ...dto.resolucion,
+        });
+        await manager.save(resolucion);
+        this.logger.log(
+          `Resolución creada para evento ${saved.id}`,
+        );
+      }
+
+      if (dto.proceso) {
+        const proceso = manager.create(Proceso, {
+          eventoId: saved.id,
+          ...dto.proceso,
+          paraQuien: dto.proceso.paraQuien || 'CONDENADO',
+          numeroIntento: dto.proceso.numeroIntento || 1,
+        });
+        await manager.save(proceso);
+        this.logger.log(
+          `Proceso creado para evento ${saved.id} (para: ${proceso.paraQuien})`,
+        );
+      }
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'CREAR_EVENTO',
+        entidad: 'EVENTO',
+        entidadId: saved.id,
+        solicitudId: saved.solicitudId,
+        fechaAccion: new Date(),
+      });
+      await manager.save(accion);
 
       await queryRunner.commitTransaction();
       this.logger.log(
