@@ -399,11 +399,14 @@ export class EventoService {
           horaFinRango: agData.horaFinRango ?? null,
           asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
           crsId: agData.crsId ?? dto.proceso.crsId ?? null,
+          regionId: agData.regionId ?? dto.proceso.regionId ?? null,
+          comunaId: agData.comunaId ?? dto.proceso.comunaId ?? null,
+          tipoLugarId: agData.tipoLugarId ?? null,
           direccionAgenda:
             agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
           paraCondenado: dto.proceso.paraQuien === 'CONDENADO',
           notas: agData.notas ?? null,
-          estadoAgenda: 'PROGRAMADO',
+          estadoAgenda: 'EN_PROCESO',
           createdBy: userId,
         });
         const savedAgenda = await manager.save(agendamiento);

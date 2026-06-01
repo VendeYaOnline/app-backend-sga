@@ -55,11 +55,20 @@ export class CreateResolucionInlineDto {
   @IsInt()
   crsId?: number;
 
-  @ApiPropertyOptional({ description: 'Número de pena' })
+  @ApiPropertyOptional({ description: 'ID de la región' })
   @IsOptional()
   @IsInt()
-  @Min(1)
-  numPena?: number;
+  regionId?: number;
+
+  @ApiPropertyOptional({ description: 'ID de la comuna' })
+  @IsOptional()
+  @IsInt()
+  comunaId?: number;
+
+  @ApiPropertyOptional({ description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)' })
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
 
   @ApiPropertyOptional({
     description: 'ID del tipo de pena sustitutiva (FK a CAT_PENA_SUSTITUTIVA)',
