@@ -165,13 +165,16 @@ export class EventoController {
   @ApiOperation({
     summary: 'Listar procesos en terreno',
     description:
-      'Retorna lista paginada de procesos en terreno con filtros opcionales',
+      'Retorna lista paginada de procesos en terreno con filtros opcionales y sus agendamientos asociados',
   })
   @ApiResponse({ status: 200, description: 'Lista de procesos' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'crsId', required: false, type: Number })
+  @ApiQuery({ name: 'tecnicoId', required: false, type: Number })
+  @ApiQuery({ name: 'paraQuien', required: false, type: String })
   async findProcesos(@Query() filters: PaginationDto) {
-    return this.eventoService.findAll(filters);
+    return this.eventoService.findAllProcesos(filters);
   }
 
   @Put('procesos/:eventoId')

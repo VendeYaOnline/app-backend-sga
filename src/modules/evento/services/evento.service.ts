@@ -136,6 +136,48 @@ export class EventoService {
     });
   }
 
+  async findAllProcesos(
+    filters: PaginationDto & {
+      crsId?: number;
+      tecnicoId?: number;
+      paraQuien?: string;
+    },
+  ) {
+    const { page = 1, limit = 20, crsId, tecnicoId, paraQuien } = filters;
+
+    const qb = this.procesoRepo
+      .createQueryBuilder('p')
+      .leftJoinAndSelect('p.evento', 'e')
+      .leftJoinAndSelect('p.agendamiento', 'ag')
+      .leftJoinAndSelect('p.tecnico', 't')
+      .leftJoinAndSelect('p.crs', 'c')
+      .leftJoinAndSelect('p.region', 'r')
+      .leftJoinAndSelect('p.comuna', 'co')
+      .leftJoinAndSelect('p.motivoNoRealizado', 'mnr')
+      .leftJoinAndSelect('ag.asignado', 'agAsig')
+      .leftJoinAndSelect('ag.crs', 'agCrs')
+      .where('e.deletedAt IS NULL');
+
+    if (crsId) qb.andWhere('p.crsId = :crsId', { crsId });
+    if (tecnicoId) qb.andWhere('p.tecnicoId = :tecnicoId', { tecnicoId });
+    if (paraQuien) qb.andWhere('p.paraQuien = :paraQuien', { paraQuien });
+
+    qb.orderBy('e.fechaEvento', 'DESC');
+
+    const skip = (page - 1) * limit;
+    const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      } as PaginationMeta,
+    };
+  }
+
   async findResolucion(eventoId: number) {
     return this.resolucionRepo.findOne({
       where: { eventoId },
