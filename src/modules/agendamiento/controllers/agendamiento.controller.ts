@@ -149,6 +149,6 @@ export class AgendamientoController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEstadoAgendamientoDto,
   ) {
-    return this.agendamientoService.updateEstado(id, dto.estadoAgenda);
+    return this.agendamientoService.updateEstado(id, dto);
   }
 }

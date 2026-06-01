@@ -100,9 +100,15 @@ export class AgendamientoService {
     return this.agendamientoRepo.save(agendamiento);
   }
 
-  async updateEstado(id: number, estadoAgenda: string): Promise<Agendamiento> {
+  async updateEstado(
+    id: number,
+    dto: { estadoAgenda: string; regionId?: number; comunaId?: number; tipoLugarId?: number },
+  ): Promise<Agendamiento> {
     const agendamiento = await this.findOne(id);
-    agendamiento.estadoAgenda = estadoAgenda;
+    agendamiento.estadoAgenda = dto.estadoAgenda;
+    if (dto.regionId !== undefined) agendamiento.regionId = dto.regionId;
+    if (dto.comunaId !== undefined) agendamiento.comunaId = dto.comunaId;
+    if (dto.tipoLugarId !== undefined) agendamiento.tipoLugarId = dto.tipoLugarId;
     return this.agendamientoRepo.save(agendamiento);
   }
 

@@ -1,5 +1,5 @@
-import { IsString, IsIn } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsIn, IsInt, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateEstadoAgendamientoDto {
   @ApiProperty({
@@ -8,4 +8,19 @@ export class UpdateEstadoAgendamientoDto {
   @IsString()
   @IsIn(['EN_PROCESO', 'NO_REALIZADO', 'COMPLETADO', 'CANCELADO'])
   estadoAgenda: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  regionId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  comunaId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
 }
