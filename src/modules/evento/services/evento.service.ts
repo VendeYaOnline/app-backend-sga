@@ -174,7 +174,7 @@ export class EventoService {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-      } as PaginationMeta,
+      },
     };
   }
 

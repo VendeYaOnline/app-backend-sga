@@ -140,7 +140,7 @@ export class AgendamientoController {
   @ApiOperation({
     summary: 'Cambiar estado del agendamiento',
     description:
-      'Actualiza el estado del agendamiento (PROGRAMADO, CONFIRMADO, EN_CURSO, COMPLETADO, CANCELADO)',
+      'Actualiza el estado del agendamiento (EN_PROCESO, NO_REALIZADO, COMPLETADO, CANCELADO)',
   })
   @ApiResponse({ status: 200, description: 'Estado actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })

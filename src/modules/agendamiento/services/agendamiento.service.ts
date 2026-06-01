@@ -36,6 +36,9 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.evento', 'e')
       .leftJoinAndSelect('a.asignado', 'u')
       .leftJoinAndSelect('a.crs', 'c')
+      .leftJoinAndSelect('a.region', 'r')
+      .leftJoinAndSelect('a.comuna', 'co')
+      .leftJoinAndSelect('a.tipoLugar', 'tl')
       .leftJoinAndSelect('a.paraVictima', 'v')
       .where('a.deletedAt IS NULL');
 
@@ -63,7 +66,15 @@ export class AgendamientoService {
   async findOne(id: number) {
     const agendamiento = await this.agendamientoRepo.findOne({
       where: { id, deletedAt: IsNull() },
-      relations: { evento: true, asignado: true, crs: true, paraVictima: true },
+      relations: {
+        evento: true,
+        asignado: true,
+        crs: true,
+        region: true,
+        comuna: true,
+        tipoLugar: true,
+        paraVictima: true,
+      },
     });
     if (!agendamiento)
       throw new NotFoundException(`Agendamiento con ID ${id} no encontrado`);
@@ -74,7 +85,7 @@ export class AgendamientoService {
     const agendamiento = this.agendamientoRepo.create({
       ...dto,
       createdBy: userId,
-      estadoAgenda: dto.estadoAgenda || 'PROGRAMADO',
+      estadoAgenda: dto.estadoAgenda || 'EN_PROCESO',
     });
     const saved = (await this.agendamientoRepo.save(
       agendamiento,
@@ -106,6 +117,9 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.evento', 'e')
       .leftJoinAndSelect('a.asignado', 'u')
       .leftJoinAndSelect('a.crs', 'c')
+      .leftJoinAndSelect('a.region', 'r')
+      .leftJoinAndSelect('a.comuna', 'co')
+      .leftJoinAndSelect('a.tipoLugar', 'tl')
       .where('a.deletedAt IS NULL')
       .andWhere('a.estadoAgenda NOT IN (:...estados)', {
         estados: ['CANCELADO'],
@@ -133,7 +147,7 @@ export class AgendamientoService {
       .where('a.deletedAt IS NULL')
       .andWhere('a.fechaAgendada = :fecha', { fecha })
       .andWhere('a.estadoAgenda IN (:...estados)', {
-        estados: ['PROGRAMADO', 'CONFIRMADO'],
+        estados: ['EN_PROCESO', 'COMPLETADO'],
       });
 
     const ocupados = await qb.getMany();

@@ -11,6 +11,9 @@ import {
 import { Evento } from '../../evento/entities/evento.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
+import { CatRegion } from '../../catalogo/entities/cat-region.entity';
+import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
+import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
 import { Victima } from '../../persona/entities/victima.entity';
 
 @Entity('sga.AGENDAMIENTO')
@@ -36,6 +39,15 @@ export class Agendamiento {
   @Column({ name: 'crs_id', type: 'int', nullable: true })
   crsId: number | null;
 
+  @Column({ name: 'region_id', type: 'int', nullable: true })
+  regionId: number | null;
+
+  @Column({ name: 'comuna_id', type: 'int', nullable: true })
+  comunaId: number | null;
+
+  @Column({ name: 'tipo_lugar_id', type: 'int', nullable: true })
+  tipoLugarId: number | null;
+
   @Column({
     name: 'direccion_agenda',
     type: 'nvarchar',
@@ -54,7 +66,7 @@ export class Agendamiento {
     name: 'estado_agenda',
     type: 'nvarchar',
     length: 20,
-    default: 'PROGRAMADO',
+    default: 'EN_PROCESO',
   })
   estadoAgenda: string;
 
@@ -84,6 +96,18 @@ export class Agendamiento {
   @ManyToOne(() => CatCrs)
   @JoinColumn({ name: 'crs_id', referencedColumnName: 'id' })
   crs: CatCrs;
+
+  @ManyToOne(() => CatRegion)
+  @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })
+  region: CatRegion;
+
+  @ManyToOne(() => CatComuna)
+  @JoinColumn({ name: 'comuna_id', referencedColumnName: 'id' })
+  comuna: CatComuna;
+
+  @ManyToOne(() => CatTipoLugar)
+  @JoinColumn({ name: 'tipo_lugar_id', referencedColumnName: 'id' })
+  tipoLugar: CatTipoLugar;
 
   @ManyToOne(() => Victima)
   @JoinColumn({ name: 'para_victima_id', referencedColumnName: 'id' })

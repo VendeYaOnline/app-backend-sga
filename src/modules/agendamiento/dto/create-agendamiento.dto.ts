@@ -40,6 +40,21 @@ export class CreateAgendamientoDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsInt()
+  regionId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  comunaId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   @MaxLength(500)
   direccionAgenda?: string;

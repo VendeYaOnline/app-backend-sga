@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateEstadoAgendamientoDto {
   @ApiProperty({
-    enum: ['PROGRAMADO', 'CONFIRMADO', 'EN_CURSO', 'COMPLETADO', 'CANCELADO'],
+    enum: ['EN_PROCESO', 'NO_REALIZADO', 'COMPLETADO', 'CANCELADO'],
   })
   @IsString()
-  @IsIn(['PROGRAMADO', 'CONFIRMADO', 'EN_CURSO', 'COMPLETADO', 'CANCELADO'])
+  @IsIn(['EN_PROCESO', 'NO_REALIZADO', 'COMPLETADO', 'CANCELADO'])
   estadoAgenda: string;
 }
