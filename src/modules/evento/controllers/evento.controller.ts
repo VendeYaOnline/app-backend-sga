@@ -85,18 +85,18 @@ export class EventoController {
   @Post('eventos/completo')
   @HttpCode(201)
   @ApiOperation({
-    summary: 'Crear evento con resolución o proceso en una sola llamada',
+    summary: 'Crear uno o varios eventos con resolución o proceso en lote',
     description:
-      'Crea un evento, sus validaciones automáticas y, opcionalmente, los datos de resolución o proceso asociados. Todo en una sola transacción.',
+      'Crea eventos, sus validaciones automáticas y, opcionalmente, los datos de resolución o proceso asociados. Todo en una sola transacción.',
   })
-  @ApiResponse({ status: 201, description: 'Evento creado exitosamente' })
+  @ApiResponse({ status: 201, description: 'Eventos creados exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
-  @ApiBody({ type: CreateEventoCompletoDto })
+  @ApiBody({ type: [CreateEventoCompletoDto] })
   async createCompleto(
-    @Body() dto: CreateEventoCompletoDto,
+    @Body() dtos: CreateEventoCompletoDto[],
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.eventoService.createCompleto(dto, user.sub);
+    return this.eventoService.createCompleto(dtos, user.sub);
   }
 
   @Put('eventos/:id')

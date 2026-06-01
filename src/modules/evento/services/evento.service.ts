@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository, IsNull } from 'typeorm';
+import { DataSource, Repository, IsNull, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Evento } from '../entities/evento.entity';
@@ -191,13 +191,11 @@ export class EventoService {
   }
 
   async createCompleto(
-    dto: CreateEventoCompletoDto,
+    dtos: CreateEventoCompletoDto[],
     userId: number,
-  ): Promise<Evento> {
-    if (dto.resolucion && dto.proceso) {
-      throw new BadRequestException(
-        'No se pueden enviar resolución y proceso en el mismo evento. Use uno solo.',
-      );
+  ): Promise<Evento[]> {
+    if (!dtos.length) {
+      throw new BadRequestException('Debe enviar al menos un evento');
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -206,87 +204,123 @@ export class EventoService {
 
     try {
       const manager = queryRunner.manager;
+      const saved: Evento[] = [];
 
-      const tipoEvento = await this.tipoEventoRepo.findOne({
-        where: { id: dto.tipoEventoId },
-      });
-      if (!tipoEvento) {
-        throw new BadRequestException('Tipo de evento no encontrado');
+      for (const dto of dtos) {
+        saved.push(await this.crearEventoConHijas(dto, userId, manager));
       }
-
-      const evento = manager.create(Evento, {
-        tipoEventoId: dto.tipoEventoId,
-        solicitudId: dto.solicitudId,
-        estadoEvento: 'PENDIENTE',
-        origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
-        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
-        asignadoA: dto.asignadoA,
-        observaciones: dto.observaciones,
-        createdBy: userId,
-      });
-      const saved = await manager.save(evento);
-
-      const validacionesConfig = await this.tipoEventoValidacionRepo.find({
-        where: { tipoEventoId: dto.tipoEventoId, activo: true },
-        order: { orden: 'ASC' },
-      });
-
-      for (const config of validacionesConfig) {
-        const validacion = manager.create(EventoValidacion, {
-          eventoId: saved.id,
-          tipoEventoValidacionId: config.id,
-          rolId: config.rolId,
-          estado: 'PENDIENTE',
-        });
-        await manager.save(validacion);
-      }
-
-      if (dto.resolucion) {
-        const resolucion = manager.create(Resolucion, {
-          eventoId: saved.id,
-          ...dto.resolucion,
-        });
-        await manager.save(resolucion);
-        this.logger.log(
-          `Resolución creada para evento ${saved.id}`,
-        );
-      }
-
-      if (dto.proceso) {
-        const proceso = manager.create(Proceso, {
-          eventoId: saved.id,
-          ...dto.proceso,
-          paraQuien: dto.proceso.paraQuien || 'CONDENADO',
-          numeroIntento: dto.proceso.numeroIntento || 1,
-        });
-        await manager.save(proceso);
-        this.logger.log(
-          `Proceso creado para evento ${saved.id} (para: ${proceso.paraQuien})`,
-        );
-      }
-
-      const accion = manager.create(AccionUsuario, {
-        usuarioId: userId,
-        tipoAccion: 'CREAR_EVENTO',
-        entidad: 'EVENTO',
-        entidadId: saved.id,
-        solicitudId: saved.solicitudId,
-        fechaAccion: new Date(),
-      });
-      await manager.save(accion);
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Evento ${saved.id} (tipo ${dto.tipoEventoId}) creado por usuario ${userId}`,
+        `${saved.length} evento(s) creado(s) por usuario ${userId}: [${saved.map((e) => e.id).join(', ')}]`,
       );
 
-      return this.findOne(saved.id);
+      const ids = saved.map((e) => e.id);
+      return this.eventoRepo.find({
+        where: { id: In(ids), deletedAt: IsNull() },
+        relations: { tipoEvento: true, solicitud: true, asignado: true },
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async crearEventoConHijas(
+    dto: CreateEventoCompletoDto,
+    userId: number,
+    manager: any,
+  ): Promise<Evento> {
+    if (dto.resolucion && dto.proceso) {
+      throw new BadRequestException(
+        'No se pueden enviar resolución y proceso en el mismo evento. Use uno solo.',
+      );
+    }
+
+    const tipoEvento = await manager.findOne(CatTipoEvento, {
+      where: { id: dto.tipoEventoId },
+    });
+    if (!tipoEvento) {
+      throw new BadRequestException('Tipo de evento no encontrado');
+    }
+
+    const { codigo } = tipoEvento;
+
+    const esResolucion = [
+      'DECRETO_MONITOREO_INICIAL',
+      'PRORROGA_EXTENSION',
+      'CESE_CONTROL',
+      'INFORME_CONTROL',
+      'INCOMPETENCIA',
+    ].includes(codigo);
+
+    const esProceso = [
+      'INSTALACION',
+      'DESINSTALACION',
+      'SOPORTE',
+    ].includes(codigo);
+
+    if (dto.resolucion && !esResolucion) {
+      throw new BadRequestException(
+        `El tipo de evento "${codigo}" no admite datos de resolución`,
+      );
+    }
+
+    if (dto.proceso && !esProceso) {
+      throw new BadRequestException(
+        `El tipo de evento "${codigo}" no admite datos de proceso`,
+      );
+    }
+
+    const evento = manager.create(Evento, {
+      tipoEventoId: dto.tipoEventoId,
+      solicitudId: dto.solicitudId,
+      estadoEvento: 'APROBADO',
+      origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
+      fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
+      asignadoA: dto.asignadoA,
+      observaciones: dto.observaciones,
+      createdBy: userId,
+    });
+    const saved = await manager.save(evento);
+
+    if (dto.resolucion) {
+      const resolucion = manager.create(Resolucion, {
+        eventoId: saved.id,
+        ...dto.resolucion,
+      });
+      await manager.save(resolucion);
+      this.logger.log(
+        `Resolución creada para evento ${saved.id} (tipo: ${codigo})`,
+      );
+    }
+
+    if (dto.proceso) {
+      const proceso = manager.create(Proceso, {
+        eventoId: saved.id,
+        ...dto.proceso,
+        paraQuien: dto.proceso.paraQuien || 'CONDENADO',
+        numeroIntento: dto.proceso.numeroIntento || 1,
+      });
+      await manager.save(proceso);
+      this.logger.log(
+        `Proceso creado para evento ${saved.id} (tipo: ${codigo}, para: ${proceso.paraQuien})`,
+      );
+    }
+
+    const accion = manager.create(AccionUsuario, {
+      usuarioId: userId,
+      tipoAccion: 'CREAR_EVENTO',
+      entidad: 'EVENTO',
+      entidadId: saved.id,
+      solicitudId: saved.solicitudId,
+      fechaAccion: new Date(),
+    });
+    await manager.save(accion);
+
+    return saved;
   }
 
   async update(id: number, dto: any, userId: number): Promise<Evento> {
