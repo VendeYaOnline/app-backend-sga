@@ -26,6 +26,9 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
+import { UpdateResolucionDto } from '../dto/update-resolucion.dto';
+import { UpdateProcesoDto } from '../dto/update-proceso.dto';
+import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
 import { EjecutarValidacionDto } from '../dto/validacion.dto';
 import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
 
@@ -155,8 +158,9 @@ export class EventoController {
 
   @Put('procesos/:eventoId')
   @ApiOperation({
-    summary: 'Editar datos del proceso',
-    description: 'Actualiza los datos de un proceso en terreno',
+    summary: 'Editar datos del proceso en terreno',
+    description:
+      'Actualiza los datos de un proceso en terreno (instalación, desinstalación, soporte). Todos los campos son opcionales — solo se actualizan los enviados.',
   })
   @ApiResponse({ status: 200, description: 'Proceso actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
@@ -165,9 +169,10 @@ export class EventoController {
     type: Number,
     description: 'ID del evento/proceso',
   })
+  @ApiBody({ type: UpdateProcesoDto })
   async updateProceso(
     @Param('eventoId', ParseIntPipe) eventoId: number,
-    @Body() dto: any,
+    @Body() dto: UpdateProcesoDto,
   ) {
     return this.eventoService.updateProceso(eventoId, dto);
   }
@@ -296,7 +301,7 @@ export class EventoController {
   @ApiOperation({
     summary: 'Editar datos de resolución judicial',
     description:
-      'Actualiza los datos de una resolución judicial asociada a un evento',
+      'Actualiza los datos de una resolución judicial asociada a un evento. Todos los campos son opcionales — solo se actualizan los enviados.',
   })
   @ApiResponse({
     status: 200,
@@ -304,9 +309,10 @@ export class EventoController {
   })
   @ApiResponse({ status: 404, description: 'Resolución no encontrada' })
   @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento' })
+  @ApiBody({ type: UpdateResolucionDto })
   async updateResolucion(
     @Param('eventoId', ParseIntPipe) eventoId: number,
-    @Body() dto: any,
+    @Body() dto: UpdateResolucionDto,
   ) {
     return this.eventoService.updateResolucion(eventoId, dto);
   }
@@ -315,7 +321,7 @@ export class EventoController {
   @ApiOperation({
     summary: 'Editar datos de cambio de domicilio',
     description:
-      'Actualiza los datos de un cambio de domicilio asociado a una resolución',
+      'Actualiza los datos de un cambio de domicilio asociado a un evento. Todos los campos son opcionales.',
   })
   @ApiResponse({
     status: 200,
@@ -326,9 +332,10 @@ export class EventoController {
     description: 'Cambio de domicilio no encontrado',
   })
   @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento' })
+  @ApiBody({ type: UpdateCambioDomicilioDto })
   async updateCambioDomicilio(
     @Param('eventoId', ParseIntPipe) eventoId: number,
-    @Body() dto: any,
+    @Body() dto: UpdateCambioDomicilioDto,
   ) {
     return this.eventoService.updateCambioDomicilio(eventoId, dto);
   }
