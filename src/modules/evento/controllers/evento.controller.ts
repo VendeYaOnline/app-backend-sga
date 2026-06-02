@@ -25,6 +25,7 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { FindProcesoDto } from '../dto/find-proceso.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { UpdateResolucionDto } from '../dto/update-resolucion.dto';
 import { UpdateProcesoDto } from '../dto/update-proceso.dto';
@@ -173,7 +174,7 @@ export class EventoController {
   @ApiQuery({ name: 'crsId', required: false, type: Number })
   @ApiQuery({ name: 'tecnicoId', required: false, type: Number })
   @ApiQuery({ name: 'paraQuien', required: false, type: String })
-  async findProcesos(@Query() filters: PaginationDto) {
+  async findProcesos(@Query() filters: FindProcesoDto) {
     return this.eventoService.findAllProcesos(filters);
   }
 
