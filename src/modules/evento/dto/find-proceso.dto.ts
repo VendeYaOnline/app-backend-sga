@@ -23,4 +23,10 @@ export class FindProcesoDto extends PaginationDto {
   @IsOptional()
   @IsIn(['CONDENADO', 'VICTIMA'])
   paraQuien?: string;
+
+  @ApiPropertyOptional({ description: 'Filtrar por tipo de evento ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  tipoEventoId?: number;
 }

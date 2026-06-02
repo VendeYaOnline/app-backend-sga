@@ -24,7 +24,7 @@ import { EventoService } from '../services/evento.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { FindEventoDto } from '../dto/find-evento.dto';
 import { FindProcesoDto } from '../dto/find-proceso.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { UpdateResolucionDto } from '../dto/update-resolucion.dto';
@@ -48,13 +48,7 @@ export class EventoController {
     description: 'Retorna lista paginada de eventos con filtros opcionales',
   })
   @ApiResponse({ status: 200, description: 'Lista de eventos' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'solicitudId', required: false, type: Number })
-  @ApiQuery({ name: 'tipoEventoId', required: false, type: Number })
-  @ApiQuery({ name: 'estadoEvento', required: false, type: String })
-  @ApiQuery({ name: 'asignadoA', required: false, type: Number })
-  async findAll(@Query() filters: PaginationDto) {
+  async findAll(@Query() filters: FindEventoDto) {
     return this.eventoService.findAll(filters);
   }
 
@@ -199,6 +193,7 @@ export class EventoController {
   @ApiQuery({ name: 'crsId', required: false, type: Number })
   @ApiQuery({ name: 'tecnicoId', required: false, type: Number })
   @ApiQuery({ name: 'paraQuien', required: false, type: String })
+  @ApiQuery({ name: 'tipoEventoId', required: false, type: Number })
   async findProcesos(@Query() filters: FindProcesoDto) {
     return this.eventoService.findAllProcesos(filters);
   }

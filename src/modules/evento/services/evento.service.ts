@@ -142,9 +142,10 @@ export class EventoService {
       crsId?: number;
       tecnicoId?: number;
       paraQuien?: string;
+      tipoEventoId?: number;
     },
   ) {
-    const { page = 1, limit = 20, crsId, tecnicoId, paraQuien } = filters;
+    const { page = 1, limit = 20, crsId, tecnicoId, paraQuien, tipoEventoId } = filters;
 
     const qb = this.procesoRepo
       .createQueryBuilder('p')
@@ -162,6 +163,7 @@ export class EventoService {
     if (crsId) qb.andWhere('p.crsId = :crsId', { crsId });
     if (tecnicoId) qb.andWhere('p.tecnicoId = :tecnicoId', { tecnicoId });
     if (paraQuien) qb.andWhere('p.paraQuien = :paraQuien', { paraQuien });
+    if (tipoEventoId) qb.andWhere('e.tipoEventoId = :tipoEventoId', { tipoEventoId });
 
     qb.orderBy('e.fechaEvento', 'DESC');
 
