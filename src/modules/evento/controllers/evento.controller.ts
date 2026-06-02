@@ -34,6 +34,7 @@ import { EjecutarValidacionDto } from '../dto/validacion.dto';
 import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 import { FinalizarEventoDto } from '../dto/finalizar-evento.dto';
+import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -93,6 +94,25 @@ export class EventoController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.eventoService.createCompleto(dtos, user.sub);
+  }
+
+  @Post('eventos/reagendar')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Reagendar un evento de instalacion o desinstalacion',
+    description:
+      'Cancela el evento existente de tipo INSTALACION o DESINSTALACION y crea un nuevo evento con nuevo proceso y agendamiento. Todo en una sola transaccion.',
+  })
+  @ApiResponse({ status: 201, description: 'Evento reagendado exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos invalidos' })
+  @ApiResponse({ status: 404, description: 'Evento no encontrado' })
+  @ApiResponse({ status: 409, description: 'El evento ya esta completado o cancelado' })
+  @ApiBody({ type: ReagendarEventoDto })
+  async reagendar(
+    @Body() dto: ReagendarEventoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventoService.reagendar(dto, user.sub);
   }
 
   @Put('eventos/:id')
