@@ -141,14 +141,7 @@ export class RegistrarInstalacionDto {
   dispositivos: CreateProcesoDispositivoDto[];
 
   @ApiPropertyOptional({
-    description: 'ID del agendamiento a actualizar. Si no se envía y el proceso tiene agendamiento, se usa el del proceso.',
-  })
-  @IsOptional()
-  @IsInt()
-  agendamientoId?: number;
-
-  @ApiPropertyOptional({
-    description: 'Datos a actualizar en el agendamiento',
+    description: 'Datos a actualizar en el agendamiento asociado al proceso',
   })
   @IsOptional()
   @ValidateNested()

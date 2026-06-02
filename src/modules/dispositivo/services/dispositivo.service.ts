@@ -109,7 +109,7 @@ export class DispositivoService {
       }
 
       if (dto.agendamiento && Object.keys(dto.agendamiento).length > 0) {
-        const agendamientoId = dto.agendamientoId;
+        const agendamientoId = proceso.agendamientoId;
 
         if (agendamientoId) {
           const agendamiento = await manager.findOne(Agendamiento, {
@@ -139,7 +139,7 @@ export class DispositivoService {
         detalles: JSON.stringify({
           cantidadDispositivos: saved.length,
           actualizoProceso: !!(dto.proceso && Object.keys(dto.proceso).length > 0),
-          actualizoAgendamiento: !!(dto.agendamientoId && dto.agendamiento && Object.keys(dto.agendamiento).length > 0),
+          actualizoAgendamiento: !!(dto.agendamiento && Object.keys(dto.agendamiento).length > 0),
         }),
       });
       await manager.save(accion);
