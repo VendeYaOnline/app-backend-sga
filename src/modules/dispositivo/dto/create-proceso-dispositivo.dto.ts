@@ -1,4 +1,12 @@
-import { IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateProcesoDispositivoDto {
@@ -21,4 +29,12 @@ export class CreateProcesoDispositivoDto {
   @IsString()
   @MaxLength(500)
   observaciones?: string;
+}
+
+export class CreateProcesoDispositivosDto {
+  @ApiProperty({ type: [CreateProcesoDispositivoDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProcesoDispositivoDto)
+  dispositivos: CreateProcesoDispositivoDto[];
 }

@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { DispositivoService } from '../services/dispositivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { CreateProcesoDispositivoDto } from '../dto/create-proceso-dispositivo.dto';
+import { CreateProcesoDispositivosDto } from '../dto/create-proceso-dispositivo.dto';
 
 @ApiTags('Dispositivos')
 @ApiBearerAuth()
@@ -47,13 +47,13 @@ export class DispositivoController {
   @Post('procesos/:eventoId/dispositivos')
   @HttpCode(201)
   @ApiOperation({
-    summary: 'Registrar dispositivo en proceso',
+    summary: 'Registrar dispositivos en proceso',
     description:
-      'Asocia un dispositivo a un proceso en terreno con un rol específico',
+      'Asocia uno o más dispositivos a un proceso en terreno con su rol específico',
   })
   @ApiResponse({
     status: 201,
-    description: 'Dispositivo registrado en el proceso',
+    description: 'Dispositivos registrados en el proceso',
   })
   @ApiResponse({
     status: 404,
@@ -64,10 +64,13 @@ export class DispositivoController {
     type: Number,
     description: 'ID del evento/proceso',
   })
-  async createProcesoDispositivo(
+  async createProcesoDispositivos(
     @Param('eventoId', ParseIntPipe) eventoId: number,
-    @Body() dto: CreateProcesoDispositivoDto,
+    @Body() dto: CreateProcesoDispositivosDto,
   ) {
-    return this.dispositivoService.createProcesoDispositivo(eventoId, dto);
+    return this.dispositivoService.createProcesoDispositivos(
+      eventoId,
+      dto.dispositivos,
+    );
   }
 }
