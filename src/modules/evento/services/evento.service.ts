@@ -320,6 +320,37 @@ export class EventoService {
         }
       }
 
+      const codigosAprobadoUnico = ['INSTALACION', 'DESINSTALACION'];
+      const tiposAprobadoUnicoIds = [...tipoMap.values()]
+        .filter((t) => codigosAprobadoUnico.includes(t.codigo))
+        .map((t) => t.id);
+
+      const dtosAprobadoUnico = dtos.filter((d) =>
+        tiposAprobadoUnicoIds.includes(d.tipoEventoId),
+      );
+
+      if (dtosAprobadoUnico.length > 0) {
+        const solicitudIdsAprobado = [
+          ...new Set(dtosAprobadoUnico.map((d) => d.solicitudId)),
+        ];
+        const aprobadosExistentes = await manager.find(Evento, {
+          where: {
+            solicitudId: In(solicitudIdsAprobado),
+            tipoEventoId: In(tiposAprobadoUnicoIds),
+            estadoEvento: 'APROBADO',
+            deletedAt: IsNull(),
+          },
+        });
+
+        if (aprobadosExistentes.length > 0) {
+          const primero = aprobadosExistentes[0];
+          const tipo = tipoMap.get(primero.tipoEventoId)!;
+          throw new ConflictException(
+            `La solicitud ${primero.solicitudId} ya tiene un evento de tipo "${tipo.descripcionEvento}" en estado APROBADO (ID: ${primero.id})`,
+          );
+        }
+      }
+
       const codigosResolucion = [
         'DECRETO_MONITOREO_INICIAL',
         'PRORROGA_EXTENSION',
