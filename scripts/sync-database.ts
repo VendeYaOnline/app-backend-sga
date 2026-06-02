@@ -86,9 +86,7 @@ import { Proceso } from '../src/modules/evento/entities/proceso.entity';
 import { ProcesoSoporteMotivo } from '../src/modules/evento/entities/proceso-soporte-motivo.entity';
 import { ProcesoSoporteDetalle } from '../src/modules/evento/entities/proceso-soporte-detalle.entity';
 
-import { Dispositivo } from '../src/modules/dispositivo/entities/dispositivo.entity';
 import { ProcesoDispositivo } from '../src/modules/dispositivo/entities/proceso-dispositivo.entity';
-import { ProcesoAccesorio } from '../src/modules/dispositivo/entities/proceso-accesorio.entity';
 
 import { Notificacion } from '../src/modules/notificacion/entities/notificacion.entity';
 import { NotificacionUsuario } from '../src/modules/notificacion/entities/notificacion-usuario.entity';
@@ -162,9 +160,7 @@ const entities = [
   ProcesoSoporteMotivo,
   ProcesoSoporteDetalle,
 
-  Dispositivo,
   ProcesoDispositivo,
-  ProcesoAccesorio,
 
   Notificacion,
   NotificacionUsuario,

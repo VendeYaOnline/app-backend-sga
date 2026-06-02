@@ -4,7 +4,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateProcesoDispositivoDto {
   @ApiProperty()
   @IsInt()
-  dispositivoId: number;
+  tipoAccesorioId: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  numeroSerie?: string;
 
   @ApiProperty()
   @IsInt()
