@@ -76,6 +76,7 @@ export class EventoService {
       .createQueryBuilder('e')
       .leftJoinAndSelect('e.tipoEvento', 'te')
       .leftJoinAndSelect('e.solicitud', 's')
+      .leftJoinAndSelect('s.condenado', 'c')
       .leftJoinAndSelect('e.asignado', 'a')
       .leftJoinAndSelect('e.eventoPadre', 'ep')
       .where('e.deletedAt IS NULL');
@@ -108,7 +109,7 @@ export class EventoService {
       where: { id, deletedAt: IsNull() },
       relations: {
         tipoEvento: true,
-        solicitud: true,
+        solicitud: { condenado: true },
         asignado: true,
         eventoPadre: true,
       },
@@ -395,7 +396,7 @@ export class EventoService {
         where: { id: In(ids), deletedAt: IsNull() },
         relations: {
           tipoEvento: true,
-          solicitud: true,
+          solicitud: { condenado: true },
           asignado: true,
           eventoPadre: true,
         },
