@@ -148,7 +148,14 @@ export class EventoService {
       tipoEventoId?: number;
     },
   ) {
-    const { page = 1, limit = 20, crsId, tecnicoId, paraQuien, tipoEventoId } = filters;
+    const {
+      page = 1,
+      limit = 20,
+      crsId,
+      tecnicoId,
+      paraQuien,
+      tipoEventoId,
+    } = filters;
 
     const qb = this.procesoRepo
       .createQueryBuilder('p')
@@ -166,7 +173,8 @@ export class EventoService {
     if (crsId) qb.andWhere('p.crsId = :crsId', { crsId });
     if (tecnicoId) qb.andWhere('p.tecnicoId = :tecnicoId', { tecnicoId });
     if (paraQuien) qb.andWhere('p.paraQuien = :paraQuien', { paraQuien });
-    if (tipoEventoId) qb.andWhere('e.tipoEventoId = :tipoEventoId', { tipoEventoId });
+    if (tipoEventoId)
+      qb.andWhere('e.tipoEventoId = :tipoEventoId', { tipoEventoId });
 
     qb.orderBy('e.fechaEvento', 'DESC');
 
@@ -291,7 +299,9 @@ export class EventoService {
           vistos.set(key, dto.solicitudId);
         }
 
-        const solicitudIdsUnicos = [...new Set(dtosUnicos.map((d) => d.solicitudId))];
+        const solicitudIdsUnicos = [
+          ...new Set(dtosUnicos.map((d) => d.solicitudId)),
+        ];
         const existentes = await manager.find(Evento, {
           where: {
             solicitudId: In(solicitudIdsUnicos),
@@ -344,7 +354,9 @@ export class EventoService {
         }
       }
 
-      const condDtos = noResolucionDtos.filter((d) => d.proceso?.paraQuien === 'CONDENADO');
+      const condDtos = noResolucionDtos.filter(
+        (d) => d.proceso?.paraQuien === 'CONDENADO',
+      );
       const victimaDtos = noResolucionDtos.filter(
         (d) => d.proceso?.paraQuien === 'VICTIMA',
       );
@@ -599,6 +611,120 @@ export class EventoService {
     return this.procesoRepo.save(proceso);
   }
 
+  async finalizarEventoCompleto(
+    eventoId: number,
+    dto: {
+      estadoEvento?: string;
+      estadoAgenda?: string;
+      realizado?: boolean;
+      motivoNoRealizadoId?: number;
+      detalleNoRealizado?: string;
+    },
+    userId: number,
+  ) {
+    if (
+      !dto.estadoEvento &&
+      dto.estadoAgenda === undefined &&
+      dto.realizado === undefined
+    ) {
+      throw new BadRequestException(
+        'Debe enviar al menos uno de: estadoEvento, estadoAgenda, realizado',
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const evento = await manager.findOne(Evento, {
+        where: { id: eventoId, deletedAt: IsNull() },
+      });
+      if (!evento) {
+        throw new NotFoundException(`Evento con ID ${eventoId} no encontrado`);
+      }
+
+      const resumen: string[] = [];
+
+      if (dto.estadoEvento !== undefined) {
+        evento.estadoEvento = dto.estadoEvento;
+        evento.updatedBy = userId;
+        await manager.save(evento);
+        resumen.push(`estadoEvento=${dto.estadoEvento}`);
+      }
+
+      if (dto.estadoAgenda !== undefined || dto.realizado !== undefined) {
+        const proceso = await manager.findOne(Proceso, {
+          where: { eventoId },
+        });
+        if (!proceso) {
+          throw new NotFoundException(
+            `Proceso no encontrado para el evento ${eventoId}`,
+          );
+        }
+
+        if (dto.estadoAgenda !== undefined) {
+          if (!proceso.agendamientoId) {
+            throw new UnprocessableEntityException(
+              'El proceso no tiene un agendamiento asociado',
+            );
+          }
+
+          const agendamiento = await manager.findOne(Agendamiento, {
+            where: { id: proceso.agendamientoId, deletedAt: IsNull() },
+          });
+          if (!agendamiento) {
+            throw new NotFoundException(
+              `Agendamiento con ID ${proceso.agendamientoId} no encontrado`,
+            );
+          }
+
+          agendamiento.estadoAgenda = dto.estadoAgenda;
+          agendamiento.updatedBy = userId;
+          await manager.save(agendamiento);
+          resumen.push(`estadoAgenda=${dto.estadoAgenda}`);
+        }
+
+        if (dto.realizado !== undefined) {
+          proceso.realizado = dto.realizado;
+          proceso.fechaCierre = new Date();
+          proceso.cerradoBy = userId;
+          if (!dto.realizado) {
+            proceso.motivoNoRealizadoId = dto.motivoNoRealizadoId ?? null;
+            proceso.detalleNoRealizado = dto.detalleNoRealizado ?? null;
+          }
+          await manager.save(proceso);
+          resumen.push(`realizado=${dto.realizado}`);
+        }
+      }
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'FINALIZAR_EVENTO',
+        entidad: 'EVENTO',
+        entidadId: evento.id,
+        solicitudId: evento.solicitudId,
+        fechaAccion: new Date(),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(
+        `Evento ${eventoId} finalizado por usuario ${userId}: ${resumen.join(', ')}`,
+      );
+
+      return this.findOne(eventoId);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async updateResolucion(eventoId: number, dto: any) {
     const existente = await this.resolucionRepo.findOne({
       where: { eventoId },
@@ -728,7 +854,13 @@ export class EventoService {
 
     const resoluciones = await this.resolucionRepo.find({
       where: { eventoId: In(decretoIds) },
-      relations: { tribunal: true, tipoLey: true, crs: true, tipoCausa: true, tipoPena: true },
+      relations: {
+        tribunal: true,
+        tipoLey: true,
+        crs: true,
+        tipoCausa: true,
+        tipoPena: true,
+      },
     });
 
     const procesos = await this.procesoRepo.find({

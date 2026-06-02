@@ -33,6 +33,7 @@ import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
 import { EjecutarValidacionDto } from '../dto/validacion.dto';
 import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
+import { FinalizarEventoDto } from '../dto/finalizar-evento.dto';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -108,6 +109,34 @@ export class EventoController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.eventoService.update(id, dto, user.sub);
+  }
+
+  @Post('eventos/:id/finalizar')
+  @ApiOperation({
+    summary: 'Finalizar evento, proceso y agendamiento',
+    description:
+      'Cambia el estado del evento, el estado del agendamiento y marca el proceso como realizado/no realizado. Todo en una sola transacción atómica.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Evento finalizado exitosamente',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Evento, proceso o agendamiento no encontrado',
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'El proceso no tiene agendamiento asociado',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'ID del evento' })
+  @ApiBody({ type: FinalizarEventoDto })
+  async finalizar(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: FinalizarEventoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventoService.finalizarEventoCompleto(id, dto, user.sub);
   }
 
   @Get('eventos/:id/validaciones')
@@ -369,7 +398,8 @@ export class EventoController {
   })
   @ApiResponse({
     status: 404,
-    description: 'No se encontró evento DECRETO_MONITOREO_INICIAL o INSTALACION para la solicitud',
+    description:
+      'No se encontró evento DECRETO_MONITOREO_INICIAL o INSTALACION para la solicitud',
   })
   @ApiParam({
     name: 'solicitudId',
