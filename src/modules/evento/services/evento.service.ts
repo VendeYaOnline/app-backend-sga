@@ -23,6 +23,7 @@ import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
+import { CreateEventoConProcesoDto } from '../dto/create-evento-con-proceso.dto';
 
 @Injectable()
 export class EventoService {
@@ -472,6 +473,113 @@ export class EventoService {
     await manager.save(accion);
 
     return saved;
+  }
+
+  async createConProceso(
+    dto: CreateEventoConProcesoDto,
+    userId: number,
+  ): Promise<Evento> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const tipoEvento = await manager.findOne(CatTipoEvento, {
+        where: { id: dto.tipoEventoId },
+      });
+      if (!tipoEvento) {
+        throw new BadRequestException('Tipo de evento no encontrado');
+      }
+
+      const { codigo } = tipoEvento;
+      const esProceso = ['INSTALACION', 'DESINSTALACION', 'SOPORTE'].includes(
+        codigo,
+      );
+
+      if (!esProceso) {
+        throw new BadRequestException(
+          `El tipo de evento "${codigo}" no es de categoria Proceso. Use /eventos/completo con resolucion.`,
+        );
+      }
+
+      const evento = manager.create(Evento, {
+        tipoEventoId: dto.tipoEventoId,
+        solicitudId: dto.solicitudId,
+        estadoEvento: 'APROBADO',
+        origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
+        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
+        asignadoA: dto.asignadoA,
+        eventoPadreId: dto.eventoPadreId ?? null,
+        observaciones: dto.observaciones,
+        createdBy: userId,
+      });
+      const saved = await manager.save(evento);
+
+      const { agendamiento: agData, ...procesoData } = dto.proceso as any;
+
+      const proceso = manager.create(Proceso, {
+        eventoId: saved.id,
+        ...procesoData,
+        paraQuien: dto.proceso.paraQuien || 'CONDENADO',
+        numeroIntento: dto.proceso.numeroIntento || 1,
+        realizado: dto.proceso.realizado ?? false,
+      });
+      await manager.save(proceso);
+      this.logger.log(
+        `Proceso creado para evento ${saved.id} (tipo: ${codigo}, para: ${proceso.paraQuien})`,
+      );
+
+      if (agData) {
+        const agendamiento = manager.create(Agendamiento, {
+          eventoId: saved.id,
+          fechaAgendada: new Date(agData.fechaAgendada),
+          horaInicioRango: agData.horaInicioRango ?? null,
+          horaFinRango: agData.horaFinRango ?? null,
+          asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
+          crsId: agData.crsId ?? dto.proceso.crsId ?? null,
+          regionId: agData.regionId ?? dto.proceso.regionId ?? null,
+          comunaId: agData.comunaId ?? dto.proceso.comunaId ?? null,
+          tipoLugarId: agData.tipoLugarId ?? null,
+          direccionAgenda:
+            agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
+          paraCondenado: dto.proceso.paraQuien === 'CONDENADO',
+          notas: agData.notas ?? null,
+          estadoAgenda: 'EN_PROCESO',
+          createdBy: userId,
+        });
+        const savedAgenda = await manager.save(agendamiento);
+
+        proceso.agendamientoId = savedAgenda.id;
+        await manager.save(proceso);
+        this.logger.log(
+          `Agendamiento ${savedAgenda.id} creado y vinculado a proceso ${saved.id}`,
+        );
+      }
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'CREAR_EVENTO',
+        entidad: 'EVENTO',
+        entidadId: saved.id,
+        solicitudId: saved.solicitudId,
+        fechaAccion: new Date(),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Evento ${saved.id} (tipo: ${codigo}) con proceso creado por usuario ${userId}`,
+      );
+
+      return this.findOne(saved.id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async update(id: number, dto: any, userId: number): Promise<Evento> {

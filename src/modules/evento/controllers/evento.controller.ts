@@ -33,6 +33,7 @@ import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
 import { EjecutarValidacionDto } from '../dto/validacion.dto';
 import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
+import { CreateEventoConProcesoDto } from '../dto/create-evento-con-proceso.dto';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -98,6 +99,30 @@ export class EventoController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.eventoService.createCompleto(dtos, user.sub);
+  }
+
+  @Post('eventos/con-proceso')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Crear un evento con proceso y agendamiento',
+    description:
+      'Crea un evento de categoria Proceso (instalacion, desinstalacion, soporte) junto con sus datos de proceso en terreno y, opcionalmente, agendamiento. Todo en una sola transaccion.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Evento con proceso creado exitosamente',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Datos invalidos o el tipo de evento no es de categoria Proceso',
+  })
+  @ApiBody({ type: CreateEventoConProcesoDto })
+  async createConProceso(
+    @Body() dto: CreateEventoConProcesoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventoService.createConProceso(dto, user.sub);
   }
 
   @Put('eventos/:id')
