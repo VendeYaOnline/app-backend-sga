@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   UnprocessableEntityException,
   Logger,
 } from '@nestjs/common';
@@ -265,6 +266,46 @@ export class EventoService {
         where: { id: In(tipoEventoIds) },
       });
       const tipoMap = new Map(tiposEvento.map((t: CatTipoEvento) => [t.id, t]));
+
+      const codigosUnicos = ['DECRETO_MONITOREO_INICIAL', 'CESE_CONTROL'];
+      const tiposUnicosIds = [...tipoMap.values()]
+        .filter((t) => codigosUnicos.includes(t.codigo))
+        .map((t) => t.id);
+
+      const dtosUnicos = dtos.filter((d) =>
+        tiposUnicosIds.includes(d.tipoEventoId),
+      );
+
+      if (dtosUnicos.length > 0) {
+        const vistos = new Map<string, number>();
+        for (const dto of dtosUnicos) {
+          const key = `${dto.solicitudId}-${dto.tipoEventoId}`;
+          if (vistos.has(key)) {
+            const tipo = tipoMap.get(dto.tipoEventoId)!;
+            throw new ConflictException(
+              `No se pueden crear múltiples eventos de tipo "${tipo.descripcionEvento}" para la solicitud ${dto.solicitudId} en una misma petición`,
+            );
+          }
+          vistos.set(key, dto.solicitudId);
+        }
+
+        const solicitudIdsUnicos = [...new Set(dtosUnicos.map((d) => d.solicitudId))];
+        const existentes = await manager.find(Evento, {
+          where: {
+            solicitudId: In(solicitudIdsUnicos),
+            tipoEventoId: In(tiposUnicosIds),
+            deletedAt: IsNull(),
+          },
+        });
+
+        if (existentes.length > 0) {
+          const primero = existentes[0];
+          const tipo = tipoMap.get(primero.tipoEventoId)!;
+          throw new ConflictException(
+            `La solicitud ${primero.solicitudId} ya tiene un evento de tipo "${tipo.descripcionEvento}" (ID: ${primero.id})`,
+          );
+        }
+      }
 
       const codigosResolucion = [
         'DECRETO_MONITOREO_INICIAL',
