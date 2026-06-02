@@ -160,4 +160,78 @@ export class DispositivoService {
       await queryRunner.release();
     }
   }
+
+  async replaceProcesoDispositivos(
+    eventoId: number,
+    dtos: CreateProcesoDispositivoDto[],
+    userId: number,
+  ): Promise<ProcesoDispositivo[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const proceso = await manager.findOne(Proceso, {
+        where: { eventoId },
+      });
+      if (!proceso) {
+        throw new NotFoundException(
+          `Proceso con evento ID ${eventoId} no encontrado`,
+        );
+      }
+
+      const existentesCount = await manager.count(ProcesoDispositivo, {
+        where: { eventoId },
+      });
+
+      await manager.delete(ProcesoDispositivo, { eventoId });
+
+      if (!dtos || dtos.length === 0) {
+        this.logger.log(
+          `Todos los dispositivos del proceso ${eventoId} fueron eliminados por usuario ${userId}`,
+        );
+      }
+
+      const dispositivos = dtos.map((dto) =>
+        manager.create(ProcesoDispositivo, {
+          eventoId,
+          ...dto,
+          fechaRegistro: new Date(),
+        }),
+      );
+      const saved = await manager.save(dispositivos);
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'EDITAR_DISPOSITIVOS',
+        entidad: 'PROCESO',
+        entidadId: eventoId,
+        fechaAccion: new Date(),
+        detalles: JSON.stringify({
+          cantidadAnterior: existentesCount,
+          cantidadNueva: saved.length,
+          eliminados: existentesCount,
+          creados: saved.length,
+        }),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Dispositivos del proceso ${eventoId} reemplazados: ${existentesCount} eliminados, ${saved.length} creados por usuario ${userId}`,
+      );
+      return saved;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `Error al reemplazar dispositivos del proceso ${eventoId}`,
+        error.stack,
+      );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }

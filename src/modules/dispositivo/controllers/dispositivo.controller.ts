@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Body,
   Param,
   ParseIntPipe,
@@ -103,5 +104,36 @@ export class DispositivoController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.dispositivoService.registrarInstalacion(eventoId, dto, user.sub);
+  }
+
+  @Put('procesos/:eventoId/dispositivos')
+  @ApiOperation({
+    summary: 'Reemplazar todos los dispositivos de un proceso',
+    description:
+      'Reemplaza la lista completa de dispositivos asociados a un proceso. Elimina los existentes y crea los nuevos en una sola transaccion. Util para agregar, quitar o modificar dispositivos de forma atomica.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Dispositivos reemplazados exitosamente',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Proceso no encontrado',
+  })
+  @ApiParam({
+    name: 'eventoId',
+    type: Number,
+    description: 'ID del evento/proceso',
+  })
+  async replaceProcesoDispositivos(
+    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Body() dto: CreateProcesoDispositivosDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.dispositivoService.replaceProcesoDispositivos(
+      eventoId,
+      dto.dispositivos,
+      user.sub,
+    );
   }
 }
