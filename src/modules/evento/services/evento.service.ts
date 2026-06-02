@@ -805,10 +805,9 @@ export class EventoService {
       const savedAgenda = await manager.save(agendamiento);
 
       proceso.agendamientoId = savedAgenda.id;
-      proceso.numeroIntento =
-        (await manager.count(Agendamiento, {
-          where: { eventoId: dto.eventoId, deletedAt: IsNull() },
-        }));
+      proceso.numeroIntento = await manager.count(Agendamiento, {
+        where: { eventoId: dto.eventoId, deletedAt: IsNull() },
+      });
       await manager.save(proceso);
 
       const accion = manager.create(AccionUsuario, {
@@ -929,78 +928,43 @@ export class EventoService {
     await this.soporteMotivoRepo.delete(motivoId);
   }
 
-  async findTrazabilidadInstalacion(solicitudId: number) {
-    const decretos = await this.eventoRepo
-      .createQueryBuilder('e')
-      .innerJoin('e.tipoEvento', 'te')
-      .where('e.solicitudId = :solicitudId', { solicitudId })
-      .andWhere('te.codigo = :codigo', { codigo: 'DECRETO_MONITOREO_INICIAL' })
-      .andWhere('e.deletedAt IS NULL')
-      .getMany();
+  async findTrazabilidadInstalacion(eventoId: number) {
+    const evento = await this.eventoRepo.findOne({
+      where: { id: eventoId, deletedAt: IsNull() },
+      relations: { tipoEvento: true },
+    });
 
-    if (!decretos.length) {
-      throw new NotFoundException(
-        `No se encontró evento DECRETO_MONITOREO_INICIAL para la solicitud ${solicitudId}`,
-      );
+    if (!evento) {
+      throw new NotFoundException(`Evento con ID ${eventoId} no encontrado`);
     }
 
-    const decretoIds = decretos.map((d) => d.id);
-
-    const instalaciones = await this.eventoRepo
-      .createQueryBuilder('e')
-      .innerJoin('e.tipoEvento', 'te')
-      .where('e.eventoPadreId IN (:...decretoIds)', { decretoIds })
-      .andWhere('te.codigo = :codigo', { codigo: 'INSTALACION' })
-      .andWhere('e.deletedAt IS NULL')
-      .getMany();
-
-    if (!instalaciones.length) {
-      throw new NotFoundException(
-        `No se encontraron eventos INSTALACION hijos del DECRETO_MONITOREO_INICIAL para la solicitud ${solicitudId}`,
-      );
-    }
-
-    const instalacionIds = instalaciones.map((i) => i.id);
-
-    const resoluciones = await this.resolucionRepo.find({
-      where: { eventoId: In(decretoIds) },
+    const proceso = await this.procesoRepo.findOne({
+      where: { eventoId },
       relations: {
-        tribunal: true,
-        tipoLey: true,
         crs: true,
-        tipoCausa: true,
-        tipoPena: true,
+        region: true,
+        comuna: true,
+        tecnico: true,
+        agendamiento: {
+          asignado: true,
+          crs: true,
+          region: true,
+          comuna: true,
+          tipoLugar: true,
+        },
       },
     });
 
-    const procesos = await this.procesoRepo.find({
-      where: { eventoId: In(instalacionIds) },
-      relations: { crs: true, region: true, comuna: true, tecnico: true },
-    });
-    const procesoMap = new Map(procesos.map((p) => [p.eventoId, p]));
-
     const dispositivos = await this.procesoDispositivoRepo.find({
-      where: { eventoId: In(instalacionIds) },
+      where: { eventoId },
       relations: { tipoAccesorio: true, rolDispositivo: true },
     });
-    const dispositivosPorEvento = new Map<number, ProcesoDispositivo[]>();
-    for (const d of dispositivos) {
-      const arr = dispositivosPorEvento.get(d.eventoId) || [];
-      arr.push(d);
-      dispositivosPorEvento.set(d.eventoId, arr);
-    }
 
     return {
-      solicitudId,
-      decretoMonitoreo: decretos.map((decreto) => ({
-        ...decreto,
-        resolucion: resoluciones.find((r) => r.eventoId === decreto.id) || null,
-      })),
-      instalaciones: instalaciones.map((instalacion) => ({
-        ...instalacion,
-        proceso: procesoMap.get(instalacion.id) || null,
-        dispositivos: dispositivosPorEvento.get(instalacion.id) || [],
-      })),
+      evento,
+      proceso: proceso || null,
+      agendamiento: proceso?.agendamiento || null,
+      dispositivos,
     };
   }
 }
