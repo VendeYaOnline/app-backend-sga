@@ -8,6 +8,7 @@ import {
 import { Solicitud } from './solicitud.entity';
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
+import { Evento } from '../../evento/entities/evento.entity';
 
 @Entity('sga.SOLICITUD_ESTADO_HIST')
 export class SolicitudEstadoHist {
@@ -59,4 +60,8 @@ export class SolicitudEstadoHist {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'usuario_id', referencedColumnName: 'id' })
   usuario: Usuario;
+
+  @ManyToOne(() => Evento)
+  @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
+  evento: Evento;
 }

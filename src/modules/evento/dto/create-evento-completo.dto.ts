@@ -252,14 +252,6 @@ export class CreateProcesoInlineDto {
   paraQuien?: string;
 
   @ApiPropertyOptional({
-    description:
-      'ID del proceso padre (FK a EVENTO, para vincular procesos de victimas al del condenado)',
-  })
-  @IsOptional()
-  @IsInt()
-  procesoPadreId?: number;
-
-  @ApiPropertyOptional({
     description: 'Numero de intento (1 para el primero)',
     minimum: 1,
   })

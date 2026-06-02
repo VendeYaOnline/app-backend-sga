@@ -12,12 +12,6 @@ export class Proceso {
   @PrimaryColumn({ name: 'evento_id', type: 'int' })
   eventoId: number;
 
-  @Column({ name: 'proceso_padre_id', type: 'int', nullable: true })
-  procesoPadreId: number | null;
-
-  @Column({ name: 'proceso_origen_id', type: 'int', nullable: true })
-  procesoOrigenId: number | null;
-
   @Column({ name: 'numero_intento', type: 'int', default: 1 })
   numeroIntento: number;
 
@@ -90,14 +84,6 @@ export class Proceso {
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;
-
-  @ManyToOne(() => Evento)
-  @JoinColumn({ name: 'proceso_padre_id', referencedColumnName: 'id' })
-  procesoPadre: Evento;
-
-  @ManyToOne(() => Evento)
-  @JoinColumn({ name: 'proceso_origen_id', referencedColumnName: 'id' })
-  procesoOrigen: Evento;
 
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'tecnico_id', referencedColumnName: 'id' })

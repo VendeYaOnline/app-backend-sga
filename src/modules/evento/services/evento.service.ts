@@ -367,18 +367,12 @@ export class EventoService {
           d.proceso?.paraQuien !== 'VICTIMA',
       );
 
-      let condEventoId: number | null = null;
-
       for (const dto of condDtos) {
         const evento = await this.crearEventoConHijas(dto, userId, manager);
         saved.push(evento);
-        if (!condEventoId) condEventoId = evento.id;
       }
 
       for (const dto of victimaDtos) {
-        if (condEventoId) {
-          dto.proceso = { ...dto.proceso!, procesoPadreId: condEventoId };
-        }
         saved.push(await this.crearEventoConHijas(dto, userId, manager));
       }
 

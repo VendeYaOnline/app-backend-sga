@@ -69,13 +69,6 @@ export class UpdateProcesoDto {
   paraQuien?: string;
 
   @ApiPropertyOptional({
-    description: 'ID del proceso origen (para reintentos)',
-  })
-  @IsOptional()
-  @IsInt()
-  procesoOrigenId?: number;
-
-  @ApiPropertyOptional({
     description: 'Número de intento (1 para el primero)',
     minimum: 1,
   })
