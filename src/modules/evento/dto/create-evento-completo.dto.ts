@@ -269,6 +269,14 @@ export class CreateProcesoInlineDto {
   numeroIntento?: number;
 
   @ApiPropertyOptional({
+    description: 'Indica si el proceso fue realizado',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  realizado?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Datos de agendamiento a crear junto con el proceso',
   })
   @IsOptional()

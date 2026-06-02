@@ -385,6 +385,7 @@ export class EventoService {
         ...procesoData,
         paraQuien: dto.proceso.paraQuien || 'CONDENADO',
         numeroIntento: dto.proceso.numeroIntento || 1,
+        realizado: dto.proceso.realizado ?? false,
       });
       await manager.save(proceso);
       this.logger.log(
