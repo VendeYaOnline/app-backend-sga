@@ -18,6 +18,7 @@ import {
 import { DispositivoService } from '../services/dispositivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CreateProcesoDispositivosDto } from '../dto/create-proceso-dispositivo.dto';
+import { RegistrarInstalacionDto } from '../dto/registrar-instalacion.dto';
 
 @ApiTags('Dispositivos')
 @ApiBearerAuth()
@@ -72,5 +73,32 @@ export class DispositivoController {
       eventoId,
       dto.dispositivos,
     );
+  }
+
+  @Post('procesos/:eventoId/instalacion')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Registrar instalación completa',
+    description:
+      'Registra los dispositivos de una instalación y opcionalmente actualiza el agendamiento asociado. Todo en una sola transacción.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Instalación registrada exitosamente',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Proceso o agendamiento no encontrado',
+  })
+  @ApiParam({
+    name: 'eventoId',
+    type: Number,
+    description: 'ID del evento/proceso de instalación',
+  })
+  async registrarInstalacion(
+    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Body() dto: RegistrarInstalacionDto,
+  ) {
+    return this.dispositivoService.registrarInstalacion(eventoId, dto);
   }
 }
