@@ -257,11 +257,52 @@ export class EventoService {
       const manager = queryRunner.manager;
       const saved: Evento[] = [];
 
-      const condDtos = dtos.filter((d) => d.proceso?.paraQuien === 'CONDENADO');
-      const victimaDtos = dtos.filter(
+      const tipoEventoIds = [...new Set(dtos.map((d) => d.tipoEventoId))];
+      const tiposEvento = await manager.find(CatTipoEvento, {
+        where: { id: In(tipoEventoIds) },
+      });
+      const tipoMap = new Map(tiposEvento.map((t: CatTipoEvento) => [t.id, t]));
+
+      const codigosResolucion = [
+        'DECRETO_MONITOREO_INICIAL',
+        'PRORROGA_EXTENSION',
+        'CESE_CONTROL',
+        'INFORME_CONTROL',
+        'INCOMPETENCIA',
+      ];
+      const codigosProceso = ['INSTALACION', 'DESINSTALACION', 'SOPORTE'];
+
+      const resolucionDtos = dtos.filter((d) => {
+        const tipo = tipoMap.get(d.tipoEventoId);
+        return tipo && codigosResolucion.includes(tipo.codigo);
+      });
+      const noResolucionDtos = dtos.filter((d) => {
+        const tipo = tipoMap.get(d.tipoEventoId);
+        return !tipo || !codigosResolucion.includes(tipo.codigo);
+      });
+
+      let resolucionEventoId: number | null = null;
+
+      for (const dto of resolucionDtos) {
+        const evento = await this.crearEventoConHijas(dto, userId, manager);
+        saved.push(evento);
+        if (!resolucionEventoId) resolucionEventoId = evento.id;
+      }
+
+      if (resolucionEventoId) {
+        for (const dto of noResolucionDtos) {
+          const tipo = tipoMap.get(dto.tipoEventoId);
+          if (tipo && codigosProceso.includes(tipo.codigo)) {
+            dto.eventoPadreId = resolucionEventoId;
+          }
+        }
+      }
+
+      const condDtos = noResolucionDtos.filter((d) => d.proceso?.paraQuien === 'CONDENADO');
+      const victimaDtos = noResolucionDtos.filter(
         (d) => d.proceso?.paraQuien === 'VICTIMA',
       );
-      const otros = dtos.filter(
+      const otros = noResolucionDtos.filter(
         (d) =>
           d.proceso?.paraQuien !== 'CONDENADO' &&
           d.proceso?.paraQuien !== 'VICTIMA',
