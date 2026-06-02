@@ -85,6 +85,12 @@ export class Agendamiento {
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime2', nullable: true })
   deletedAt: Date | null;
 
+  @Column({ name: 'updated_by', type: 'int', nullable: true })
+  updatedBy: number | null;
+
+  @Column({ name: 'deleted_by', type: 'int', nullable: true })
+  deletedBy: number | null;
+
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;

@@ -94,21 +94,29 @@ export class AgendamientoService {
     return this.findOne(saved.id);
   }
 
-  async update(id: number, dto: any): Promise<Agendamiento> {
+  async update(id: number, dto: any, userId: number): Promise<Agendamiento> {
     const agendamiento = await this.findOne(id);
-    Object.assign(agendamiento, dto);
+    Object.assign(agendamiento, dto, { updatedBy: userId });
     return this.agendamientoRepo.save(agendamiento);
   }
 
   async updateEstado(
     id: number,
-    dto: { estadoAgenda: string; regionId?: number; comunaId?: number; tipoLugarId?: number },
+    dto: {
+      estadoAgenda: string;
+      regionId?: number;
+      comunaId?: number;
+      tipoLugarId?: number;
+    },
+    userId: number,
   ): Promise<Agendamiento> {
     const agendamiento = await this.findOne(id);
     agendamiento.estadoAgenda = dto.estadoAgenda;
+    agendamiento.updatedBy = userId;
     if (dto.regionId !== undefined) agendamiento.regionId = dto.regionId;
     if (dto.comunaId !== undefined) agendamiento.comunaId = dto.comunaId;
-    if (dto.tipoLugarId !== undefined) agendamiento.tipoLugarId = dto.tipoLugarId;
+    if (dto.tipoLugarId !== undefined)
+      agendamiento.tipoLugarId = dto.tipoLugarId;
     return this.agendamientoRepo.save(agendamiento);
   }
 

@@ -2,6 +2,8 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
   Unique,
@@ -26,6 +28,12 @@ export class CatEstadoSolicitudTransicion {
 
   @Column({ name: 'activo', type: 'bit', default: 1 })
   activo: boolean;
+
+  @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetime2' })
+  updatedAt: Date;
 
   @ManyToOne(() => CatEstadoSolicitud)
   @JoinColumn({ name: 'estado_origen_id', referencedColumnName: 'id' })

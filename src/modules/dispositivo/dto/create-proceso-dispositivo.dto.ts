@@ -2,6 +2,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsBoolean,
   MaxLength,
   IsArray,
   ValidateNested,
@@ -24,17 +25,30 @@ export class CreateProcesoDispositivoDto {
   @IsInt()
   rolDispositivoId: number;
 
-  @ApiPropertyOptional({ description: 'Talla del dispositivo si aplica (ej: S/M/L/XL)' })
+  @ApiPropertyOptional({
+    description: 'Talla del dispositivo si aplica (ej: S/M/L/XL)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(10)
   talla?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Observaciones sobre el dispositivo',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Indica si fue entregado/recibido físicamente. NULL = no aplica',
+  })
+  @IsOptional()
+  @IsBoolean()
+  entregado?: boolean;
 }
 
 export class CreateProcesoDispositivosDto {

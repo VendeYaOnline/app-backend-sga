@@ -522,23 +522,29 @@ export class SolicitudService {
     return this.solicitudZonaRepo.save(zona);
   }
 
-  async updateZona(solicitudId: number, zonaId: number, dto: UpdateZonaDto) {
+  async updateZona(
+    solicitudId: number,
+    zonaId: number,
+    dto: UpdateZonaDto,
+    userId: number,
+  ) {
     const zona = await this.solicitudZonaRepo.findOne({
       where: { id: zonaId, solicitudId, deletedAt: IsNull() },
     });
     if (!zona)
       throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
-    Object.assign(zona, dto);
+    Object.assign(zona, dto, { updatedBy: userId });
     return this.solicitudZonaRepo.save(zona);
   }
 
-  async deleteZona(solicitudId: number, zonaId: number) {
+  async deleteZona(solicitudId: number, zonaId: number, userId: number) {
     const zona = await this.solicitudZonaRepo.findOne({
       where: { id: zonaId, solicitudId, deletedAt: IsNull() },
     });
     if (!zona)
       throw new NotFoundException(`Zona con ID ${zonaId} no encontrada`);
     zona.deletedAt = new Date();
+    zona.deletedBy = userId;
     await this.solicitudZonaRepo.save(zona);
   }
 

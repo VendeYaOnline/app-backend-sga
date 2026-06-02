@@ -113,6 +113,12 @@ export class SolicitudZona {
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime2', nullable: true })
   deletedAt: Date | null;
 
+  @Column({ name: 'updated_by', type: 'int', nullable: true })
+  updatedBy: number | null;
+
+  @Column({ name: 'deleted_by', type: 'int', nullable: true })
+  deletedBy: number | null;
+
   @ManyToOne(() => Solicitud)
   @JoinColumn({ name: 'solicitud_id', referencedColumnName: 'id' })
   solicitud: Solicitud;

@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('sga.CAT_ROL')
 export class CatRol {
@@ -18,4 +24,10 @@ export class CatRol {
     nullable: true,
   })
   descripcionRol: string | null;
+
+  @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetime2' })
+  updatedAt: Date;
 }

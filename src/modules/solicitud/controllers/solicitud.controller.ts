@@ -299,8 +299,9 @@ export class SolicitudController {
     @Param('id', ParseIntPipe) id: number,
     @Param('zonaId', ParseIntPipe) zonaId: number,
     @Body() dto: UpdateZonaDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.solicitudService.updateZona(id, zonaId, dto);
+    return this.solicitudService.updateZona(id, zonaId, dto, user.sub);
   }
 
   @Delete(':id/zonas/:zonaId')
@@ -316,8 +317,9 @@ export class SolicitudController {
   async deleteZona(
     @Param('id', ParseIntPipe) id: number,
     @Param('zonaId', ParseIntPipe) zonaId: number,
+    @CurrentUser() user: JwtPayload,
   ) {
-    await this.solicitudService.deleteZona(id, zonaId);
+    await this.solicitudService.deleteZona(id, zonaId, user.sub);
   }
 
   @Put(':id/zonas/:zonaId/validar')

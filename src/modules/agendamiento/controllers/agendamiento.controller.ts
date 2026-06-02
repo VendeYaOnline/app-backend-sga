@@ -132,8 +132,9 @@ export class AgendamientoController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAgendamientoDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.agendamientoService.update(id, dto);
+    return this.agendamientoService.update(id, dto, user.sub);
   }
 
   @Put(':id/estado')
@@ -148,7 +149,8 @@ export class AgendamientoController {
   async updateEstado(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEstadoAgendamientoDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.agendamientoService.updateEstado(id, dto);
+    return this.agendamientoService.updateEstado(id, dto, user.sub);
   }
 }

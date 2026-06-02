@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('sga.CAT_ESTADO_SOLICITUD')
 export class CatEstadoSolicitud {
@@ -19,4 +25,10 @@ export class CatEstadoSolicitud {
 
   @Column({ name: 'activo', type: 'bit', default: 1 })
   activo: boolean;
+
+  @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'datetime2' })
+  updatedAt: Date;
 }

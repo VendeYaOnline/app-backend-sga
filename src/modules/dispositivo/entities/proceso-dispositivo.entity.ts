@@ -17,7 +17,12 @@ export class ProcesoDispositivo {
   @Column({ name: 'evento_id', type: 'int' })
   eventoId: number;
 
-  @Column({ name: 'numero_serie', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'numero_serie',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   numeroSerie: string | null;
 
   @Column({ name: 'tipo_accesorio_id', type: 'int' })
@@ -39,6 +44,9 @@ export class ProcesoDispositivo {
 
   @Column({ name: 'talla', type: 'nvarchar', length: 10, nullable: true })
   talla: string | null;
+
+  @Column({ name: 'entregado', type: 'bit', nullable: true })
+  entregado: boolean | null;
 
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
