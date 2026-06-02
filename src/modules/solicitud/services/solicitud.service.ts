@@ -30,6 +30,10 @@ import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
 import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
+import { CreateZonaDto } from '../dto/create-solicitud.dto';
+import { UpdateZonaDto } from '../dto/update-zona.dto';
+import { CreateSolicitanteDto } from '../dto/create-solicitante.dto';
+import { UpdateSolicitanteDto } from '../dto/update-solicitante.dto';
 
 const ESTADO_INICIAL_CODIGO = 'RECEPCIONADA';
 
@@ -508,7 +512,7 @@ export class SolicitudService {
     await this.solicitudRepo.save(solicitud);
   }
 
-  async addZona(solicitudId: number, dto: any, userId: number) {
+  async addZona(solicitudId: number, dto: CreateZonaDto, userId: number) {
     await this.findOne(solicitudId);
     const zona = this.solicitudZonaRepo.create({
       solicitudId,
@@ -518,7 +522,7 @@ export class SolicitudService {
     return this.solicitudZonaRepo.save(zona);
   }
 
-  async updateZona(solicitudId: number, zonaId: number, dto: any) {
+  async updateZona(solicitudId: number, zonaId: number, dto: UpdateZonaDto) {
     const zona = await this.solicitudZonaRepo.findOne({
       where: { id: zonaId, solicitudId, deletedAt: IsNull() },
     });
@@ -550,7 +554,7 @@ export class SolicitudService {
     return this.solicitudZonaRepo.save(zona);
   }
 
-  async addSolicitante(solicitudId: number, dto: any) {
+  async addSolicitante(solicitudId: number, dto: CreateSolicitanteDto) {
     const solicitante = this.solicitanteRepo.create({ solicitudId, ...dto });
     return this.solicitanteRepo.save(solicitante);
   }
@@ -558,7 +562,7 @@ export class SolicitudService {
   async updateSolicitante(
     solicitudId: number,
     solicitanteId: number,
-    dto: any,
+    dto: UpdateSolicitanteDto,
   ) {
     const sol = await this.solicitanteRepo.findOne({
       where: { id: solicitanteId, solicitudId },
@@ -636,7 +640,7 @@ export class SolicitudService {
     await this.solicitudDelitoRepo.remove(sd);
   }
 
-  async getTransicionesPermitidas(solicitudId: number, roleCodes: string[]) {
+  async findTransicionesPermitidas(solicitudId: number, roleCodes: string[]) {
     const solicitud = await this.findOne(solicitudId);
 
     const roles = await this.dataSource.getRepository(CatRol).find({
