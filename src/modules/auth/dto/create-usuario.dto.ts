@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsInt,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -27,6 +28,13 @@ export class CreateUsuarioDto {
   @IsNotEmpty()
   @MaxLength(12)
   run: string;
+
+  @ApiProperty({ example: 'MiPassword123', minLength: 8 })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  @MaxLength(100)
+  password: string;
 
   @ApiProperty({ example: 'Juan' })
   @IsString()

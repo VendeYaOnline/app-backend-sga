@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
@@ -198,9 +199,12 @@ export class UsuarioService {
       throw new ConflictException(`El RUN "${dto.run}" ya está registrado`);
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const passHash = await bcrypt.hash(dto.password, salt);
+
     const usuario = this.usuarioRepo.create({
       ...dto,
-      passHash: dto.debeCambiarPass ? null : null,
+      passHash,
       createdBy: userId,
     });
     return this.usuarioRepo.save(usuario);
