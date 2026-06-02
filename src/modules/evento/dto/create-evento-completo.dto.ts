@@ -277,6 +277,13 @@ export class CreateProcesoInlineDto {
   realizado?: boolean;
 
   @ApiPropertyOptional({
+    description: 'Notas adicionales del técnico sobre el proceso',
+  })
+  @IsOptional()
+  @IsString()
+  notas?: string;
+
+  @ApiPropertyOptional({
     description: 'Datos de agendamiento a crear junto con el proceso',
   })
   @IsOptional()

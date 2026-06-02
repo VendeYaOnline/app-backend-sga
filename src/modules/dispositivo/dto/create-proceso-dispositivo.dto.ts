@@ -24,6 +24,12 @@ export class CreateProcesoDispositivoDto {
   @IsInt()
   rolDispositivoId: number;
 
+  @ApiPropertyOptional({ description: 'Talla del dispositivo si aplica (ej: S/M/L/XL)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  talla?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

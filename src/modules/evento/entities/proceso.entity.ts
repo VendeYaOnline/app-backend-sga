@@ -76,6 +76,9 @@ export class Proceso {
   @Column({ name: 'cerrado_by', type: 'int', nullable: true })
   cerradoBy: number | null;
 
+  @Column({ name: 'notas', type: 'nvarchar', length: 'max', nullable: true })
+  notas: string | null;
+
   @Column({
     name: 'para_quien',
     type: 'nvarchar',

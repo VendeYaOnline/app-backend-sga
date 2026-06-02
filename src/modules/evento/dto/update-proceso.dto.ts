@@ -84,4 +84,11 @@ export class UpdateProcesoDto {
   @IsOptional()
   @IsString()
   horaSalida?: string;
+
+  @ApiPropertyOptional({
+    description: 'Notas adicionales del técnico sobre el proceso',
+  })
+  @IsOptional()
+  @IsString()
+  notas?: string;
 }

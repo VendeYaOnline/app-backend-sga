@@ -37,6 +37,9 @@ export class ProcesoDispositivo {
   })
   observaciones: string | null;
 
+  @Column({ name: 'talla', type: 'nvarchar', length: 10, nullable: true })
+  talla: string | null;
+
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;
