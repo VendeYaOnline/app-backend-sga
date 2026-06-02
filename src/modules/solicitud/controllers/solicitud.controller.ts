@@ -25,6 +25,10 @@ import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
 import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
 import { CreateFactibilidadDto } from '../dto/create-factibilidad.dto';
+import { CreateZonaDto } from '../dto/create-solicitud.dto';
+import { UpdateZonaDto } from '../dto/update-zona.dto';
+import { CreateSolicitanteDto } from '../dto/create-solicitante.dto';
+import { UpdateSolicitanteDto } from '../dto/update-solicitante.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
@@ -242,11 +246,11 @@ export class SolicitudController {
     description: 'Lista de transiciones permitidas',
   })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
-  async getTransicionesPermitidas(
+  async findTransicionesPermitidas(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.solicitudService.getTransicionesPermitidas(id, user.roles);
+    return this.solicitudService.findTransicionesPermitidas(id, user.roles);
   }
 
   @Get(':id/zonas')
@@ -275,7 +279,7 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async addZona(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: any,
+    @Body() dto: CreateZonaDto,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.solicitudService.addZona(id, dto, user.sub);
@@ -294,7 +298,7 @@ export class SolicitudController {
   async updateZona(
     @Param('id', ParseIntPipe) id: number,
     @Param('zonaId', ParseIntPipe) zonaId: number,
-    @Body() dto: any,
+    @Body() dto: UpdateZonaDto,
   ) {
     return this.solicitudService.updateZona(id, zonaId, dto);
   }
@@ -361,7 +365,7 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async addSolicitante(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: any,
+    @Body() dto: CreateSolicitanteDto,
   ) {
     return this.solicitudService.addSolicitante(id, dto);
   }
@@ -389,7 +393,7 @@ export class SolicitudController {
   async updateSolicitante(
     @Param('id', ParseIntPipe) id: number,
     @Param('solicitanteId', ParseIntPipe) solicitanteId: number,
-    @Body() dto: any,
+    @Body() dto: UpdateSolicitanteDto,
   ) {
     return this.solicitudService.updateSolicitante(id, solicitanteId, dto);
   }
