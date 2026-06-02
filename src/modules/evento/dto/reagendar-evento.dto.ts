@@ -3,63 +3,75 @@ import {
   IsOptional,
   IsString,
   IsDateString,
-  ValidateNested,
+  MaxLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CreateProcesoInlineDto } from './create-evento-completo.dto';
 
 export class ReagendarEventoDto {
   @ApiProperty({
-    description: 'ID del evento existente a cancelar y reagendar',
+    description: 'ID del evento existente cuyo proceso se va a reagendar',
   })
   @IsInt()
   eventoId: number;
 
-  @ApiProperty({ description: 'ID del tipo de evento (FK a CAT_TIPO_EVENTO)' })
-  @IsInt()
-  tipoEventoId: number;
+  @ApiProperty({
+    description: 'Fecha y hora agendada para el nuevo agendamiento (ISO 8601)',
+  })
+  @IsDateString()
+  fechaAgendada: string;
 
-  @ApiProperty({ description: 'ID de la solicitud asociada' })
-  @IsInt()
-  solicitudId: number;
+  @ApiPropertyOptional({ description: 'Hora inicio del rango (HH:mm:ss)' })
+  @IsOptional()
+  @IsString()
+  horaInicioRango?: string;
 
-  @ApiPropertyOptional({ description: 'ID del usuario asignado' })
+  @ApiPropertyOptional({ description: 'Hora fin del rango (HH:mm:ss)' })
+  @IsOptional()
+  @IsString()
+  horaFinRango?: string;
+
+  @ApiPropertyOptional({ description: 'ID del tecnico asignado' })
   @IsOptional()
   @IsInt()
   asignadoA?: number;
 
+  @ApiPropertyOptional({ description: 'ID del CRS para el agendamiento' })
+  @IsOptional()
+  @IsInt()
+  crsId?: number;
+
+  @ApiPropertyOptional({ description: 'ID de la region para el agendamiento' })
+  @IsOptional()
+  @IsInt()
+  regionId?: number;
+
+  @ApiPropertyOptional({ description: 'ID de la comuna para el agendamiento' })
+  @IsOptional()
+  @IsInt()
+  comunaId?: number;
+
   @ApiPropertyOptional({
-    description: 'FK al evento padre (ej: decreto que origina una instalacion)',
+    description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)',
   })
   @IsOptional()
   @IsInt()
-  eventoPadreId?: number;
-
-  @ApiPropertyOptional({ description: 'Fecha del evento (YYYY-MM-DD)' })
-  @IsOptional()
-  @IsDateString()
-  fechaEvento?: string;
+  tipoLugarId?: number;
 
   @ApiPropertyOptional({
-    description: 'Origen de creacion del evento',
-    default: 'FORMULARIO_WEB',
+    description: 'Direccion del agendamiento',
+    maxLength: 500,
   })
   @IsOptional()
   @IsString()
-  origenCreacion?: string;
-
-  @ApiPropertyOptional({ description: 'Observaciones generales del evento' })
-  @IsOptional()
-  @IsString()
-  observaciones?: string;
+  @MaxLength(500)
+  direccionAgenda?: string;
 
   @ApiPropertyOptional({
-    description:
-      'Datos de proceso en terreno con agendamiento incluido (solo para tipos de evento de categoria Proceso)',
+    description: 'Notas del agendamiento',
+    maxLength: 500,
   })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateProcesoInlineDto)
-  proceso?: CreateProcesoInlineDto;
+  @IsString()
+  @MaxLength(500)
+  notas?: string;
 }

@@ -755,7 +755,7 @@ export class EventoService {
   async reagendar(
     dto: ReagendarEventoDto,
     userId: number,
-  ): Promise<Evento> {
+  ): Promise<Agendamiento> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -763,45 +763,20 @@ export class EventoService {
     try {
       const manager = queryRunner.manager;
 
-      const oldEvento = await manager.findOne(Evento, {
-        where: { id: dto.eventoId, deletedAt: IsNull() },
-        relations: { tipoEvento: true },
-      });
-
-      if (!oldEvento) {
-        throw new NotFoundException(
-          `Evento con ID ${dto.eventoId} no encontrado`,
-        );
-      }
-
-      const { codigo } = oldEvento.tipoEvento;
-
-      if (!['INSTALACION', 'DESINSTALACION'].includes(codigo)) {
-        throw new BadRequestException(
-          `El evento ${dto.eventoId} es de tipo "${codigo}". Solo se pueden reagendar eventos de tipo INSTALACION o DESINSTALACION.`,
-        );
-      }
-
-      if (
-        oldEvento.estadoEvento === 'COMPLETADO' ||
-        oldEvento.estadoEvento === 'CANCELADO'
-      ) {
-        throw new ConflictException(
-          `El evento ${dto.eventoId} ya está en estado "${oldEvento.estadoEvento}" y no puede ser reagendado.`,
-        );
-      }
-
-      oldEvento.estadoEvento = 'CANCELADO';
-      oldEvento.updatedBy = userId;
-      await manager.save(oldEvento);
-
-      const oldProceso = await manager.findOne(Proceso, {
+      const proceso = await manager.findOne(Proceso, {
         where: { eventoId: dto.eventoId },
+        relations: { evento: true },
       });
 
-      if (oldProceso?.agendamientoId) {
+      if (!proceso) {
+        throw new NotFoundException(
+          `No se encontro el proceso asociado al evento ${dto.eventoId}`,
+        );
+      }
+
+      if (proceso.agendamientoId) {
         const oldAgenda = await manager.findOne(Agendamiento, {
-          where: { id: oldProceso.agendamientoId },
+          where: { id: proceso.agendamientoId, deletedAt: IsNull() },
         });
         if (oldAgenda) {
           oldAgenda.estadoAgenda = 'NO_REALIZADO';
@@ -810,97 +785,48 @@ export class EventoService {
         }
       }
 
-      const evento = manager.create(Evento, {
-        tipoEventoId: dto.tipoEventoId,
-        solicitudId: dto.solicitudId,
-        estadoEvento: 'APROBADO',
-        origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
-        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
-        asignadoA: dto.asignadoA,
-        eventoPadreId: dto.eventoPadreId ?? null,
-        observaciones: dto.observaciones,
+      const agendamiento = manager.create(Agendamiento, {
+        eventoId: dto.eventoId,
+        fechaAgendada: new Date(dto.fechaAgendada),
+        horaInicioRango: dto.horaInicioRango ?? null,
+        horaFinRango: dto.horaFinRango ?? null,
+        asignadoA: dto.asignadoA ?? null,
+        crsId: dto.crsId ?? proceso.crsId ?? null,
+        regionId: dto.regionId ?? proceso.regionId ?? null,
+        comunaId: dto.comunaId ?? proceso.comunaId ?? null,
+        tipoLugarId: dto.tipoLugarId ?? null,
+        direccionAgenda:
+          dto.direccionAgenda ?? proceso.direccionProceso ?? null,
+        paraCondenado: proceso.paraQuien === 'CONDENADO',
+        notas: dto.notas ?? null,
+        estadoAgenda: 'EN_PROCESO',
         createdBy: userId,
       });
-      const savedEvento = await manager.save(evento);
+      const savedAgenda = await manager.save(agendamiento);
 
-      if (dto.proceso) {
-        const { agendamiento: agData, ...procesoData } = dto.proceso as any;
-        const paraQuien = dto.proceso.paraQuien || 'CONDENADO';
-
-        const nuevoIntento =
-          (await manager.count(Proceso, {
-            where: {
-              evento: {
-                solicitudId: dto.solicitudId,
-                tipoEventoId: dto.tipoEventoId,
-              },
-              paraQuien,
-            },
-          })) + 1;
-
-        const proceso = manager.create(Proceso, {
-          eventoId: savedEvento.id,
-          ...procesoData,
-          paraQuien,
-          numeroIntento: nuevoIntento,
-          realizado: dto.proceso.realizado ?? false,
-        });
-        await manager.save(proceso);
-
-        if (agData) {
-          const agendamiento = manager.create(Agendamiento, {
-            eventoId: savedEvento.id,
-            fechaAgendada: new Date(agData.fechaAgendada),
-            horaInicioRango: agData.horaInicioRango ?? null,
-            horaFinRango: agData.horaFinRango ?? null,
-            asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
-            crsId: agData.crsId ?? dto.proceso.crsId ?? null,
-            regionId: agData.regionId ?? dto.proceso.regionId ?? null,
-            comunaId: agData.comunaId ?? dto.proceso.comunaId ?? null,
-            tipoLugarId: agData.tipoLugarId ?? null,
-            direccionAgenda:
-              agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
-            paraCondenado: paraQuien === 'CONDENADO',
-            notas: agData.notas ?? null,
-            estadoAgenda: 'EN_PROCESO',
-            createdBy: userId,
-          });
-          const savedAgenda = await manager.save(agendamiento);
-
-          proceso.agendamientoId = savedAgenda.id;
-          await manager.save(proceso);
-        }
-      }
+      proceso.agendamientoId = savedAgenda.id;
+      proceso.numeroIntento =
+        (await manager.count(Agendamiento, {
+          where: { eventoId: dto.eventoId, deletedAt: IsNull() },
+        }));
+      await manager.save(proceso);
 
       const accion = manager.create(AccionUsuario, {
         usuarioId: userId,
         tipoAccion: 'REAGENDAR_EVENTO',
-        entidad: 'EVENTO',
-        entidadId: savedEvento.id,
-        solicitudId: savedEvento.solicitudId,
+        entidad: 'AGENDAMIENTO',
+        entidadId: savedAgenda.id,
+        solicitudId: proceso.evento?.solicitudId ?? null,
         fechaAccion: new Date(),
-        detalles: JSON.stringify({
-          evento_anterior_id: oldEvento.id,
-          estado_anterior: 'CANCELADO',
-        }),
       });
       await manager.save(accion);
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Evento ${oldEvento.id} reagendado → nuevo evento ${savedEvento.id}`,
+        `Agendamiento ${savedAgenda.id} creado para proceso del evento ${dto.eventoId} (intento ${proceso.numeroIntento})`,
       );
 
-      const result = await this.eventoRepo.findOne({
-        where: { id: savedEvento.id, deletedAt: IsNull() },
-        relations: {
-          tipoEvento: true,
-          solicitud: true,
-          asignado: true,
-          eventoPadre: true,
-        },
-      });
-      return result!;
+      return savedAgenda;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

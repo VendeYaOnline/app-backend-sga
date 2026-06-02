@@ -99,14 +99,12 @@ export class EventoController {
   @Post('eventos/reagendar')
   @HttpCode(201)
   @ApiOperation({
-    summary: 'Reagendar un evento de instalacion o desinstalacion',
+    summary: 'Reagendar el agendamiento de un proceso',
     description:
-      'Cancela el evento existente de tipo INSTALACION o DESINSTALACION y crea un nuevo evento con nuevo proceso y agendamiento. Todo en una sola transaccion.',
+      'Marca el agendamiento anterior como NO_REALIZADO, crea un nuevo agendamiento y lo asigna al proceso existente. El numero de intento se recalcula automaticamente.',
   })
-  @ApiResponse({ status: 201, description: 'Evento reagendado exitosamente' })
-  @ApiResponse({ status: 400, description: 'Datos invalidos' })
-  @ApiResponse({ status: 404, description: 'Evento no encontrado' })
-  @ApiResponse({ status: 409, description: 'El evento ya esta completado o cancelado' })
+  @ApiResponse({ status: 201, description: 'Agendamiento creado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
   @ApiBody({ type: ReagendarEventoDto })
   async reagendar(
     @Body() dto: ReagendarEventoDto,
