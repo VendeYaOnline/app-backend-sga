@@ -381,4 +381,29 @@ export class EventoController {
   ) {
     return this.eventoService.updateCambioDomicilio(eventoId, dto);
   }
+
+  @Get('eventos/trazabilidad-instalacion/:solicitudId')
+  @ApiOperation({
+    summary: 'Trazabilidad de instalación para desinstalación',
+    description:
+      'Retorna la trazabilidad completa de los eventos de instalación hijos del decreto monitoreo de una solicitud. Incluye los datos del decreto monitoreo, la resolución judicial asociada, los eventos de instalación, los datos de cada proceso de instalación (dirección, CRS, región, comuna, técnico) y el detalle de dispositivos instalados.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Trazabilidad de instalación',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No se encontró evento DECRETO_MONITOREO_INICIAL o INSTALACION para la solicitud',
+  })
+  @ApiParam({
+    name: 'solicitudId',
+    type: Number,
+    description: 'ID de la solicitud',
+  })
+  async findTrazabilidadInstalacion(
+    @Param('solicitudId', ParseIntPipe) solicitudId: number,
+  ) {
+    return this.eventoService.findTrazabilidadInstalacion(solicitudId);
+  }
 }

@@ -18,6 +18,7 @@ import { ResolucionCambioDomicilio } from '../entities/resolucion-cambio-domicil
 import { Proceso } from '../entities/proceso.entity';
 import { ProcesoSoporteDetalle } from '../entities/proceso-soporte-detalle.entity';
 import { ProcesoSoporteMotivo } from '../entities/proceso-soporte-motivo.entity';
+import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
@@ -46,6 +47,8 @@ export class EventoService {
     private readonly soporteDetalleRepo: Repository<ProcesoSoporteDetalle>,
     @InjectRepository(ProcesoSoporteMotivo)
     private readonly soporteMotivoRepo: Repository<ProcesoSoporteMotivo>,
+    @InjectRepository(ProcesoDispositivo)
+    private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
     @InjectRepository(CatTipoEvento)
     private readonly tipoEventoRepo: Repository<CatTipoEvento>,
     @InjectRepository(CatTipoEventoValidacion)
@@ -796,5 +799,74 @@ export class EventoService {
     });
     if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
     await this.soporteMotivoRepo.delete(motivoId);
+  }
+
+  async findTrazabilidadInstalacion(solicitudId: number) {
+    const decretos = await this.eventoRepo
+      .createQueryBuilder('e')
+      .innerJoin('e.tipoEvento', 'te')
+      .where('e.solicitudId = :solicitudId', { solicitudId })
+      .andWhere('te.codigo = :codigo', { codigo: 'DECRETO_MONITOREO_INICIAL' })
+      .andWhere('e.deletedAt IS NULL')
+      .getMany();
+
+    if (!decretos.length) {
+      throw new NotFoundException(
+        `No se encontró evento DECRETO_MONITOREO_INICIAL para la solicitud ${solicitudId}`,
+      );
+    }
+
+    const decretoIds = decretos.map((d) => d.id);
+
+    const instalaciones = await this.eventoRepo
+      .createQueryBuilder('e')
+      .innerJoin('e.tipoEvento', 'te')
+      .where('e.eventoPadreId IN (:...decretoIds)', { decretoIds })
+      .andWhere('te.codigo = :codigo', { codigo: 'INSTALACION' })
+      .andWhere('e.deletedAt IS NULL')
+      .getMany();
+
+    if (!instalaciones.length) {
+      throw new NotFoundException(
+        `No se encontraron eventos INSTALACION hijos del DECRETO_MONITOREO_INICIAL para la solicitud ${solicitudId}`,
+      );
+    }
+
+    const instalacionIds = instalaciones.map((i) => i.id);
+
+    const resoluciones = await this.resolucionRepo.find({
+      where: { eventoId: In(decretoIds) },
+      relations: { tribunal: true, tipoLey: true, crs: true, tipoCausa: true, tipoPena: true },
+    });
+
+    const procesos = await this.procesoRepo.find({
+      where: { eventoId: In(instalacionIds) },
+      relations: { crs: true, region: true, comuna: true, tecnico: true },
+    });
+    const procesoMap = new Map(procesos.map((p) => [p.eventoId, p]));
+
+    const dispositivos = await this.procesoDispositivoRepo.find({
+      where: { eventoId: In(instalacionIds) },
+      relations: { tipoAccesorio: true, rolDispositivo: true },
+    });
+    const dispositivosPorEvento = new Map<number, ProcesoDispositivo[]>();
+    for (const d of dispositivos) {
+      const arr = dispositivosPorEvento.get(d.eventoId) || [];
+      arr.push(d);
+      dispositivosPorEvento.set(d.eventoId, arr);
+    }
+
+    return {
+      solicitudId,
+      decretoMonitoreo: decretos.map((decreto) => ({
+        ...decreto,
+        resolucion: resoluciones.find((r) => r.eventoId === decreto.id) || null,
+      })),
+      instalaciones: instalaciones.map((instalacion) => ({
+        ...instalacion,
+        proceso: procesoMap.get(instalacion.id) || null,
+        dispositivos: dispositivosPorEvento.get(instalacion.id) || [],
+      })),
+    };
   }
 }

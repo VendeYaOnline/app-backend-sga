@@ -13,6 +13,7 @@ import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
 import { CatTipoEvento } from '../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
+import { ProcesoDispositivo } from '../dispositivo/entities/proceso-dispositivo.entity';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
       Proceso,
       ProcesoSoporteDetalle,
       ProcesoSoporteMotivo,
+      ProcesoDispositivo,
       AccionUsuario,
       CatTipoEvento,
       CatTipoEventoValidacion,
