@@ -17,6 +17,8 @@ import {
 } from '@nestjs/swagger';
 import { DispositivoService } from '../services/dispositivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { CreateProcesoDispositivosDto } from '../dto/create-proceso-dispositivo.dto';
 import { RegistrarInstalacionDto } from '../dto/registrar-instalacion.dto';
 
@@ -80,7 +82,7 @@ export class DispositivoController {
   @ApiOperation({
     summary: 'Registrar instalación completa',
     description:
-      'Registra los dispositivos de una instalación y opcionalmente actualiza el agendamiento asociado. Todo en una sola transacción.',
+      'Registra los dispositivos de una instalación y opcionalmente actualiza el proceso y el agendamiento asociado. Todo en una sola transacción.',
   })
   @ApiResponse({
     status: 201,
@@ -98,7 +100,8 @@ export class DispositivoController {
   async registrarInstalacion(
     @Param('eventoId', ParseIntPipe) eventoId: number,
     @Body() dto: RegistrarInstalacionDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.dispositivoService.registrarInstalacion(eventoId, dto);
+    return this.dispositivoService.registrarInstalacion(eventoId, dto, user.sub);
   }
 }

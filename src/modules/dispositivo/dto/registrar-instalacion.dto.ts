@@ -4,6 +4,7 @@ import {
   IsInt,
   IsString,
   IsIn,
+  IsBoolean,
   IsDateString,
   MaxLength,
   ValidateNested,
@@ -11,6 +12,60 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateProcesoDispositivoDto } from './create-proceso-dispositivo.dto';
+
+export class UpdateProcesoInlineDto {
+  @ApiPropertyOptional({ description: 'Fecha y hora de ejecución real (ISO 8601)' })
+  @IsOptional()
+  @IsDateString()
+  fechaEjecucion?: string;
+
+  @ApiPropertyOptional({ description: 'Hora de llegada al lugar (HH:mm:ss)' })
+  @IsOptional()
+  @IsString()
+  horaLlegada?: string;
+
+  @ApiPropertyOptional({ description: 'Hora de salida del lugar (HH:mm:ss)' })
+  @IsOptional()
+  @IsString()
+  horaSalida?: string;
+
+  @ApiPropertyOptional({ description: 'Indica si el proceso fue realizado' })
+  @IsOptional()
+  @IsBoolean()
+  realizado?: boolean;
+
+  @ApiPropertyOptional({ description: 'ID del motivo si no se realizó' })
+  @IsOptional()
+  @IsInt()
+  motivoNoRealizadoId?: number;
+
+  @ApiPropertyOptional({ description: 'Detalle si no se realizó', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  detalleNoRealizado?: string;
+
+  @ApiPropertyOptional({ description: 'Notas adicionales del técnico' })
+  @IsOptional()
+  @IsString()
+  notas?: string;
+
+  @ApiPropertyOptional({ description: 'ID de la región donde se ejecutó' })
+  @IsOptional()
+  @IsInt()
+  regionId?: number;
+
+  @ApiPropertyOptional({ description: 'ID de la comuna donde se ejecutó' })
+  @IsOptional()
+  @IsInt()
+  comunaId?: number;
+
+  @ApiPropertyOptional({ description: 'Dirección real donde se ejecutó', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  direccionProceso?: string;
+}
 
 export class UpdateAgendamientoInlineDto {
   @ApiPropertyOptional({
@@ -99,4 +154,12 @@ export class RegistrarInstalacionDto {
   @ValidateNested()
   @Type(() => UpdateAgendamientoInlineDto)
   agendamiento?: UpdateAgendamientoInlineDto;
+
+  @ApiPropertyOptional({
+    description: 'Datos a actualizar en el proceso',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UpdateProcesoInlineDto)
+  proceso?: UpdateProcesoInlineDto;
 }

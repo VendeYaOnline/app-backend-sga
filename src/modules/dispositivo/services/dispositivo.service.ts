@@ -6,7 +6,9 @@ import {
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ProcesoDispositivo } from '../entities/proceso-dispositivo.entity';
+import { Proceso } from '../../evento/entities/proceso.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
+import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
 import { CreateProcesoDispositivoDto } from '../dto/create-proceso-dispositivo.dto';
 import { RegistrarInstalacionDto } from '../dto/registrar-instalacion.dto';
 
@@ -21,6 +23,8 @@ export class DispositivoService {
     private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
     @InjectRepository(Agendamiento)
     private readonly agendamientoRepo: Repository<Agendamiento>,
+    @InjectRepository(Proceso)
+    private readonly procesoRepo: Repository<Proceso>,
   ) {}
 
   async findDispositivosByEvento(eventoId: number) {
@@ -69,6 +73,7 @@ export class DispositivoService {
   async registrarInstalacion(
     eventoId: number,
     dto: RegistrarInstalacionDto,
+    userId: number,
   ): Promise<ProcesoDispositivo[]> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -76,6 +81,15 @@ export class DispositivoService {
 
     try {
       const manager = queryRunner.manager;
+
+      const proceso = await manager.findOne(Proceso, {
+        where: { eventoId },
+      });
+      if (!proceso) {
+        throw new NotFoundException(
+          `Proceso con evento ID ${eventoId} no encontrado`,
+        );
+      }
 
       const dispositivos = dto.dispositivos.map((dispDto) =>
         manager.create(ProcesoDispositivo, {
@@ -85,6 +99,14 @@ export class DispositivoService {
         }),
       );
       const saved = await manager.save(dispositivos);
+
+      if (dto.proceso && Object.keys(dto.proceso).length > 0) {
+        Object.assign(proceso, dto.proceso);
+        await manager.save(proceso);
+        this.logger.log(
+          `Proceso ${eventoId} actualizado durante instalación`,
+        );
+      }
 
       if (dto.agendamiento && Object.keys(dto.agendamiento).length > 0) {
         const agendamientoId = dto.agendamientoId;
@@ -108,9 +130,23 @@ export class DispositivoService {
         }
       }
 
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'REGISTRAR_INSTALACION',
+        entidad: 'PROCESO',
+        entidadId: eventoId,
+        fechaAccion: new Date(),
+        detalles: JSON.stringify({
+          cantidadDispositivos: saved.length,
+          actualizoProceso: !!(dto.proceso && Object.keys(dto.proceso).length > 0),
+          actualizoAgendamiento: !!(dto.agendamientoId && dto.agendamiento && Object.keys(dto.agendamiento).length > 0),
+        }),
+      });
+      await manager.save(accion);
+
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Instalación registrada: ${saved.length} dispositivo(s) en proceso ${eventoId}`,
+        `Instalación registrada: ${saved.length} dispositivo(s) en proceso ${eventoId} por usuario ${userId}`,
       );
       return saved;
     } catch (error) {
