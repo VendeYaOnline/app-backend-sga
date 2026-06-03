@@ -213,7 +213,11 @@ export class SolicitudService {
     });
   }
 
-  async create(dto: CreateSolicitudDto, userId: number): Promise<Solicitud> {
+  async create(
+    dto: CreateSolicitudDto,
+    userId: number,
+    origenCreacion?: string,
+  ): Promise<Solicitud> {
     if (!dto.condenadoId && !dto.condenado) {
       throw new BadRequestException(
         'Debe proporcionar condenadoId o datos de condenado nuevo',
@@ -288,7 +292,7 @@ export class SolicitudService {
         estadoActualId: estadoInicial.id,
         estadoAt: new Date(),
         observaciones: dto.observaciones,
-        origenCreacion: 'FORMULARIO_WEB',
+        origenCreacion: origenCreacion || 'FORMULARIO_WEB',
         motivoOrigen: 'ORIGINAL',
         createdBy: userId,
       });
