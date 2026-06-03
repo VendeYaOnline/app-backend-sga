@@ -22,7 +22,7 @@ import { AgendamientoService } from '../services/agendamiento.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
 import { CreateAgendamientoDto } from '../dto/create-agendamiento.dto';
 import { UpdateAgendamientoDto } from '../dto/update-agendamiento.dto';
 import { UpdateEstadoAgendamientoDto } from '../dto/update-estado-agendamiento.dto';
@@ -38,12 +38,16 @@ export class AgendamientoController {
   @ApiOperation({
     summary: 'Listar agendamientos con filtros',
     description:
-      'Retorna lista paginada de agendamientos con filtros opcionales',
+      'Retorna lista paginada de agendamientos con filtros opcionales por tipo de evento, evento, asignado y estado',
   })
   @ApiResponse({ status: 200, description: 'Lista de agendamientos' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  async findAll(@Query() filters: PaginationDto) {
+  @ApiQuery({ name: 'tipoEventoId', required: false, type: Number, description: 'Filtrar por tipo de evento ID' })
+  @ApiQuery({ name: 'eventoId', required: false, type: Number, description: 'Filtrar por evento ID' })
+  @ApiQuery({ name: 'asignadoA', required: false, type: Number, description: 'Filtrar por técnico asignado ID' })
+  @ApiQuery({ name: 'estadoAgenda', required: false, type: String, description: 'Filtrar por estado de agenda' })
+  async findAll(@Query() filters: FindAgendamientoDto) {
     return this.agendamientoService.findAll(filters);
   }
 

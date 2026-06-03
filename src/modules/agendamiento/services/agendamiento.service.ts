@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
 import { Agendamiento } from '../entities/agendamiento.entity';
 
 @Injectable()
@@ -22,12 +23,13 @@ export class AgendamientoService {
 
   async findAll(
     filters: PaginationDto & {
+      tipoEventoId?: number;
       eventoId?: number;
       asignadoA?: number;
       estadoAgenda?: string;
     },
   ) {
-    const { page = 1, limit = 20, eventoId, asignadoA, estadoAgenda } = filters;
+    const { page = 1, limit = 20, tipoEventoId, eventoId, asignadoA, estadoAgenda } = filters;
 
     const qb = this.agendamientoRepo
       .createQueryBuilder('a')
@@ -41,6 +43,7 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.victima', 'vic')
       .where('a.deletedAt IS NULL');
 
+    if (tipoEventoId) qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
     if (eventoId) qb.andWhere('a.eventoId = :eid', { eid: eventoId });
     if (asignadoA) qb.andWhere('a.asignadoA = :uid', { uid: asignadoA });
     if (estadoAgenda)
