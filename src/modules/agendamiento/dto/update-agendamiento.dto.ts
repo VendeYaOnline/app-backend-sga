@@ -62,11 +62,6 @@ export class UpdateAgendamientoDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsInt()
-  paraVictimaId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
   @IsString()
   @MaxLength(500)
   notas?: string;

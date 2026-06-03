@@ -39,7 +39,6 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')
       .leftJoinAndSelect('a.tipoLugar', 'tl')
-      .leftJoinAndSelect('a.paraVictima', 'v')
       .where('a.deletedAt IS NULL');
 
     if (eventoId) qb.andWhere('a.eventoId = :eid', { eid: eventoId });
@@ -73,7 +72,6 @@ export class AgendamientoService {
         region: true,
         comuna: true,
         tipoLugar: true,
-        paraVictima: true,
       },
     });
     if (!agendamiento)

@@ -138,6 +138,8 @@ export class EventoService {
         comuna: true,
         motivoNoRealizado: true,
         agendamiento: true,
+        condenado: true,
+        victima: true,
       },
     });
   }
@@ -148,6 +150,8 @@ export class EventoService {
       tecnicoId?: number;
       paraQuien?: string;
       tipoEventoId?: number;
+      condenadoId?: number;
+      victimaId?: number;
     },
   ) {
     const {
@@ -157,6 +161,8 @@ export class EventoService {
       tecnicoId,
       paraQuien,
       tipoEventoId,
+      condenadoId,
+      victimaId,
     } = filters;
 
     const qb = this.procesoRepo
@@ -168,6 +174,8 @@ export class EventoService {
       .leftJoinAndSelect('p.region', 'r')
       .leftJoinAndSelect('p.comuna', 'co')
       .leftJoinAndSelect('p.motivoNoRealizado', 'mnr')
+      .leftJoinAndSelect('p.condenado', 'cond')
+      .leftJoinAndSelect('p.victima', 'vic')
       .leftJoinAndSelect('ag.asignado', 'agAsig')
       .leftJoinAndSelect('ag.crs', 'agCrs')
       .where('e.deletedAt IS NULL');
@@ -177,6 +185,9 @@ export class EventoService {
     if (paraQuien) qb.andWhere('p.paraQuien = :paraQuien', { paraQuien });
     if (tipoEventoId)
       qb.andWhere('e.tipoEventoId = :tipoEventoId', { tipoEventoId });
+    if (condenadoId)
+      qb.andWhere('p.condenadoId = :condenadoId', { condenadoId });
+    if (victimaId) qb.andWhere('p.victimaId = :victimaId', { victimaId });
 
     qb.orderBy('e.fechaEvento', 'DESC');
 
@@ -531,7 +542,6 @@ export class EventoService {
           tipoLugarId: agData.tipoLugarId ?? null,
           direccionAgenda:
             agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
-          paraCondenado: dto.proceso.paraQuien === 'CONDENADO',
           notas: agData.notas ?? null,
           estadoAgenda: 'EN_PROCESO',
           createdBy: userId,
@@ -797,7 +807,6 @@ export class EventoService {
         tipoLugarId: dto.tipoLugarId ?? null,
         direccionAgenda:
           dto.direccionAgenda ?? proceso.direccionProceso ?? null,
-        paraCondenado: proceso.paraQuien === 'CONDENADO',
         notas: dto.notas ?? null,
         estadoAgenda: 'EN_PROCESO',
         createdBy: userId,

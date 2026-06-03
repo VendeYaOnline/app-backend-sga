@@ -14,7 +14,6 @@ import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
-import { Victima } from '../../persona/entities/victima.entity';
 
 @Entity('sga.AGENDAMIENTO')
 export class Agendamiento {
@@ -55,12 +54,6 @@ export class Agendamiento {
     nullable: true,
   })
   direccionAgenda: string | null;
-
-  @Column({ name: 'para_condenado', type: 'bit', default: 1 })
-  paraCondenado: boolean;
-
-  @Column({ name: 'para_victima_id', type: 'int', nullable: true })
-  paraVictimaId: number | null;
 
   @Column({
     name: 'estado_agenda',
@@ -114,8 +107,4 @@ export class Agendamiento {
   @ManyToOne(() => CatTipoLugar)
   @JoinColumn({ name: 'tipo_lugar_id', referencedColumnName: 'id' })
   tipoLugar: CatTipoLugar;
-
-  @ManyToOne(() => Victima)
-  @JoinColumn({ name: 'para_victima_id', referencedColumnName: 'id' })
-  paraVictima: Victima;
 }

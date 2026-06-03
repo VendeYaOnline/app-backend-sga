@@ -29,4 +29,16 @@ export class FindProcesoDto extends PaginationDto {
   @Type(() => Number)
   @IsInt()
   tipoEventoId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por condenado ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por víctima ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  victimaId?: number;
 }

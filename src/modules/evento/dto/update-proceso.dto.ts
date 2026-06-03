@@ -138,6 +138,20 @@ export class UpdateProcesoDto {
   cerradoBy?: number;
 
   @ApiPropertyOptional({
+    description: 'ID del condenado asociado (FK a CONDENADO)',
+  })
+  @IsOptional()
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID de la víctima asociada (FK a VICTIMA)',
+  })
+  @IsOptional()
+  @IsInt()
+  victimaId?: number;
+
+  @ApiPropertyOptional({
     description: 'Notas adicionales del técnico sobre el proceso',
   })
   @IsOptional()

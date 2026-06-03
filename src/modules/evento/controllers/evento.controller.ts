@@ -216,6 +216,8 @@ export class EventoController {
   @ApiQuery({ name: 'tecnicoId', required: false, type: Number })
   @ApiQuery({ name: 'paraQuien', required: false, type: String })
   @ApiQuery({ name: 'tipoEventoId', required: false, type: Number })
+  @ApiQuery({ name: 'condenadoId', required: false, type: Number })
+  @ApiQuery({ name: 'victimaId', required: false, type: Number })
   async findProcesos(@Query() filters: FindProcesoDto) {
     return this.eventoService.findAllProcesos(filters);
   }

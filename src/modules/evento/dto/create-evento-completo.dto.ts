@@ -282,6 +282,20 @@ export class CreateProcesoInlineDto {
   notas?: string;
 
   @ApiPropertyOptional({
+    description: 'ID del condenado asociado (FK a CONDENADO)',
+  })
+  @IsOptional()
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID de la víctima asociada (FK a VICTIMA)',
+  })
+  @IsOptional()
+  @IsInt()
+  victimaId?: number;
+
+  @ApiPropertyOptional({
     description: 'Datos de agendamiento a crear junto con el proceso',
   })
   @IsOptional()

@@ -3,7 +3,6 @@ import {
   IsDateString,
   IsOptional,
   IsString,
-  IsBoolean,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -58,16 +57,6 @@ export class CreateAgendamientoDto {
   @IsString()
   @MaxLength(500)
   direccionAgenda?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  paraCondenado?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  paraVictimaId?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
