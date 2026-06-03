@@ -380,8 +380,8 @@ export class EventoService {
       };
       const sortedNoResolucion = [...noResolucionDtos].sort(
         (a, b) =>
-          (ordenParaQuien[a.proceso?.agendamiento?.paraQuien ?? ''] ?? 3) -
-          (ordenParaQuien[b.proceso?.agendamiento?.paraQuien ?? ''] ?? 3),
+          (ordenParaQuien[a.agendamiento?.paraQuien ?? ''] ?? 3) -
+          (ordenParaQuien[b.agendamiento?.paraQuien ?? ''] ?? 3),
       );
 
       for (const dto of sortedNoResolucion) {
@@ -422,9 +422,9 @@ export class EventoService {
     manager: EntityManager,
     tipoMap: Map<number, CatTipoEvento>,
   ): Promise<Evento> {
-    if (dto.resolucion && dto.proceso) {
+    if (dto.resolucion && dto.agendamiento) {
       throw new BadRequestException(
-        'No se pueden enviar resolución y proceso en el mismo evento. Use uno solo.',
+        'No se pueden enviar resolución y agendamiento en el mismo evento. Use uno solo.',
       );
     }
 
@@ -453,9 +453,9 @@ export class EventoService {
       );
     }
 
-    if (dto.proceso && !esProceso) {
+    if (dto.agendamiento && !esProceso) {
       throw new BadRequestException(
-        `El tipo de evento "${codigo}" no admite datos de proceso`,
+        `El tipo de evento "${codigo}" no admite datos de agendamiento`,
       );
     }
 
@@ -482,90 +482,46 @@ export class EventoService {
       );
     }
 
-    if (dto.proceso) {
-      const procesoRaw = dto.proceso as {
-        agendamiento?: {
-          fechaAgendada: string;
-          horaInicioRango?: string;
-          horaFinRango?: string;
-          asignadoA?: number;
-          crsId: number;
-          regionId?: number;
-          comunaId?: number;
-          tipoLugarId?: number;
-          direccionAgenda?: string;
-          urlAcceso?: string;
-          notas?: string;
-          paraQuien: string;
-          condenadoId?: number;
-          victimaId?: number;
-        };
-        numeroIntento?: number;
-        realizado?: boolean;
-        crsId?: number;
-        regionId?: number;
-        comunaId?: number;
-        direccionProceso?: string;
-        [key: string]: unknown;
-      };
-      const { agendamiento: agData, ...procesoData } = procesoRaw;
+    if (dto.agendamiento) {
+      const agData = dto.agendamiento;
+      const paraQuien = agData.paraQuien ?? 'CONDENADO';
+      const condenadoId = agData.condenadoId ?? null;
+      const victimaId = agData.victimaId ?? null;
 
-      let agendamientoId: number | null = null;
-
-      if (agData) {
-        const paraQuien = agData.paraQuien ?? 'CONDENADO';
-        const condenadoId = agData.condenadoId ?? null;
-        const victimaId = agData.victimaId ?? null;
-
-        if (paraQuien === 'CONDENADO' && !condenadoId) {
-          throw new BadRequestException(
-            'Debe especificar condenadoId cuando paraQuien es CONDENADO',
-          );
-        }
-        if (paraQuien === 'VICTIMA' && !victimaId) {
-          throw new BadRequestException(
-            'Debe especificar victimaId cuando paraQuien es VICTIMA',
-          );
-        }
-
-        const agendamiento = manager.create(Agendamiento, {
-          eventoId: saved.id,
-          fechaAgendada: new Date(agData.fechaAgendada),
-          horaInicioRango: agData.horaInicioRango ?? null,
-          horaFinRango: agData.horaFinRango ?? null,
-          asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
-          crsId: agData.crsId ?? dto.proceso.crsId ?? null,
-          regionId: agData.regionId ?? dto.proceso.regionId ?? null,
-          comunaId: agData.comunaId ?? dto.proceso.comunaId ?? null,
-          tipoLugarId: agData.tipoLugarId ?? null,
-          direccionAgenda:
-            agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
-          urlAcceso: agData.urlAcceso ?? null,
-          notas: agData.notas ?? null,
-          paraQuien: agData.paraQuien ?? 'CONDENADO',
-          condenadoId: agData.condenadoId ?? null,
-          victimaId: agData.victimaId ?? null,
-          estadoAgenda: 'EN_PROCESO',
-          esVigente: true,
-          createdBy: userId,
-        } as any);
-        const savedAgenda = await manager.save(agendamiento);
-        agendamientoId = savedAgenda.id;
-        this.logger.log(
-          `Agendamiento ${savedAgenda.id} creado para proceso ${saved.id}`,
+      if (paraQuien === 'CONDENADO' && !condenadoId) {
+        throw new BadRequestException(
+          'Debe especificar condenadoId cuando paraQuien es CONDENADO',
+        );
+      }
+      if (paraQuien === 'VICTIMA' && !victimaId) {
+        throw new BadRequestException(
+          'Debe especificar victimaId cuando paraQuien es VICTIMA',
         );
       }
 
-      const proceso = manager.create(Proceso, {
+      const agendamiento = manager.create(Agendamiento, {
         eventoId: saved.id,
-        ...procesoData,
-        agendamientoId,
-        numeroIntento: dto.proceso.numeroIntento || 1,
-        realizado: dto.proceso.realizado ?? false,
-      });
-      await manager.save(proceso);
+        fechaAgendada: new Date(agData.fechaAgendada),
+        horaInicioRango: agData.horaInicioRango ?? null,
+        horaFinRango: agData.horaFinRango ?? null,
+        asignadoA: agData.asignadoA ?? dto.asignadoA ?? null,
+        crsId: agData.crsId,
+        regionId: agData.regionId ?? null,
+        comunaId: agData.comunaId ?? null,
+        tipoLugarId: agData.tipoLugarId ?? null,
+        direccionAgenda: agData.direccionAgenda ?? null,
+        urlAcceso: agData.urlAcceso ?? null,
+        notas: agData.notas ?? null,
+        paraQuien: agData.paraQuien ?? 'CONDENADO',
+        condenadoId: agData.condenadoId ?? null,
+        victimaId: agData.victimaId ?? null,
+        estadoAgenda: 'EN_PROCESO',
+        esVigente: true,
+        createdBy: userId,
+      } as any);
+      const savedAgenda = await manager.save(agendamiento);
       this.logger.log(
-        `Proceso creado para evento ${saved.id} (tipo: ${codigo})`,
+        `Agendamiento ${savedAgenda.id} creado para evento ${saved.id} (tipo: ${codigo})`,
       );
     }
 
@@ -791,27 +747,25 @@ export class EventoService {
     try {
       const manager = queryRunner.manager;
 
-      const proceso = await manager.findOne(Proceso, {
-        where: { eventoId: dto.eventoId },
-        relations: { evento: true },
+      const evento = await manager.findOne(Evento, {
+        where: { id: dto.eventoId, deletedAt: IsNull() },
       });
 
-      if (!proceso) {
+      if (!evento) {
         throw new NotFoundException(
-          `No se encontro el proceso asociado al evento ${dto.eventoId}`,
+          `No se encontro el evento con ID ${dto.eventoId}`,
         );
       }
 
-      if (proceso.agendamientoId) {
-        const oldAgenda = await manager.findOne(Agendamiento, {
-          where: { id: proceso.agendamientoId, deletedAt: IsNull() },
-        });
-        if (oldAgenda) {
-          oldAgenda.estadoAgenda = 'NO_REALIZADO';
-          oldAgenda.esVigente = false;
-          oldAgenda.updatedBy = userId;
-          await manager.save(oldAgenda);
-        }
+      const oldAgenda = await manager.findOne(Agendamiento, {
+        where: { eventoId: dto.eventoId, esVigente: true, deletedAt: IsNull() },
+      });
+
+      if (oldAgenda) {
+        oldAgenda.estadoAgenda = 'NO_REALIZADO';
+        oldAgenda.esVigente = false;
+        oldAgenda.updatedBy = userId;
+        await manager.save(oldAgenda);
       }
 
       const paraQuien = dto.paraQuien ?? 'CONDENADO';
@@ -834,14 +788,14 @@ export class EventoService {
         fechaAgendada: new Date(dto.fechaAgendada),
         horaInicioRango: dto.horaInicioRango ?? null,
         horaFinRango: dto.horaFinRango ?? null,
-        asignadoA: dto.asignadoA ?? null,
-        crsId: dto.crsId ?? proceso.crsId ?? null,
-        regionId: dto.regionId ?? proceso.regionId ?? null,
-        comunaId: dto.comunaId ?? proceso.comunaId ?? null,
-        tipoLugarId: dto.tipoLugarId ?? null,
+        asignadoA: dto.asignadoA ?? oldAgenda?.asignadoA ?? null,
+        crsId: dto.crsId ?? oldAgenda?.crsId ?? null,
+        regionId: dto.regionId ?? oldAgenda?.regionId ?? null,
+        comunaId: dto.comunaId ?? oldAgenda?.comunaId ?? null,
+        tipoLugarId: dto.tipoLugarId ?? oldAgenda?.tipoLugarId ?? null,
         direccionAgenda:
-          dto.direccionAgenda ?? proceso.direccionProceso ?? null,
-        urlAcceso: dto.urlAcceso ?? null,
+          dto.direccionAgenda ?? oldAgenda?.direccionAgenda ?? null,
+        urlAcceso: dto.urlAcceso ?? oldAgenda?.urlAcceso ?? null,
         notas: dto.notas ?? null,
         paraQuien,
         condenadoId,
@@ -852,25 +806,19 @@ export class EventoService {
       } as any);
       const savedAgenda = await manager.save(agendamiento);
 
-      proceso.agendamientoId = savedAgenda.id;
-      proceso.numeroIntento = await manager.count(Agendamiento, {
-        where: { eventoId: dto.eventoId, deletedAt: IsNull() },
-      });
-      await manager.save(proceso);
-
       const accion = manager.create(AccionUsuario, {
         usuarioId: userId,
         tipoAccion: 'REAGENDAR_EVENTO',
         entidad: 'AGENDAMIENTO',
         entidadId: savedAgenda.id,
-        solicitudId: proceso.evento?.solicitudId ?? null,
+        solicitudId: evento.solicitudId,
         fechaAccion: new Date(),
       });
       await manager.save(accion);
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Agendamiento ${savedAgenda.id} creado para proceso del evento ${dto.eventoId} (intento ${proceso.numeroIntento})`,
+        `Agendamiento ${savedAgenda.id} creado para evento ${dto.eventoId} (reagendamiento)`,
       );
 
       return savedAgenda;

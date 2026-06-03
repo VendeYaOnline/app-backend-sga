@@ -238,80 +238,6 @@ export class CreateAgendamientoInlineDto {
   notas?: string;
 }
 
-export class CreateProcesoInlineDto {
-  @ApiPropertyOptional({
-    description: 'ID del tecnico asignado (FK a USUARIO)',
-  })
-  @IsOptional()
-  @IsInt()
-  tecnicoId?: number;
-
-  @ApiPropertyOptional({
-    description: 'ID del CRS donde se ejecuta el proceso',
-  })
-  @IsOptional()
-  @IsInt()
-  crsId?: number;
-
-  @ApiPropertyOptional({ description: 'ID de la region' })
-  @IsOptional()
-  @IsInt()
-  regionId?: number;
-
-  @ApiPropertyOptional({ description: 'ID de la comuna' })
-  @IsOptional()
-  @IsInt()
-  comunaId?: number;
-
-  @ApiPropertyOptional({
-    description: 'Direccion donde se ejecuta el proceso',
-    maxLength: 500,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  direccionProceso?: string;
-
-  @ApiPropertyOptional({
-    description: 'Fecha y hora programada para el proceso (ISO 8601)',
-  })
-  @IsOptional()
-  @IsDateString()
-  fechaProgramada?: string;
-
-  @ApiPropertyOptional({
-    description: 'Número de intento (1 para el primero)',
-    minimum: 1,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  numeroIntento?: number;
-
-  @ApiPropertyOptional({
-    description: 'Indica si el proceso fue realizado',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  realizado?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Notas adicionales del técnico sobre el proceso',
-  })
-  @IsOptional()
-  @IsString()
-  notas?: string;
-
-  @ApiPropertyOptional({
-    description: 'Datos de agendamiento a crear junto con el proceso',
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateAgendamientoInlineDto)
-  agendamiento?: CreateAgendamientoInlineDto;
-}
-
 export class CreateEventoCompletoDto {
   @ApiProperty({ description: 'ID del tipo de evento (FK a CAT_TIPO_EVENTO)' })
   @IsInt()
@@ -355,10 +281,10 @@ export class CreateEventoCompletoDto {
 
   @ApiPropertyOptional({
     description:
-      'Datos de proceso en terreno (solo para tipos de evento de categoria Proceso)',
+      'Datos de agendamiento (solo para tipos de evento de categoria Proceso: INSTALACION, DESINSTALACION, SOPORTE)',
   })
   @IsOptional()
   @ValidateNested()
-  @Type(() => CreateProcesoInlineDto)
-  proceso?: CreateProcesoInlineDto;
+  @Type(() => CreateAgendamientoInlineDto)
+  agendamiento?: CreateAgendamientoInlineDto;
 }

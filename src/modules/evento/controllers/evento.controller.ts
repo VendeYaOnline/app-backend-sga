@@ -82,9 +82,9 @@ export class EventoController {
   @Post('eventos/completo')
   @HttpCode(201)
   @ApiOperation({
-    summary: 'Crear uno o varios eventos con resolución o proceso en lote',
+    summary: 'Crear uno o varios eventos con resolucion o agendamiento en lote',
     description:
-      'Crea eventos, sus validaciones automáticas y, opcionalmente, los datos de resolución o proceso asociados. Todo en una sola transacción.',
+      'Crea eventos, sus validaciones automaticas y, opcionalmente, los datos de resolucion o agendamiento asociados. Todo en una sola transaccion.',
   })
   @ApiResponse({ status: 201, description: 'Eventos creados exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
@@ -99,12 +99,12 @@ export class EventoController {
   @Post('eventos/reagendar')
   @HttpCode(201)
   @ApiOperation({
-    summary: 'Reagendar el agendamiento de un proceso',
+    summary: 'Reagendar el agendamiento de un evento',
     description:
-      'Marca el agendamiento anterior como NO_REALIZADO, crea un nuevo agendamiento y lo asigna al proceso existente. El numero de intento se recalcula automaticamente.',
+      'Marca el agendamiento vigente anterior como NO_REALIZADO y crea un nuevo agendamiento para el mismo evento. No modifica el proceso en terreno.',
   })
   @ApiResponse({ status: 201, description: 'Agendamiento creado exitosamente' })
-  @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
+  @ApiResponse({ status: 404, description: 'Evento no encontrado' })
   @ApiBody({ type: ReagendarEventoDto })
   async reagendar(
     @Body() dto: ReagendarEventoDto,
