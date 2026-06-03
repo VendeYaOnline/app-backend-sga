@@ -971,18 +971,17 @@ export class EventoService {
   }
 
   async findTrazabilidadInstalacion(eventoId: number) {
-    const eventoDesinstalacion = await this.eventoRepo.findOne({
-      where: { id: eventoId, deletedAt: IsNull() },
-      relations: { tipoEvento: true },
-    });
+    const [eventoDesinstalacion, procesoDesinstalacion] = await Promise.all([
+      this.eventoRepo.findOne({
+        where: { id: eventoId, deletedAt: IsNull() },
+        relations: { tipoEvento: true },
+      }),
+      this.procesoRepo.findOne({ where: { eventoId } }),
+    ]);
 
     if (!eventoDesinstalacion) {
       throw new NotFoundException(`Evento con ID ${eventoId} no encontrado`);
     }
-
-    const procesoDesinstalacion = await this.procesoRepo.findOne({
-      where: { eventoId },
-    });
 
     if (!procesoDesinstalacion) {
       throw new NotFoundException(
@@ -1036,47 +1035,31 @@ export class EventoService {
 
     const instalacionEventoId = instalacionProceso.eventoId;
 
-    const proceso = await this.procesoRepo.findOne({
-      where: { eventoId: instalacionEventoId },
-      relations: {
-        crs: true,
-        region: true,
-        comuna: true,
-        tecnico: true,
-        condenado: true,
-        victima: true,
-        motivoNoRealizado: true,
-        agendamiento: {
-          asignado: true,
+    const [resolucion, dispositivos] = await Promise.all([
+      this.resolucionRepo.findOne({
+        where: { eventoId: instalacionEventoId },
+        relations: {
+          tribunal: true,
+          tipoCausa: true,
+          tipoLey: true,
           crs: true,
-          region: true,
-          comuna: true,
-          tipoLugar: true,
+          tipoPena: true,
         },
-      },
-    });
+      }),
+      this.procesoDispositivoRepo.find({
+        where: { eventoId: instalacionEventoId },
+        relations: { tipoAccesorio: true, rolDispositivo: true },
+      }),
+    ]);
 
-    const resolucion = await this.resolucionRepo.findOne({
-      where: { eventoId: instalacionEventoId },
-      relations: {
-        tribunal: true,
-        tipoCausa: true,
-        tipoLey: true,
-        crs: true,
-        tipoPena: true,
-      },
-    });
-
-    const dispositivos = await this.procesoDispositivoRepo.find({
-      where: { eventoId: instalacionEventoId },
-      relations: { tipoAccesorio: true, rolDispositivo: true },
-    });
+    const evento = instalacionProceso.evento;
+    delete (instalacionProceso as any).evento;
 
     return {
-      evento: instalacionProceso.evento,
-      proceso: proceso || null,
+      evento,
+      proceso: instalacionProceso,
       resolucion: resolucion || null,
-      agendamiento: proceso?.agendamiento || null,
+      agendamiento: instalacionProceso?.agendamiento || null,
       dispositivos,
     };
   }
