@@ -12,7 +12,6 @@ import * as path from 'path';
 import * as fs from 'fs/promises';
 import { Response } from 'express';
 import { createReadStream } from 'fs';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Archivo } from '../entities/archivo.entity';
 import { ArchivoReferencia } from '../entities/archivo-referencia.entity';
 
@@ -88,7 +87,10 @@ export class ArchivoService {
       return archivo;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.logger.error('Error al subir archivo', error.stack);
+      this.logger.error(
+        'Error al subir archivo',
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new InternalServerErrorException('Error al subir archivo');
     } finally {
       await queryRunner.release();

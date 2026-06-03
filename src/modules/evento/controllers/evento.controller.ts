@@ -126,6 +126,7 @@ export class EventoController {
     @Body() dto: any,
     @CurrentUser() user: JwtPayload,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.eventoService.update(id, dto, user.sub);
   }
 
@@ -195,12 +196,14 @@ export class EventoController {
     @Body() dto: any,
     @CurrentUser() user: JwtPayload,
   ) {
+    /* eslint-disable @typescript-eslint/no-unsafe-argument */
     return this.eventoService.ejecutarValidacion(
       id,
       validacionId,
       dto,
       user.sub,
     );
+    /* eslint-enable @typescript-eslint/no-unsafe-argument */
   }
 
   @Get('procesos')
@@ -260,6 +263,7 @@ export class EventoController {
     @Body() dto: any,
     @CurrentUser() user: JwtPayload,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.eventoService.cerrarProceso(eventoId, dto, user.sub);
   }
 

@@ -201,7 +201,7 @@ export class PjudService {
 
   async enviarFactibilidad(
     solicitudId: number,
-    dto: any,
+    dto: Record<string, unknown>,
   ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_FACTIBILIDAD',
@@ -215,7 +215,7 @@ export class PjudService {
 
   async enviarIncumplimiento(
     solicitudId: number,
-    dto: any,
+    dto: Record<string, unknown>,
   ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_INCUMPLIMIENTO',
@@ -227,7 +227,10 @@ export class PjudService {
     return this.pjudLlamadaRepo.save(llamada);
   }
 
-  async enviarAlarmaCenco(dto: any): Promise<PjudLlamada> {
+  async enviarAlarmaCenco(dto: {
+    solicitudId: number;
+    [key: string]: unknown;
+  }): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_ALARMA_CENCO',
       direccion: 'OUT',
@@ -266,6 +269,7 @@ export class PjudService {
       const start = Date.now();
 
       try {
+        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
         if (!llamada.requestBody) {
           throw new Error('requestBody vacío, no se puede reprocesar');
         }
@@ -290,6 +294,7 @@ export class PjudService {
 
         llamada.procesadoOk = true;
         llamada.procesadoAt = new Date();
+        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
         llamada.duracionMs = (llamada.duracionMs || 0) + (Date.now() - start);
         llamada.errorDesc = null;
         procesados++;

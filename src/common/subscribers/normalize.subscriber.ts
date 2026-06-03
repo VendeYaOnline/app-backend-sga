@@ -29,7 +29,7 @@ const SKIP_PROPERTIES = new Set([
 @EventSubscriber()
 export class NormalizeSubscriber implements EntitySubscriberInterface {
   beforeInsert(event: InsertEvent<any>): void {
-    this.normalizeEntity(event.entity);
+    this.normalizeEntity(event.entity as Record<string, unknown>);
   }
 
   beforeUpdate(event: UpdateEvent<any>): void {
@@ -38,7 +38,7 @@ export class NormalizeSubscriber implements EntitySubscriberInterface {
     }
   }
 
-  private normalizeEntity(entity: any): void {
+  private normalizeEntity(entity: Record<string, unknown>): void {
     if (!entity || typeof entity !== 'object') return;
 
     for (const key of Object.keys(entity)) {

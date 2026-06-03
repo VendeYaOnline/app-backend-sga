@@ -58,7 +58,7 @@ export class DispositivoService {
       await queryRunner.rollbackTransaction();
       this.logger.error(
         `Error al registrar dispositivos en proceso ${eventoId}`,
-        error.stack,
+        error instanceof Error ? error.stack : undefined,
       );
       throw error;
     } finally {
@@ -151,7 +151,7 @@ export class DispositivoService {
       await queryRunner.rollbackTransaction();
       this.logger.error(
         `Error al registrar instalación en proceso ${eventoId}`,
-        error.stack,
+        error instanceof Error ? error.stack : undefined,
       );
       throw error;
     } finally {
@@ -225,7 +225,7 @@ export class DispositivoService {
       await queryRunner.rollbackTransaction();
       this.logger.error(
         `Error al reemplazar dispositivos del proceso ${eventoId}`,
-        error.stack,
+        error instanceof Error ? error.stack : undefined,
       );
       throw error;
     } finally {

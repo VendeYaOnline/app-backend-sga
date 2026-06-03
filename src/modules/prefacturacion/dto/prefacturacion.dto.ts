@@ -1,5 +1,5 @@
-import { IsInt, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePeriodoDto {
   @ApiProperty()

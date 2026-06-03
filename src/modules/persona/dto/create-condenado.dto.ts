@@ -20,7 +20,7 @@ export class CreateCondenadoDto {
   tipoIdentificacionId: number;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => !o.esExtranjero)
+  @ValidateIf((o: CreateCondenadoDto) => !o.esExtranjero)
   @IsNotEmpty({
     message: 'El RUN del condenado es obligatorio para personas no extranjeras',
   })
@@ -29,7 +29,7 @@ export class CreateCondenadoDto {
   runCondenado?: string;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => o.esExtranjero === true)
+  @ValidateIf((o: CreateCondenadoDto) => o.esExtranjero === true)
   @IsNotEmpty({
     message: 'El pasaporte es obligatorio para personas extranjeras',
   })

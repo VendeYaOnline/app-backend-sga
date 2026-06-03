@@ -42,6 +42,7 @@ export class CargaLaboralController {
     description: 'Filtrar por usuario',
   })
   async findResumen(@Query() filters: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.cargaLaboralService.findResumen(filters);
   }
 
@@ -79,6 +80,7 @@ export class CargaLaboralController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async findDetalle(@Query() filters: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.cargaLaboralService.findDetalle(filters);
   }
 
@@ -108,6 +110,7 @@ export class CargaLaboralController {
     description: 'Filtrar por usuario',
   })
   async exportar(@Query() filters: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.cargaLaboralService.exportar(filters);
   }
 }

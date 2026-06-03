@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { Notificacion } from '../entities/notificacion.entity';
 import { NotificacionUsuario } from '../entities/notificacion-usuario.entity';
@@ -97,11 +96,11 @@ export class NotificacionService {
     return plantilla;
   }
 
-  async createPlantilla(dto: any): Promise<NotificacionPlantilla> {
+  async createPlantilla(
+    dto: Record<string, unknown>,
+  ): Promise<NotificacionPlantilla> {
     const plantilla = this.plantillaRepo.create(dto);
-    return this.plantillaRepo.save(
-      plantilla,
-    ) as unknown as Promise<NotificacionPlantilla>;
+    return this.plantillaRepo.save(plantilla);
   }
 
   async updatePlantilla(id: number, dto: any): Promise<NotificacionPlantilla> {

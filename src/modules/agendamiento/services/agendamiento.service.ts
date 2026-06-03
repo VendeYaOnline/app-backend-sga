@@ -1,16 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { Agendamiento } from '../entities/agendamiento.entity';
-import { Evento } from '../../evento/entities/evento.entity';
 
 @Injectable()
 export class AgendamientoService {
@@ -80,19 +73,24 @@ export class AgendamientoService {
   }
 
   async create(dto: any, userId: number): Promise<Agendamiento> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const estadoAgenda = (dto.estadoAgenda as string) || 'EN_PROCESO';
     const agendamiento = this.agendamientoRepo.create({
       ...dto,
       createdBy: userId,
-      estadoAgenda: dto.estadoAgenda || 'EN_PROCESO',
-    });
-    const saved = (await this.agendamientoRepo.save(
-      agendamiento,
-    )) as unknown as Agendamiento;
+      estadoAgenda,
+    } as Partial<Agendamiento>);
+    const saved = await this.agendamientoRepo.save(agendamiento);
     this.logger.log(`Agendamiento ${saved.id} creado por usuario ${userId}`);
     return this.findOne(saved.id);
   }
 
-  async update(id: number, dto: any, userId: number): Promise<Agendamiento> {
+  async update(
+    id: number,
+
+    dto: any,
+    userId: number,
+  ): Promise<Agendamiento> {
     const agendamiento = await this.findOne(id);
     Object.assign(agendamiento, dto, { updatedBy: userId });
     return this.agendamientoRepo.save(agendamiento);

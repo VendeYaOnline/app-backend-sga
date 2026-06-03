@@ -13,7 +13,10 @@ export class PermisosGuard implements CanActivate {
     );
     if (!required) return true;
 
-    const { user } = context.switchToHttp().getRequest();
+    const request = context
+      .switchToHttp()
+      .getRequest<{ user?: { permisos?: string[] } }>();
+    const user = request.user;
     return user?.permisos?.includes(required) ?? false;
   }
 }

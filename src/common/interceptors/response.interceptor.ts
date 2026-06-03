@@ -28,15 +28,16 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     return next.handle().pipe(
-      map((data) => {
-        if (data?.meta) {
+      map((data: unknown) => {
+        const d = data as { meta?: unknown; data?: unknown; message?: string };
+        if (d?.meta) {
           return {
-            data: data.data,
-            meta: data.meta,
-            message: data.message ?? 'Operación exitosa',
-          };
+            data: d.data,
+            meta: d.meta,
+            message: d.message ?? 'Operación exitosa',
+          } as ApiResponse<T>;
         }
-        return { data, message: 'Operación exitosa' };
+        return { data: d, message: 'Operación exitosa' } as ApiResponse<T>;
       }),
     );
   }

@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Condenado } from '../entities/condenado.entity';
 import { CondenadoContacto } from '../entities/condenado-contacto.entity';
 import { Victima } from '../entities/victima.entity';
@@ -166,8 +165,14 @@ export class PersonaService {
     await this.condenadoContactoRepo.remove(contacto);
   }
 
-  async findVictimas(filters: any) {
-    const { page = 1, limit = 20, search, runVictima, datoReservado } = filters;
+  async findVictimas(filters: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    runVictima?: string;
+    datoReservado?: boolean;
+  }) {
+    const { page = 1, limit = 20, search, runVictima } = filters;
 
     const qb = this.victimaRepo
       .createQueryBuilder('v')

@@ -8,9 +8,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository, IsNull, In } from 'typeorm';
+import { DataSource, EntityManager, Repository, IsNull, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Evento } from '../entities/evento.entity';
 import { EventoValidacion } from '../entities/evento-validacion.entity';
 import { Resolucion } from '../entities/resolucion.entity';
@@ -213,6 +212,7 @@ export class EventoService {
   }
 
   async create(dto: any, userId: number): Promise<Evento> {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -221,26 +221,28 @@ export class EventoService {
       const manager = queryRunner.manager;
 
       const tipoEvento = await this.tipoEventoRepo.findOne({
-        where: { id: dto.tipoEventoId },
+        where: { id: dto.tipoEventoId as number },
       });
       if (!tipoEvento)
         throw new BadRequestException('Tipo de evento no encontrado');
 
       const evento = manager.create(Evento, {
-        tipoEventoId: dto.tipoEventoId,
-        solicitudId: dto.solicitudId,
+        tipoEventoId: dto.tipoEventoId as number,
+        solicitudId: dto.solicitudId as number,
         estadoEvento: 'PENDIENTE',
-        origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
-        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
-        asignadoA: dto.asignadoA,
-        eventoPadreId: dto.eventoPadreId ?? null,
-        observaciones: dto.observaciones,
+        origenCreacion: (dto.origenCreacion as string) || 'FORMULARIO_WEB',
+        fechaEvento: dto.fechaEvento
+          ? new Date(dto.fechaEvento as string)
+          : new Date(),
+        asignadoA: dto.asignadoA as number | undefined,
+        eventoPadreId: (dto.eventoPadreId as number) ?? null,
+        observaciones: dto.observaciones as string | undefined,
         createdBy: userId,
       });
       const saved = await manager.save(evento);
 
       const validacionesConfig = await this.tipoEventoValidacionRepo.find({
-        where: { tipoEventoId: dto.tipoEventoId, activo: true },
+        where: { tipoEventoId: dto.tipoEventoId as number, activo: true },
         order: { orden: 'ASC' },
       });
 
@@ -256,7 +258,7 @@ export class EventoService {
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Evento ${saved.id} (tipo ${dto.tipoEventoId}) creado por usuario ${userId}`,
+        `Evento ${saved.id} (tipo ${dto.tipoEventoId as number}) creado por usuario ${userId}`,
       );
 
       return this.findOne(saved.id);
@@ -266,6 +268,7 @@ export class EventoService {
     } finally {
       await queryRunner.release();
     }
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
   }
 
   async createCompleto(
@@ -449,7 +452,7 @@ export class EventoService {
   private async crearEventoConHijas(
     dto: CreateEventoCompletoDto,
     userId: number,
-    manager: any,
+    manager: EntityManager,
   ): Promise<Evento> {
     if (dto.resolucion && dto.proceso) {
       throw new BadRequestException(
@@ -515,7 +518,29 @@ export class EventoService {
     }
 
     if (dto.proceso) {
-      const { agendamiento: agData, ...procesoData } = dto.proceso as any;
+      const procesoRaw = dto.proceso as {
+        agendamiento?: {
+          fechaAgendada: string;
+          horaInicioRango?: string;
+          horaFinRango?: string;
+          asignadoA?: number;
+          crsId?: number;
+          regionId?: number;
+          comunaId?: number;
+          tipoLugarId?: number;
+          direccionAgenda?: string;
+          notas?: string;
+        };
+        paraQuien?: string;
+        numeroIntento?: number;
+        realizado?: boolean;
+        crsId?: number;
+        regionId?: number;
+        comunaId?: number;
+        direccionProceso?: string;
+        [key: string]: unknown;
+      };
+      const { agendamiento: agData, ...procesoData } = procesoRaw;
 
       const proceso = manager.create(Proceso, {
         eventoId: saved.id,
@@ -545,7 +570,7 @@ export class EventoService {
           notas: agData.notas ?? null,
           estadoAgenda: 'EN_PROCESO',
           createdBy: userId,
-        });
+        } as any);
         const savedAgenda = await manager.save(agendamiento);
 
         proceso.agendamientoId = savedAgenda.id;
@@ -569,7 +594,11 @@ export class EventoService {
     return saved;
   }
 
-  async update(id: number, dto: any, userId: number): Promise<Evento> {
+  async update(
+    id: number,
+    dto: Record<string, unknown>,
+    userId: number,
+  ): Promise<Evento> {
     const evento = await this.findOne(id);
     Object.assign(evento, dto, { updatedBy: userId });
     return this.eventoRepo.save(evento);
@@ -620,8 +649,9 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.procesoRepo.save(existente);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.procesoRepo.create({ eventoId, ...dto });
-    return this.procesoRepo.save(nuevo) as unknown as Promise<Proceso>;
+    return this.procesoRepo.save(nuevo);
   }
 
   async cerrarProceso(
@@ -810,7 +840,7 @@ export class EventoService {
         notas: dto.notas ?? null,
         estadoAgenda: 'EN_PROCESO',
         createdBy: userId,
-      });
+      } as any);
       const savedAgenda = await manager.save(agendamiento);
 
       proceso.agendamientoId = savedAgenda.id;
@@ -851,8 +881,9 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.resolucionRepo.save(existente);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nueva = this.resolucionRepo.create({ eventoId, ...dto });
-    return this.resolucionRepo.save(nueva) as unknown as Promise<Resolucion>;
+    return this.resolucionRepo.save(nueva);
   }
 
   async updateCambioDomicilio(eventoId: number, dto: any) {
@@ -863,6 +894,7 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.resolucionCdRepo.save(existente);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.resolucionCdRepo.create({ eventoId, ...dto });
     return this.resolucionCdRepo.save(nuevo);
   }
@@ -875,6 +907,7 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.soporteDetalleRepo.save(existente);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.soporteDetalleRepo.create({ eventoId, ...dto });
     return this.soporteDetalleRepo.save(nuevo);
   }

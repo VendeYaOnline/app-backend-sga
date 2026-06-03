@@ -7,11 +7,9 @@ import {
   ParseIntPipe,
   UseGuards,
   Res,
-  Req,
   UseInterceptors,
   UploadedFile,
   Body,
-  Query,
 } from '@nestjs/common';
 import {
   ApiTags,

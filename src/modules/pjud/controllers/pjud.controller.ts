@@ -105,6 +105,7 @@ export class PjudController {
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
     @Body() dto: any,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.pjudService.enviarFactibilidad(solicitudId, dto);
   }
 
@@ -132,6 +133,7 @@ export class PjudController {
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
     @Body() dto: any,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.pjudService.enviarIncumplimiento(solicitudId, dto);
   }
 
@@ -149,6 +151,7 @@ export class PjudController {
   })
   @ApiBody({ type: PjudEnvioDto })
   async enviarAlarmaCenco(@Body() dto: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.pjudService.enviarAlarmaCenco(dto);
   }
 

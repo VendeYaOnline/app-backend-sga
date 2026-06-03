@@ -60,6 +60,7 @@ export class AgendamientoController {
   @ApiQuery({ name: 'fechaDesde', required: false, type: String })
   @ApiQuery({ name: 'fechaHasta', required: false, type: String })
   async findCalendario(@Query() filters: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.agendamientoService.findCalendario(filters);
   }
 

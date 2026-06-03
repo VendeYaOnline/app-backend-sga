@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Solicitud } from './solicitud.entity';
 import { CatDelito } from '../../catalogo/entities/cat-delito.entity';
 

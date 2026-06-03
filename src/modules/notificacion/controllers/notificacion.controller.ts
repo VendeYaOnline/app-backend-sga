@@ -134,6 +134,7 @@ export class NotificacionController {
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiBody({ type: CreatePlantillaDto })
   async createPlantilla(@Body() dto: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.notificacionService.createPlantilla(dto);
   }
 

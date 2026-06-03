@@ -51,7 +51,7 @@ export class AuthController {
     description: 'Restablece la contraseña usando el token enviado por email',
   })
   @ApiResponse({ status: 200, description: 'Contraseña actualizada' })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
+  resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
 

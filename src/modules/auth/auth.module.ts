@@ -31,6 +31,7 @@ import { RolPermiso } from './entities/rol-permiso.entity';
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('jwt.secret') || 'default-secret',
         signOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           expiresIn: (config.get<string>('jwt.expiresIn') || '8h') as any,
         },
       }),

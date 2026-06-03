@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CatRegion } from '../entities/cat-region.entity';
@@ -87,7 +87,7 @@ export class CatalogoService {
   }
 
   async findComunas(regionId?: number) {
-    const where: any = { activo: true };
+    const where: { activo: boolean; regionId?: number } = { activo: true };
     if (regionId) where.regionId = regionId;
     return this.comunaRepo.find({ where, order: { nombre: 'ASC' } });
   }

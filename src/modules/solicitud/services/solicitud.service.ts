@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { Solicitud } from '../entities/solicitud.entity';
 import { SolicitudSolicitante } from '../entities/solicitud-solicitante.entity';
 import { SolicitudVictima } from '../entities/solicitud-victima.entity';
@@ -724,7 +723,7 @@ export class SolicitudService {
     const lastFolio = await this.factibilidadRepo
       .createQueryBuilder('f')
       .select('MAX(f.folioInterno)', 'maxFolio')
-      .getRawOne();
+      .getRawOne<{ maxFolio: number }>();
     const folio = (lastFolio?.maxFolio || 0) + 1;
 
     const factibilidad = this.factibilidadRepo.create({

@@ -160,7 +160,7 @@ export class AuthService {
     };
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  resetPassword(dto: ResetPasswordDto) {
     this.logger.log(
       `Intento de reset de contraseña con token: ${dto.token.substring(0, 10)}...`,
     );

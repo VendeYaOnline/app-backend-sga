@@ -25,8 +25,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const res = exception.getResponse();
-      const message = typeof res === 'string' ? res : (res as any).message;
-      const errors = (res as any).errors;
+      const resObj = res as { message?: string | string[]; errors?: unknown };
+      const message =
+        typeof res === 'string' ? res : (resObj.message ?? exception.message);
+      const errors = resObj.errors;
 
       return response.status(status).json({
         statusCode: status,
@@ -35,7 +37,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         errors:
           errors ??
           (Array.isArray(message)
-            ? message.map((m) => ({ message: m }))
+            ? message.map((m: string) => ({ message: m }))
             : undefined),
       });
     }

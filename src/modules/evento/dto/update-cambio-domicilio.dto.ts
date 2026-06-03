@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, IsBoolean, IsIn } from 'class-validator';
+import { IsInt, IsOptional, IsBoolean, IsIn } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateCambioDomicilioDto {

@@ -6,7 +6,7 @@ import {
   IsIn,
   MaxLength,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoEvento } from '../enums/evento.enum';
 
 const ESTADOS_AGENDA = [

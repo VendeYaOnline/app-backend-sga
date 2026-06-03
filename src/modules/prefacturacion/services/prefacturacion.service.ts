@@ -8,7 +8,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { PrefactPeriodo } from '../entities/prefact-periodo.entity';
 import { PrefactDetalle } from '../entities/prefact-detalle.entity';
@@ -58,7 +57,10 @@ export class PrefacturacionService {
     return periodo;
   }
 
-  async crearPeriodo(dto: any): Promise<PrefactPeriodo> {
+  async crearPeriodo(dto: {
+    anio: number;
+    mes: number;
+  }): Promise<PrefactPeriodo> {
     const existente = await this.periodoRepo.findOne({
       where: { anio: dto.anio, mes: dto.mes },
     });
@@ -67,7 +69,7 @@ export class PrefacturacionService {
         `El periodo ${dto.mes}/${dto.anio} ya existe`,
       );
     const periodo = this.periodoRepo.create(dto);
-    return this.periodoRepo.save(periodo) as unknown as Promise<PrefactPeriodo>;
+    return this.periodoRepo.save(periodo);
   }
 
   async cerrarPeriodo(id: number, userId: number): Promise<PrefactPeriodo> {
@@ -87,9 +89,9 @@ export class PrefacturacionService {
     });
   }
 
-  async crearDetalle(dto: any): Promise<PrefactDetalle> {
+  async crearDetalle(dto: Record<string, unknown>): Promise<PrefactDetalle> {
     const detalle = this.detalleRepo.create(dto);
-    return this.detalleRepo.save(detalle) as unknown as Promise<PrefactDetalle>;
+    return this.detalleRepo.save(detalle);
   }
 
   async findResumen(periodoId: number) {

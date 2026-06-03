@@ -67,6 +67,7 @@ export class PrefacturacionController {
   @ApiResponse({ status: 409, description: 'El periodo ya existe' })
   @ApiBody({ type: CreatePeriodoDto })
   async crearPeriodo(@Body() dto: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.prefacturacionService.crearPeriodo(dto);
   }
 
@@ -122,6 +123,7 @@ export class PrefacturacionController {
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiBody({ type: CreateDetalleDto })
   async crearDetalle(@Body() dto: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.prefacturacionService.crearDetalle(dto);
   }
 }

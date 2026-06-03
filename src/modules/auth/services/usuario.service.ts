@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
-import { PaginationMeta } from '../../../common/interfaces/pagination-meta.interface';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
 import { Usuario } from '../entities/usuario.entity';
@@ -172,15 +171,16 @@ export class UsuarioService {
   }
 
   async findPermisosByUsuario(usuarioId: number): Promise<string[]> {
-    const result = await this.usuarioRolRepo.manager.query(
-      `SELECT DISTINCT p.codigo
+    const result: { codigo: string }[] =
+      await this.usuarioRolRepo.manager.query(
+        `SELECT DISTINCT p.codigo
        FROM sga.USUARIO_ROL ur
        INNER JOIN sga.ROL_PERMISO rp ON ur.rol_id = rp.rol_id
        INNER JOIN sga.CAT_PERMISO p ON rp.permiso_id = p.id
        WHERE ur.usuario_id = @0`,
-      [usuarioId],
-    );
-    return result.map((r: any) => r.codigo);
+        [usuarioId],
+      );
+    return result.map((r) => r.codigo);
   }
 
   async create(dto: CreateUsuarioDto, userId: number): Promise<Usuario> {
