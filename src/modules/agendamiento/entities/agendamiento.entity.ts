@@ -82,6 +82,14 @@ export class Agendamiento {
   })
   urlAcceso: string | null;
 
+  @Column({
+    name: 'tipo_soporte',
+    type: 'nvarchar',
+    length: 20,
+    nullable: true,
+  })
+  tipoSoporte: string | null;
+
   @Column({ name: 'es_vigente', type: 'bit', default: 1 })
   esVigente: boolean;
 

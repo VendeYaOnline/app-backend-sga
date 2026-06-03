@@ -59,6 +59,14 @@ export class ReagendarEventoDto {
   @MaxLength(500)
   urlAcceso?: string;
 
+  @ApiPropertyOptional({
+    description: 'Tipo de soporte (solo para procesos SOPORTE)',
+    enum: ['PRESENCIAL', 'VIRTUAL'],
+  })
+  @IsOptional()
+  @IsIn(['PRESENCIAL', 'VIRTUAL'])
+  tipoSoporte?: string;
+
   @ApiPropertyOptional({ description: 'ID del tecnico asignado' })
   @IsOptional()
   @IsInt()

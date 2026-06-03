@@ -7,17 +7,6 @@ export class ProcesoSoporteDetalle {
   eventoId: number;
 
   @Column({
-    name: 'tipo_soporte',
-    type: 'nvarchar',
-    length: 20,
-    default: 'PRESENCIAL',
-  })
-  tipoSoporte: string;
-
-  @Column({ name: 'requiere_cambio_dispositivo', type: 'bit', default: 0 })
-  requiereCambioDispositivo: boolean;
-
-  @Column({
     name: 'medio_contacto',
     type: 'nvarchar',
     length: 30,

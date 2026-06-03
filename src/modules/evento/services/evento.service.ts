@@ -511,6 +511,7 @@ export class EventoService {
         tipoLugarId: agData.tipoLugarId ?? null,
         direccionAgenda: agData.direccionAgenda ?? null,
         urlAcceso: agData.urlAcceso ?? null,
+        tipoSoporte: agData.tipoSoporte ?? null,
         notas: agData.notas ?? null,
         paraQuien: agData.paraQuien ?? 'CONDENADO',
         condenadoId: agData.condenadoId ?? null,
@@ -796,6 +797,7 @@ export class EventoService {
         direccionAgenda:
           dto.direccionAgenda ?? oldAgenda?.direccionAgenda ?? null,
         urlAcceso: dto.urlAcceso ?? oldAgenda?.urlAcceso ?? null,
+        tipoSoporte: dto.tipoSoporte ?? oldAgenda?.tipoSoporte ?? null,
         notas: dto.notas ?? null,
         paraQuien,
         condenadoId,

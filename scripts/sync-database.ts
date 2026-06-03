@@ -87,6 +87,7 @@ import { ProcesoSoporteMotivo } from '../src/modules/evento/entities/proceso-sop
 import { ProcesoSoporteDetalle } from '../src/modules/evento/entities/proceso-soporte-detalle.entity';
 
 import { ProcesoDispositivo } from '../src/modules/dispositivo/entities/proceso-dispositivo.entity';
+import { VwDispositivosActivos } from '../src/modules/dispositivo/entities/vw-dispositivos-activos.entity';
 
 import { Notificacion } from '../src/modules/notificacion/entities/notificacion.entity';
 import { NotificacionUsuario } from '../src/modules/notificacion/entities/notificacion-usuario.entity';
@@ -161,6 +162,7 @@ const entities = [
   ProcesoSoporteDetalle,
 
   ProcesoDispositivo,
+  VwDispositivosActivos,
 
   Notificacion,
   NotificacionUsuario,

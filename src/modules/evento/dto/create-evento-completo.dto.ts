@@ -229,6 +229,14 @@ export class CreateAgendamientoInlineDto {
   urlAcceso?: string;
 
   @ApiPropertyOptional({
+    description: 'Tipo de soporte (solo para procesos SOPORTE)',
+    enum: ['PRESENCIAL', 'VIRTUAL'],
+  })
+  @IsOptional()
+  @IsIn(['PRESENCIAL', 'VIRTUAL'])
+  tipoSoporte?: string;
+
+  @ApiPropertyOptional({
     description: 'Notas del agendamiento',
     maxLength: 500,
   })

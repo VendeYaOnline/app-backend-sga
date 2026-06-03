@@ -42,6 +42,14 @@ export class UpdateAgendamientoDto {
   @MaxLength(500)
   urlAcceso?: string;
 
+  @ApiPropertyOptional({
+    description: 'Tipo de soporte (solo para procesos SOPORTE)',
+    enum: ['PRESENCIAL', 'VIRTUAL'],
+  })
+  @IsOptional()
+  @IsIn(['PRESENCIAL', 'VIRTUAL'])
+  tipoSoporte?: string;
+
   @ApiPropertyOptional({ description: 'Agendamiento vigente del evento' })
   @IsOptional()
   @Type(() => Boolean)

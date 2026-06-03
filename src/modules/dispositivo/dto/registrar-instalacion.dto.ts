@@ -142,6 +142,14 @@ export class UpdateAgendamientoInlineDto {
   @IsString()
   @MaxLength(500)
   notas?: string;
+
+  @ApiPropertyOptional({
+    description: 'Tipo de soporte (solo para procesos SOPORTE)',
+    enum: ['PRESENCIAL', 'VIRTUAL'],
+  })
+  @IsOptional()
+  @IsIn(['PRESENCIAL', 'VIRTUAL'])
+  tipoSoporte?: string;
 }
 
 export class RegistrarInstalacionDto {

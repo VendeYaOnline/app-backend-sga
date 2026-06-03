@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ProcesoDispositivo } from '../entities/proceso-dispositivo.entity';
+import { VwDispositivosActivos } from '../entities/vw-dispositivos-activos.entity';
 import { Proceso } from '../../evento/entities/proceso.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
@@ -17,6 +18,8 @@ export class DispositivoService {
     private readonly dataSource: DataSource,
     @InjectRepository(ProcesoDispositivo)
     private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
+    @InjectRepository(VwDispositivosActivos)
+    private readonly vwDispositivosActivosRepo: Repository<VwDispositivosActivos>,
     @InjectRepository(Agendamiento)
     private readonly agendamientoRepo: Repository<Agendamiento>,
     @InjectRepository(Proceso)
@@ -231,5 +234,11 @@ export class DispositivoService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async findDispositivosActivos(solicitudId: number, paraQuien: string) {
+    return this.vwDispositivosActivosRepo.find({
+      where: { solicitudId, paraQuien },
+    });
   }
 }
