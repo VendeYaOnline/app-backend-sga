@@ -326,21 +326,6 @@ export class CreateEventoCompletoDto {
   @IsInt()
   asignadoA?: number;
 
-  @ApiPropertyOptional({
-    description: 'FK al evento padre (ej: decreto que origina una instalacion)',
-  })
-  @IsOptional()
-  @IsInt()
-  eventoPadreId?: number;
-
-  @ApiPropertyOptional({
-    description: 'Naturaleza de la relación con el evento padre',
-    enum: ['GENERA_PROCESO', 'REAGENDA', 'GENERA_SOLICITUD'],
-  })
-  @IsOptional()
-  @IsString()
-  tipoRelacion?: string;
-
   @ApiPropertyOptional({ description: 'Fecha del evento (YYYY-MM-DD)' })
   @IsOptional()
   @IsDateString()

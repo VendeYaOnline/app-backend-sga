@@ -78,7 +78,6 @@ export class EventoService {
       .leftJoinAndSelect('e.solicitud', 's')
       .leftJoinAndSelect('s.condenado', 'c')
       .leftJoinAndSelect('e.asignado', 'a')
-      .leftJoinAndSelect('e.eventoPadre', 'ep')
       .where('e.deletedAt IS NULL');
 
     if (solicitudId) qb.andWhere('e.solicitudId = :sid', { sid: solicitudId });
@@ -111,7 +110,6 @@ export class EventoService {
         tipoEvento: true,
         solicitud: { condenado: true },
         asignado: true,
-        eventoPadre: true,
       },
     });
     if (!evento)
@@ -220,8 +218,6 @@ export class EventoService {
           ? new Date(dto.fechaEvento as string)
           : new Date(),
         asignadoA: dto.asignadoA as number | undefined,
-        eventoPadreId: (dto.eventoPadreId as number) ?? null,
-        tipoRelacion: (dto.tipoRelacion as string) ?? null,
         observaciones: dto.observaciones as string | undefined,
         createdBy: userId,
       });
@@ -359,8 +355,6 @@ export class EventoService {
         'INFORME_CONTROL',
         'INCOMPETENCIA',
       ];
-      const codigosProceso = ['INSTALACION', 'DESINSTALACION', 'SOPORTE'];
-
       const resolucionDtos = dtos.filter((d) => {
         const tipo = tipoMap.get(d.tipoEventoId);
         return tipo && codigosResolucion.includes(tipo.codigo);
@@ -370,8 +364,6 @@ export class EventoService {
         return !tipo || !codigosResolucion.includes(tipo.codigo);
       });
 
-      let resolucionEventoId: number | null = null;
-
       for (const dto of resolucionDtos) {
         const evento = await this.crearEventoConHijas(
           dto,
@@ -380,16 +372,6 @@ export class EventoService {
           tipoMap,
         );
         saved.push(evento);
-        if (!resolucionEventoId) resolucionEventoId = evento.id;
-      }
-
-      if (resolucionEventoId) {
-        for (const dto of noResolucionDtos) {
-          const tipo = tipoMap.get(dto.tipoEventoId);
-          if (tipo && codigosProceso.includes(tipo.codigo)) {
-            dto.eventoPadreId = resolucionEventoId;
-          }
-        }
       }
 
       const ordenParaQuien: Record<string, number> = {
@@ -424,7 +406,6 @@ export class EventoService {
           tipoEvento: true,
           solicitud: { condenado: true },
           asignado: true,
-          eventoPadre: true,
         },
       });
     } catch (error) {
@@ -485,8 +466,6 @@ export class EventoService {
       origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
       fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
       asignadoA: dto.asignadoA,
-      eventoPadreId: dto.eventoPadreId ?? null,
-      tipoRelacion: dto.tipoRelacion ?? null,
       observaciones: dto.observaciones,
       createdBy: userId,
     });
@@ -1091,14 +1070,13 @@ export class EventoService {
       }),
     ]);
 
-    const evento = instalacionProceso.evento;
-    delete (instalacionProceso as any).evento;
+    const { evento, ...proceso } = instalacionProceso;
 
     return {
       evento,
-      proceso: instalacionProceso,
+      proceso,
       resolucion: resolucion || null,
-      agendamiento: instalacionProceso?.agendamiento || null,
+      agendamiento: proceso?.agendamiento || null,
       dispositivos,
     };
   }

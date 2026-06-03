@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
-  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
@@ -24,9 +23,6 @@ export class Evento {
   @Column({ name: 'solicitud_id', type: 'int' })
   solicitudId: number;
 
-  @Column({ name: 'evento_padre_id', type: 'int', nullable: true })
-  eventoPadreId: number | null;
-
   @Column({
     name: 'estado_evento',
     type: 'nvarchar',
@@ -43,14 +39,6 @@ export class Evento {
 
   @Column({ name: 'asignado_a', type: 'int', nullable: true })
   asignadoA: number | null;
-
-  @Column({
-    name: 'tipo_relacion',
-    type: 'nvarchar',
-    length: 30,
-    nullable: true,
-  })
-  tipoRelacion: string | null;
 
   @Column({
     name: 'observaciones',
@@ -89,11 +77,4 @@ export class Evento {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'asignado_a', referencedColumnName: 'id' })
   asignado: Usuario;
-
-  @ManyToOne(() => Evento, { nullable: true })
-  @JoinColumn({ name: 'evento_padre_id', referencedColumnName: 'id' })
-  eventoPadre: Evento | null;
-
-  @OneToMany(() => Evento, (e) => e.eventoPadre)
-  eventosHijos: Evento[];
 }
