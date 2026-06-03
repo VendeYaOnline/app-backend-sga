@@ -46,6 +46,7 @@ export class AgendamientoController {
   @ApiQuery({ name: 'tipoEventoId', required: false, type: Number, description: 'Filtrar por tipo de evento ID' })
   @ApiQuery({ name: 'eventoId', required: false, type: Number, description: 'Filtrar por evento ID' })
   @ApiQuery({ name: 'asignadoA', required: false, type: Number, description: 'Filtrar por técnico asignado ID' })
+  @ApiQuery({ name: 'paraQuien', required: false, type: String, description: 'Filtrar por destinatario (CONDENADO o VICTIMA)' })
   @ApiQuery({ name: 'estadoAgenda', required: false, type: String, description: 'Filtrar por estado de agenda' })
   async findAll(@Query() filters: FindAgendamientoDto) {
     return this.agendamientoService.findAll(filters);

@@ -23,6 +23,13 @@ export class FindAgendamientoDto extends PaginationDto {
   asignadoA?: number;
 
   @ApiPropertyOptional({
+    description: 'Filtrar por destinatario (CONDENADO o VICTIMA)',
+  })
+  @IsOptional()
+  @IsString()
+  paraQuien?: string;
+
+  @ApiPropertyOptional({
     description:
       'Filtrar por estado de agenda (EN_PROCESO, NO_REALIZADO, COMPLETADO, CANCELADO)',
   })
