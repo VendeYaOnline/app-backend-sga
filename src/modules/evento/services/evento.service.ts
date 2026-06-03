@@ -661,7 +661,13 @@ export class EventoService {
         );
       }
 
-      const { agendamientoId, dispositivos, soporteDetalle, motivos, ...restDto } = dto;
+      const {
+        agendamientoId,
+        dispositivos,
+        soporteDetalle,
+        motivos,
+        ...restDto
+      } = dto;
       const nuevo = manager.create(Proceso, {
         eventoId,
         agendamientoId,
@@ -1155,7 +1161,7 @@ export class EventoService {
       }),
       this.procesoDispositivoRepo.find({
         where: { eventoId: instalacionEventoId },
-        relations: { tipoAccesorio: true, rolDispositivo: true },
+        relations: { rolDispositivo: true },
       }),
     ]);
 

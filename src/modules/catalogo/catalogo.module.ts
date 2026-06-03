@@ -16,7 +16,6 @@ import { CatTipoEvento } from './entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from './entities/cat-tipo-evento-validacion.entity';
 import { CatMotivoNoRealizado } from './entities/cat-motivo-no-realizado.entity';
 import { CatTipoProblemaSt } from './entities/cat-tipo-problema-st.entity';
-import { CatTipoAccesorio } from './entities/cat-tipo-accesorio.entity';
 import { CatTipoDia } from './entities/cat-tipo-dia.entity';
 import { CatIdentidadGenero } from './entities/cat-identidad-genero.entity';
 import { CatRolDispositivo } from './entities/cat-rol-dispositivo.entity';
@@ -47,7 +46,6 @@ import { CatTipoFactibilidad } from './entities/cat-tipo-factibilidad.entity';
       CatTipoEventoValidacion,
       CatMotivoNoRealizado,
       CatTipoProblemaSt,
-      CatTipoAccesorio,
       CatTipoDia,
       CatIdentidadGenero,
       CatRolDispositivo,

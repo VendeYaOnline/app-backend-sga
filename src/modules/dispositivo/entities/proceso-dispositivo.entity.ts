@@ -6,7 +6,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Evento } from '../../evento/entities/evento.entity';
-import { CatTipoAccesorio } from '../../catalogo/entities/cat-tipo-accesorio.entity';
 import { CatRolDispositivo } from '../../catalogo/entities/cat-rol-dispositivo.entity';
 
 @Entity('sga.PROCESO_DISPOSITIVO')
@@ -21,12 +20,8 @@ export class ProcesoDispositivo {
     name: 'numero_serie',
     type: 'nvarchar',
     length: 100,
-    nullable: true,
   })
-  numeroSerie: string | null;
-
-  @Column({ name: 'tipo_accesorio_id', type: 'int' })
-  tipoAccesorioId: number;
+  numeroSerie: string;
 
   @Column({ name: 'rol_dispositivo_id', type: 'int' })
   rolDispositivoId: number;
@@ -51,10 +46,6 @@ export class ProcesoDispositivo {
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;
-
-  @ManyToOne(() => CatTipoAccesorio)
-  @JoinColumn({ name: 'tipo_accesorio_id', referencedColumnName: 'id' })
-  tipoAccesorio: CatTipoAccesorio;
 
   @ManyToOne(() => CatRolDispositivo)
   @JoinColumn({ name: 'rol_dispositivo_id', referencedColumnName: 'id' })

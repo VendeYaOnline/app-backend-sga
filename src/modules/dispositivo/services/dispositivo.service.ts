@@ -29,7 +29,7 @@ export class DispositivoService {
   async findDispositivosByEvento(eventoId: number) {
     return this.procesoDispositivoRepo.find({
       where: { eventoId },
-      relations: { tipoAccesorio: true, rolDispositivo: true },
+      relations: { rolDispositivo: true },
     });
   }
 

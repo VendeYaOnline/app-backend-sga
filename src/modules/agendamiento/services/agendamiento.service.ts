@@ -30,7 +30,15 @@ export class AgendamientoService {
       estadoAgenda?: string;
     },
   ) {
-    const { page = 1, limit = 20, tipoEventoId, eventoId, asignadoA, paraQuien, estadoAgenda } = filters;
+    const {
+      page = 1,
+      limit = 20,
+      tipoEventoId,
+      eventoId,
+      asignadoA,
+      paraQuien,
+      estadoAgenda,
+    } = filters;
 
     const qb = this.agendamientoRepo
       .createQueryBuilder('a')
@@ -44,11 +52,11 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.victima', 'vic')
       .where('a.deletedAt IS NULL');
 
-    if (tipoEventoId) qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
+    if (tipoEventoId)
+      qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
     if (eventoId) qb.andWhere('a.eventoId = :eid', { eid: eventoId });
     if (asignadoA) qb.andWhere('a.asignadoA = :uid', { uid: asignadoA });
-    if (paraQuien)
-      qb.andWhere('a.paraQuien = :pq', { pq: paraQuien });
+    if (paraQuien) qb.andWhere('a.paraQuien = :pq', { pq: paraQuien });
     if (estadoAgenda)
       qb.andWhere('a.estadoAgenda = :est', { est: estadoAgenda });
 

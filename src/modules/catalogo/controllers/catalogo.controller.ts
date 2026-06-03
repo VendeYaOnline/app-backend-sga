@@ -174,17 +174,6 @@ export class CatalogoController {
     return this.catalogoService.findTiposProblemaSt();
   }
 
-  @Get('tipos-accesorio')
-  @ApiOperation({
-    summary: 'Listar tipos de accesorio y dispositivos',
-    description:
-      'Retorna el catálogo de tipos de accesorios y dispositivos de monitoreo',
-  })
-  @ApiResponse({ status: 200, description: 'Lista de tipos de accesorio' })
-  findTiposAccesorio() {
-    return this.catalogoService.findTiposAccesorio();
-  }
-
   @Get('tipos-dia')
   @ApiOperation({
     summary: 'Listar tipos de día para horarios',

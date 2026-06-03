@@ -9,7 +9,6 @@ import { ViewEntity, ViewColumn, DataSource } from 'typeorm';
       .addSelect('a.condenado_id', 'condenadoId')
       .addSelect('a.victima_id', 'victimaId')
       .addSelect('pd.numero_serie', 'numeroSerie')
-      .addSelect('pd.tipo_accesorio_id', 'tipoAccesorioId')
       .addSelect('pd.evento_id', 'procesoOrigenId')
       .addSelect('p.fecha_ejecucion', 'fechaUltimoMovimiento')
       .from('sga.PROCESO_DISPOSITIVO', 'pd')
@@ -54,9 +53,6 @@ export class VwDispositivosActivos {
 
   @ViewColumn({ name: 'numero_serie' })
   numeroSerie: string;
-
-  @ViewColumn({ name: 'tipo_accesorio_id' })
-  tipoAccesorioId: number;
 
   @ViewColumn({ name: 'proceso_origen_id' })
   procesoOrigenId: number;

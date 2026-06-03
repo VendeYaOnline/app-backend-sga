@@ -23,7 +23,9 @@ export class CreateProcesoDispositivoDto {
   @MaxLength(100)
   numeroSerie?: string;
 
-  @ApiProperty({ description: 'ID del rol del dispositivo (FK a CAT_ROL_DISPOSITIVO)' })
+  @ApiProperty({
+    description: 'ID del rol del dispositivo (FK a CAT_ROL_DISPOSITIVO)',
+  })
   @IsInt()
   rolDispositivoId: number;
 
@@ -55,7 +57,8 @@ export class CreateProcesoDispositivoDto {
 
 export class CreateProcesoSoporteDetalleDto {
   @ApiPropertyOptional({
-    description: 'Medio de contacto usado en el soporte (ej: TELEFONICO, PRESENCIAL)',
+    description:
+      'Medio de contacto usado en el soporte (ej: TELEFONICO, PRESENCIAL)',
     maxLength: 30,
   })
   @IsOptional()
@@ -72,7 +75,9 @@ export class CreateProcesoSoporteDetalleDto {
 }
 
 export class CreateProcesoSoporteMotivoDto {
-  @ApiProperty({ description: 'ID del tipo de problema (FK a CAT_TIPO_PROBLEMA_ST)' })
+  @ApiProperty({
+    description: 'ID del tipo de problema (FK a CAT_TIPO_PROBLEMA_ST)',
+  })
   @IsInt()
   tipoProblemaId: number;
 
@@ -207,7 +212,8 @@ export class CreateProcesoDto {
   dispositivos?: CreateProcesoDispositivoDto[];
 
   @ApiPropertyOptional({
-    description: 'Detalle de soporte técnico (aplica para procesos de tipo SOPORTE)',
+    description:
+      'Detalle de soporte técnico (aplica para procesos de tipo SOPORTE)',
   })
   @IsOptional()
   @ValidateNested()
@@ -216,7 +222,8 @@ export class CreateProcesoDto {
 
   @ApiPropertyOptional({
     type: [CreateProcesoSoporteMotivoDto],
-    description: 'Motivos del soporte técnico (aplica para procesos de tipo SOPORTE). esMotivoPrincipal siempre se fuerza a false.',
+    description:
+      'Motivos del soporte técnico (aplica para procesos de tipo SOPORTE). esMotivoPrincipal siempre se fuerza a false.',
   })
   @IsOptional()
   @IsArray()

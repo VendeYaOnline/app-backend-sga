@@ -15,7 +15,6 @@ import { CatTipoEvento } from '../entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../entities/cat-tipo-evento-validacion.entity';
 import { CatMotivoNoRealizado } from '../entities/cat-motivo-no-realizado.entity';
 import { CatTipoProblemaSt } from '../entities/cat-tipo-problema-st.entity';
-import { CatTipoAccesorio } from '../entities/cat-tipo-accesorio.entity';
 import { CatTipoDia } from '../entities/cat-tipo-dia.entity';
 import { CatIdentidadGenero } from '../entities/cat-identidad-genero.entity';
 import { CatRolDispositivo } from '../entities/cat-rol-dispositivo.entity';
@@ -57,8 +56,6 @@ export class CatalogoService {
     private readonly motivoNoRealizadoRepo: Repository<CatMotivoNoRealizado>,
     @InjectRepository(CatTipoProblemaSt)
     private readonly tipoProblemaStRepo: Repository<CatTipoProblemaSt>,
-    @InjectRepository(CatTipoAccesorio)
-    private readonly tipoAccesorioRepo: Repository<CatTipoAccesorio>,
     @InjectRepository(CatTipoDia)
     private readonly tipoDiaRepo: Repository<CatTipoDia>,
     @InjectRepository(CatIdentidadGenero)
@@ -173,13 +170,6 @@ export class CatalogoService {
     return this.tipoProblemaStRepo.find({
       where: { activo: true },
       order: { descripcionProblema: 'ASC' },
-    });
-  }
-
-  async findTiposAccesorio() {
-    return this.tipoAccesorioRepo.find({
-      where: { activo: true },
-      order: { descripcionAccesorio: 'ASC' },
     });
   }
 

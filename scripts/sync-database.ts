@@ -51,7 +51,6 @@ import { CatTipoEvento } from '../src/modules/catalogo/entities/cat-tipo-evento.
 import { CatTipoEventoValidacion } from '../src/modules/catalogo/entities/cat-tipo-evento-validacion.entity';
 import { CatMotivoNoRealizado } from '../src/modules/catalogo/entities/cat-motivo-no-realizado.entity';
 import { CatTipoProblemaSt } from '../src/modules/catalogo/entities/cat-tipo-problema-st.entity';
-import { CatTipoAccesorio } from '../src/modules/catalogo/entities/cat-tipo-accesorio.entity';
 import { CatTipoDia } from '../src/modules/catalogo/entities/cat-tipo-dia.entity';
 import { CatIdentidadGenero } from '../src/modules/catalogo/entities/cat-identidad-genero.entity';
 import { CatRolDispositivo } from '../src/modules/catalogo/entities/cat-rol-dispositivo.entity';
@@ -126,7 +125,6 @@ const entities = [
   CatTipoEventoValidacion,
   CatMotivoNoRealizado,
   CatTipoProblemaSt,
-  CatTipoAccesorio,
   CatTipoDia,
   CatIdentidadGenero,
   CatRolDispositivo,
