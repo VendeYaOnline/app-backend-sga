@@ -6,6 +6,14 @@ export class ProcesoSoporteDetalle {
   @PrimaryColumn({ name: 'evento_id', type: 'int' })
   eventoId: number;
 
+  @Column({
+    name: 'tipo_soporte',
+    type: 'nvarchar',
+    length: 20,
+    default: 'PRESENCIAL',
+  })
+  tipoSoporte: string;
+
   @Column({ name: 'requiere_cambio_dispositivo', type: 'bit', default: 0 })
   requiereCambioDispositivo: boolean;
 

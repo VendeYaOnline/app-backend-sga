@@ -147,6 +147,34 @@ export class CreateAgendamientoInlineDto {
   @IsDateString()
   fechaAgendada: string;
 
+  @ApiProperty({
+    description: 'ID del CRS (obligatorio, filtro de cola de técnicos)',
+  })
+  @IsInt()
+  crsId: number;
+
+  @ApiProperty({
+    description: 'Para quién es el proceso',
+    enum: ['CONDENADO', 'VICTIMA'],
+    default: 'CONDENADO',
+  })
+  @IsIn(['CONDENADO', 'VICTIMA'])
+  paraQuien: string;
+
+  @ApiPropertyOptional({
+    description: 'ID del condenado (obligatorio si paraQuien = CONDENADO)',
+  })
+  @IsOptional()
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID de la víctima (obligatorio si paraQuien = VICTIMA)',
+  })
+  @IsOptional()
+  @IsInt()
+  victimaId?: number;
+
   @ApiPropertyOptional({ description: 'Hora inicio del rango (HH:mm:ss)' })
   @IsOptional()
   @IsString()
@@ -161,11 +189,6 @@ export class CreateAgendamientoInlineDto {
   @IsOptional()
   @IsInt()
   asignadoA?: number;
-
-  @ApiPropertyOptional({ description: 'ID del CRS' })
-  @IsOptional()
-  @IsInt()
-  crsId?: number;
 
   @ApiPropertyOptional({
     description: 'ID de la region donde se realiza la visita',
@@ -196,6 +219,14 @@ export class CreateAgendamientoInlineDto {
   @IsString()
   @MaxLength(500)
   direccionAgenda?: string;
+
+  @ApiPropertyOptional({
+    description: 'URL para soportes virtuales (Teams, Zoom, etc.)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  urlAcceso?: string;
 
   @ApiPropertyOptional({
     description: 'Notas del agendamiento',
@@ -249,16 +280,7 @@ export class CreateProcesoInlineDto {
   fechaProgramada?: string;
 
   @ApiPropertyOptional({
-    description: 'Para quien es el proceso',
-    enum: ['CONDENADO', 'VICTIMA'],
-    default: 'CONDENADO',
-  })
-  @IsOptional()
-  @IsIn(['CONDENADO', 'VICTIMA'])
-  paraQuien?: string;
-
-  @ApiPropertyOptional({
-    description: 'Numero de intento (1 para el primero)',
+    description: 'Número de intento (1 para el primero)',
     minimum: 1,
   })
   @IsOptional()
@@ -280,20 +302,6 @@ export class CreateProcesoInlineDto {
   @IsOptional()
   @IsString()
   notas?: string;
-
-  @ApiPropertyOptional({
-    description: 'ID del condenado asociado (FK a CONDENADO)',
-  })
-  @IsOptional()
-  @IsInt()
-  condenadoId?: number;
-
-  @ApiPropertyOptional({
-    description: 'ID de la víctima asociada (FK a VICTIMA)',
-  })
-  @IsOptional()
-  @IsInt()
-  victimaId?: number;
 
   @ApiPropertyOptional({
     description: 'Datos de agendamiento a crear junto con el proceso',
@@ -324,6 +332,14 @@ export class CreateEventoCompletoDto {
   @IsOptional()
   @IsInt()
   eventoPadreId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Naturaleza de la relación con el evento padre',
+    enum: ['GENERA_PROCESO', 'REAGENDA', 'GENERA_SOLICITUD'],
+  })
+  @IsOptional()
+  @IsString()
+  tipoRelacion?: string;
 
   @ApiPropertyOptional({ description: 'Fecha del evento (YYYY-MM-DD)' })
   @IsOptional()

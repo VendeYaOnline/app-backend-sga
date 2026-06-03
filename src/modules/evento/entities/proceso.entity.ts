@@ -6,8 +6,6 @@ import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatMotivoNoRealizado } from '../../catalogo/entities/cat-motivo-no-realizado.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
-import { Condenado } from '../../persona/entities/condenado.entity';
-import { Victima } from '../../persona/entities/victima.entity';
 
 @Entity('sga.PROCESO')
 export class Proceso {
@@ -72,22 +70,8 @@ export class Proceso {
   @Column({ name: 'cerrado_by', type: 'int', nullable: true })
   cerradoBy: number | null;
 
-  @Column({ name: 'condenado_id', type: 'int', nullable: true })
-  condenadoId: number | null;
-
-  @Column({ name: 'victima_id', type: 'int', nullable: true })
-  victimaId: number | null;
-
   @Column({ name: 'notas', type: 'nvarchar', length: 'max', nullable: true })
   notas: string | null;
-
-  @Column({
-    name: 'para_quien',
-    type: 'nvarchar',
-    length: 10,
-    default: 'CONDENADO',
-  })
-  paraQuien: string;
 
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
@@ -120,12 +104,4 @@ export class Proceso {
   @ManyToOne(() => Agendamiento)
   @JoinColumn({ name: 'agendamiento_id', referencedColumnName: 'id' })
   agendamiento: Agendamiento;
-
-  @ManyToOne(() => Condenado)
-  @JoinColumn({ name: 'condenado_id', referencedColumnName: 'id' })
-  condenado: Condenado;
-
-  @ManyToOne(() => Victima)
-  @JoinColumn({ name: 'victima_id', referencedColumnName: 'id' })
-  victima: Victima;
 }

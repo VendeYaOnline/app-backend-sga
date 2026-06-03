@@ -17,6 +17,14 @@ export class CatTipoEvento {
   @Column({ name: 'requiere_documento', type: 'bit', default: 0 })
   requiereDocumento: boolean;
 
+  @Column({
+    name: 'maquina_estados',
+    type: 'nvarchar',
+    length: 30,
+    default: 'PROCESO',
+  })
+  maquinaEstados: string;
+
   @Column({ name: 'activo', type: 'bit', default: 1 })
   activo: boolean;
 }

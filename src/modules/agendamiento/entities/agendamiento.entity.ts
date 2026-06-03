@@ -14,6 +14,8 @@ import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
+import { Condenado } from '../../persona/entities/condenado.entity';
+import { Victima } from '../../persona/entities/victima.entity';
 
 @Entity('sga.AGENDAMIENTO')
 export class Agendamiento {
@@ -23,6 +25,29 @@ export class Agendamiento {
   @Column({ name: 'evento_id', type: 'int' })
   eventoId: number;
 
+  @Column({ name: 'crs_id', type: 'int' })
+  crsId: number;
+
+  @Column({
+    name: 'para_quien',
+    type: 'nvarchar',
+    length: 10,
+    default: 'CONDENADO',
+  })
+  paraQuien: string;
+
+  @Column({ name: 'condenado_id', type: 'int', nullable: true })
+  condenadoId: number | null;
+
+  @Column({ name: 'victima_id', type: 'int', nullable: true })
+  victimaId: number | null;
+
+  @Column({ name: 'asignado_a', type: 'int', nullable: true })
+  asignadoA: number | null;
+
+  @Column({ name: 'tomado_at', type: 'datetime2', nullable: true })
+  tomadoAt: Date | null;
+
   @Column({ name: 'fecha_agendada', type: 'datetime2' })
   fechaAgendada: Date;
 
@@ -31,12 +56,6 @@ export class Agendamiento {
 
   @Column({ name: 'hora_fin_rango', type: 'time', nullable: true })
   horaFinRango: string | null;
-
-  @Column({ name: 'asignado_a', type: 'int', nullable: true })
-  asignadoA: number | null;
-
-  @Column({ name: 'crs_id', type: 'int', nullable: true })
-  crsId: number | null;
 
   @Column({ name: 'region_id', type: 'int', nullable: true })
   regionId: number | null;
@@ -54,6 +73,17 @@ export class Agendamiento {
     nullable: true,
   })
   direccionAgenda: string | null;
+
+  @Column({
+    name: 'url_acceso',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
+  urlAcceso: string | null;
+
+  @Column({ name: 'es_vigente', type: 'bit', default: 1 })
+  esVigente: boolean;
 
   @Column({
     name: 'estado_agenda',
@@ -88,13 +118,21 @@ export class Agendamiento {
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;
 
-  @ManyToOne(() => Usuario)
-  @JoinColumn({ name: 'asignado_a', referencedColumnName: 'id' })
-  asignado: Usuario;
-
   @ManyToOne(() => CatCrs)
   @JoinColumn({ name: 'crs_id', referencedColumnName: 'id' })
   crs: CatCrs;
+
+  @ManyToOne(() => Condenado)
+  @JoinColumn({ name: 'condenado_id', referencedColumnName: 'id' })
+  condenado: Condenado;
+
+  @ManyToOne(() => Victima)
+  @JoinColumn({ name: 'victima_id', referencedColumnName: 'id' })
+  victima: Victima;
+
+  @ManyToOne(() => Usuario)
+  @JoinColumn({ name: 'asignado_a', referencedColumnName: 'id' })
+  asignado: Usuario;
 
   @ManyToOne(() => CatRegion)
   @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })

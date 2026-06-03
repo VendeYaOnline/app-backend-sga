@@ -4,7 +4,6 @@ import {
   IsString,
   IsBoolean,
   IsDateString,
-  IsIn,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -58,15 +57,6 @@ export class UpdateProcesoDto {
   @IsOptional()
   @IsDateString()
   fechaEjecucion?: string;
-
-  @ApiPropertyOptional({
-    description: 'Para quién es el proceso',
-    enum: ['CONDENADO', 'VICTIMA'],
-    default: 'CONDENADO',
-  })
-  @IsOptional()
-  @IsIn(['CONDENADO', 'VICTIMA'])
-  paraQuien?: string;
 
   @ApiPropertyOptional({
     description: 'Número de intento (1 para el primero)',
@@ -136,20 +126,6 @@ export class UpdateProcesoDto {
   @IsOptional()
   @IsInt()
   cerradoBy?: number;
-
-  @ApiPropertyOptional({
-    description: 'ID del condenado asociado (FK a CONDENADO)',
-  })
-  @IsOptional()
-  @IsInt()
-  condenadoId?: number;
-
-  @ApiPropertyOptional({
-    description: 'ID de la víctima asociada (FK a VICTIMA)',
-  })
-  @IsOptional()
-  @IsInt()
-  victimaId?: number;
 
   @ApiPropertyOptional({
     description: 'Notas adicionales del técnico sobre el proceso',

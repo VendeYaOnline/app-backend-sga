@@ -136,9 +136,10 @@ export class EventoService {
         region: true,
         comuna: true,
         motivoNoRealizado: true,
-        agendamiento: true,
-        condenado: true,
-        victima: true,
+        agendamiento: {
+          condenado: true,
+          victima: true,
+        },
       },
     });
   }
@@ -147,22 +148,10 @@ export class EventoService {
     filters: PaginationDto & {
       crsId?: number;
       tecnicoId?: number;
-      paraQuien?: string;
       tipoEventoId?: number;
-      condenadoId?: number;
-      victimaId?: number;
     },
   ) {
-    const {
-      page = 1,
-      limit = 20,
-      crsId,
-      tecnicoId,
-      paraQuien,
-      tipoEventoId,
-      condenadoId,
-      victimaId,
-    } = filters;
+    const { page = 1, limit = 20, crsId, tecnicoId, tipoEventoId } = filters;
 
     const qb = this.procesoRepo
       .createQueryBuilder('p')
@@ -173,20 +162,16 @@ export class EventoService {
       .leftJoinAndSelect('p.region', 'r')
       .leftJoinAndSelect('p.comuna', 'co')
       .leftJoinAndSelect('p.motivoNoRealizado', 'mnr')
-      .leftJoinAndSelect('p.condenado', 'cond')
-      .leftJoinAndSelect('p.victima', 'vic')
+      .leftJoinAndSelect('ag.condenado', 'cond')
+      .leftJoinAndSelect('ag.victima', 'vic')
       .leftJoinAndSelect('ag.asignado', 'agAsig')
       .leftJoinAndSelect('ag.crs', 'agCrs')
       .where('e.deletedAt IS NULL');
 
     if (crsId) qb.andWhere('p.crsId = :crsId', { crsId });
     if (tecnicoId) qb.andWhere('p.tecnicoId = :tecnicoId', { tecnicoId });
-    if (paraQuien) qb.andWhere('p.paraQuien = :paraQuien', { paraQuien });
     if (tipoEventoId)
       qb.andWhere('e.tipoEventoId = :tipoEventoId', { tipoEventoId });
-    if (condenadoId)
-      qb.andWhere('p.condenadoId = :condenadoId', { condenadoId });
-    if (victimaId) qb.andWhere('p.victimaId = :victimaId', { victimaId });
 
     qb.orderBy('e.fechaEvento', 'DESC');
 
@@ -236,6 +221,7 @@ export class EventoService {
           : new Date(),
         asignadoA: dto.asignadoA as number | undefined,
         eventoPadreId: (dto.eventoPadreId as number) ?? null,
+        tipoRelacion: (dto.tipoRelacion as string) ?? null,
         observaciones: dto.observaciones as string | undefined,
         createdBy: userId,
       });
@@ -412,8 +398,8 @@ export class EventoService {
       };
       const sortedNoResolucion = [...noResolucionDtos].sort(
         (a, b) =>
-          (ordenParaQuien[a.proceso?.paraQuien ?? ''] ?? 3) -
-          (ordenParaQuien[b.proceso?.paraQuien ?? ''] ?? 3),
+          (ordenParaQuien[a.proceso?.agendamiento?.paraQuien ?? ''] ?? 3) -
+          (ordenParaQuien[b.proceso?.agendamiento?.paraQuien ?? ''] ?? 3),
       );
 
       for (const dto of sortedNoResolucion) {
@@ -500,6 +486,7 @@ export class EventoService {
       fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
       asignadoA: dto.asignadoA,
       eventoPadreId: dto.eventoPadreId ?? null,
+      tipoRelacion: dto.tipoRelacion ?? null,
       observaciones: dto.observaciones,
       createdBy: userId,
     });
@@ -523,14 +510,17 @@ export class EventoService {
           horaInicioRango?: string;
           horaFinRango?: string;
           asignadoA?: number;
-          crsId?: number;
+          crsId: number;
           regionId?: number;
           comunaId?: number;
           tipoLugarId?: number;
           direccionAgenda?: string;
+          urlAcceso?: string;
           notas?: string;
+          paraQuien: string;
+          condenadoId?: number;
+          victimaId?: number;
         };
-        paraQuien?: string;
         numeroIntento?: number;
         realizado?: boolean;
         crsId?: number;
@@ -544,6 +534,21 @@ export class EventoService {
       let agendamientoId: number | null = null;
 
       if (agData) {
+        const paraQuien = agData.paraQuien ?? 'CONDENADO';
+        const condenadoId = agData.condenadoId ?? null;
+        const victimaId = agData.victimaId ?? null;
+
+        if (paraQuien === 'CONDENADO' && !condenadoId) {
+          throw new BadRequestException(
+            'Debe especificar condenadoId cuando paraQuien es CONDENADO',
+          );
+        }
+        if (paraQuien === 'VICTIMA' && !victimaId) {
+          throw new BadRequestException(
+            'Debe especificar victimaId cuando paraQuien es VICTIMA',
+          );
+        }
+
         const agendamiento = manager.create(Agendamiento, {
           eventoId: saved.id,
           fechaAgendada: new Date(agData.fechaAgendada),
@@ -556,8 +561,13 @@ export class EventoService {
           tipoLugarId: agData.tipoLugarId ?? null,
           direccionAgenda:
             agData.direccionAgenda ?? dto.proceso.direccionProceso ?? null,
+          urlAcceso: agData.urlAcceso ?? null,
           notas: agData.notas ?? null,
+          paraQuien: agData.paraQuien ?? 'CONDENADO',
+          condenadoId: agData.condenadoId ?? null,
+          victimaId: agData.victimaId ?? null,
           estadoAgenda: 'EN_PROCESO',
+          esVigente: true,
           createdBy: userId,
         } as any);
         const savedAgenda = await manager.save(agendamiento);
@@ -571,13 +581,12 @@ export class EventoService {
         eventoId: saved.id,
         ...procesoData,
         agendamientoId,
-        paraQuien: dto.proceso.paraQuien || 'CONDENADO',
         numeroIntento: dto.proceso.numeroIntento || 1,
         realizado: dto.proceso.realizado ?? false,
       });
       await manager.save(proceso);
       this.logger.log(
-        `Proceso creado para evento ${saved.id} (tipo: ${codigo}, para: ${proceso.paraQuien})`,
+        `Proceso creado para evento ${saved.id} (tipo: ${codigo})`,
       );
     }
 
@@ -820,9 +829,25 @@ export class EventoService {
         });
         if (oldAgenda) {
           oldAgenda.estadoAgenda = 'NO_REALIZADO';
+          oldAgenda.esVigente = false;
           oldAgenda.updatedBy = userId;
           await manager.save(oldAgenda);
         }
+      }
+
+      const paraQuien = dto.paraQuien ?? 'CONDENADO';
+      const condenadoId = dto.condenadoId ?? null;
+      const victimaId = dto.victimaId ?? null;
+
+      if (paraQuien === 'CONDENADO' && !condenadoId) {
+        throw new BadRequestException(
+          'Debe especificar condenadoId cuando paraQuien es CONDENADO',
+        );
+      }
+      if (paraQuien === 'VICTIMA' && !victimaId) {
+        throw new BadRequestException(
+          'Debe especificar victimaId cuando paraQuien es VICTIMA',
+        );
       }
 
       const agendamiento = manager.create(Agendamiento, {
@@ -837,8 +862,13 @@ export class EventoService {
         tipoLugarId: dto.tipoLugarId ?? null,
         direccionAgenda:
           dto.direccionAgenda ?? proceso.direccionProceso ?? null,
+        urlAcceso: dto.urlAcceso ?? null,
         notas: dto.notas ?? null,
+        paraQuien,
+        condenadoId,
+        victimaId,
         estadoAgenda: 'EN_PROCESO',
+        esVigente: true,
         createdBy: userId,
       } as any);
       const savedAgenda = await manager.save(agendamiento);
@@ -976,7 +1006,10 @@ export class EventoService {
         where: { id: eventoId, deletedAt: IsNull() },
         relations: { tipoEvento: true },
       }),
-      this.procesoRepo.findOne({ where: { eventoId } }),
+      this.procesoRepo.findOne({
+        where: { eventoId },
+        relations: { agendamiento: true },
+      }),
     ]);
 
     if (!eventoDesinstalacion) {
@@ -989,31 +1022,37 @@ export class EventoService {
       );
     }
 
+    if (!procesoDesinstalacion.agendamiento) {
+      throw new BadRequestException(
+        'El proceso no tiene un agendamiento asociado',
+      );
+    }
+
     const { solicitudId } = eventoDesinstalacion;
-    const { paraQuien, victimaId, condenadoId } = procesoDesinstalacion;
-    const personaId =
-      paraQuien === 'VICTIMA' ? victimaId : condenadoId;
+    const { paraQuien, victimaId, condenadoId } =
+      procesoDesinstalacion.agendamiento;
+    const personaId = paraQuien === 'VICTIMA' ? victimaId : condenadoId;
     const personaField =
-      paraQuien === 'VICTIMA' ? 'p.victimaId' : 'p.condenadoId';
+      paraQuien === 'VICTIMA' ? 'ag.victimaId' : 'ag.condenadoId';
 
     if (personaId === null || personaId === undefined) {
       throw new BadRequestException(
-        `El proceso de desinstalación no tiene ${paraQuien === 'VICTIMA' ? 'víctima' : 'condenado'} asociado`,
+        `El proceso de desinstalación no tiene ${paraQuien === 'VICTIMA' ? 'víctima' : 'condenado'} asociado en el agendamiento`,
       );
     }
 
     const instalacionProceso = await this.procesoRepo
       .createQueryBuilder('p')
       .innerJoinAndSelect('p.evento', 'e')
+      .innerJoinAndSelect('p.agendamiento', 'ag')
       .innerJoinAndSelect('e.tipoEvento', 'te')
       .leftJoinAndSelect('p.crs', 'crs')
       .leftJoinAndSelect('p.region', 'region')
       .leftJoinAndSelect('p.comuna', 'comuna')
       .leftJoinAndSelect('p.tecnico', 'tecnico')
-      .leftJoinAndSelect('p.condenado', 'condenado')
-      .leftJoinAndSelect('p.victima', 'victima')
+      .leftJoinAndSelect('ag.condenado', 'condenado')
+      .leftJoinAndSelect('ag.victima', 'victima')
       .leftJoinAndSelect('p.motivoNoRealizado', 'mnr')
-      .leftJoinAndSelect('p.agendamiento', 'ag')
       .leftJoinAndSelect('ag.asignado', 'agAsignado')
       .leftJoinAndSelect('ag.crs', 'agCrs')
       .leftJoinAndSelect('ag.region', 'agRegion')

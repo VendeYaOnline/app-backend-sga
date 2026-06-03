@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   IsDateString,
+  IsIn,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -20,6 +21,28 @@ export class ReagendarEventoDto {
   @IsDateString()
   fechaAgendada: string;
 
+  @ApiProperty({
+    description: 'Para quién es el proceso',
+    enum: ['CONDENADO', 'VICTIMA'],
+    default: 'CONDENADO',
+  })
+  @IsIn(['CONDENADO', 'VICTIMA'])
+  paraQuien: string;
+
+  @ApiPropertyOptional({
+    description: 'ID del condenado (obligatorio si paraQuien = CONDENADO)',
+  })
+  @IsOptional()
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID de la víctima (obligatorio si paraQuien = VICTIMA)',
+  })
+  @IsOptional()
+  @IsInt()
+  victimaId?: number;
+
   @ApiPropertyOptional({ description: 'Hora inicio del rango (HH:mm:ss)' })
   @IsOptional()
   @IsString()
@@ -29,6 +52,12 @@ export class ReagendarEventoDto {
   @IsOptional()
   @IsString()
   horaFinRango?: string;
+
+  @ApiPropertyOptional({ description: 'URL para soportes virtuales' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  urlAcceso?: string;
 
   @ApiPropertyOptional({ description: 'ID del tecnico asignado' })
   @IsOptional()

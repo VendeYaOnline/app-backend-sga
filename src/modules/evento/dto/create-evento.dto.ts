@@ -22,6 +22,14 @@ export class CreateEventoDto {
   @IsInt()
   eventoPadreId?: number;
 
+  @ApiPropertyOptional({
+    description: 'Naturaleza de la relación con el evento padre',
+    enum: ['GENERA_PROCESO', 'REAGENDA', 'GENERA_SOLICITUD'],
+  })
+  @IsOptional()
+  @IsString()
+  tipoRelacion?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()

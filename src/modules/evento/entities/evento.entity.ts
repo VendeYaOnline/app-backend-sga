@@ -45,6 +45,14 @@ export class Evento {
   asignadoA: number | null;
 
   @Column({
+    name: 'tipo_relacion',
+    type: 'nvarchar',
+    length: 30,
+    nullable: true,
+  })
+  tipoRelacion: string | null;
+
+  @Column({
     name: 'observaciones',
     type: 'nvarchar',
     length: 'max',

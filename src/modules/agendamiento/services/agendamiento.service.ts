@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
@@ -32,6 +37,8 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')
       .leftJoinAndSelect('a.tipoLugar', 'tl')
+      .leftJoinAndSelect('a.condenado', 'cond')
+      .leftJoinAndSelect('a.victima', 'vic')
       .where('a.deletedAt IS NULL');
 
     if (eventoId) qb.andWhere('a.eventoId = :eid', { eid: eventoId });
@@ -65,6 +72,8 @@ export class AgendamientoService {
         region: true,
         comuna: true,
         tipoLugar: true,
+        condenado: true,
+        victima: true,
       },
     });
     if (!agendamiento)
@@ -73,6 +82,9 @@ export class AgendamientoService {
   }
 
   async create(dto: any, userId: number): Promise<Agendamiento> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    this.validarSujetoAgenda(dto);
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const estadoAgenda = (dto.estadoAgenda as string) || 'EN_PROCESO';
     const agendamiento = this.agendamientoRepo.create({
@@ -92,8 +104,48 @@ export class AgendamientoService {
     userId: number,
   ): Promise<Agendamiento> {
     const agendamiento = await this.findOne(id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const merged = { ...agendamiento, ...dto };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    this.validarSujetoAgenda(merged);
     Object.assign(agendamiento, dto, { updatedBy: userId });
     return this.agendamientoRepo.save(agendamiento);
+  }
+
+  private validarSujetoAgenda(dto: {
+    paraQuien?: string;
+    condenadoId?: number | null;
+    victimaId?: number | null;
+  }): void {
+    const paraQuien = dto.paraQuien ?? 'CONDENADO';
+    const condenadoId = dto.condenadoId ?? null;
+    const victimaId = dto.victimaId ?? null;
+
+    if (paraQuien === 'CONDENADO') {
+      if (!condenadoId) {
+        throw new BadRequestException(
+          'Debe especificar condenadoId cuando paraQuien es CONDENADO',
+        );
+      }
+      if (victimaId) {
+        throw new BadRequestException(
+          'No se puede especificar victimaId cuando paraQuien es CONDENADO',
+        );
+      }
+    }
+
+    if (paraQuien === 'VICTIMA') {
+      if (!victimaId) {
+        throw new BadRequestException(
+          'Debe especificar victimaId cuando paraQuien es VICTIMA',
+        );
+      }
+      if (condenadoId) {
+        throw new BadRequestException(
+          'No se puede especificar condenadoId cuando paraQuien es VICTIMA',
+        );
+      }
+    }
   }
 
   async updateEstado(
@@ -130,6 +182,8 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')
       .leftJoinAndSelect('a.tipoLugar', 'tl')
+      .leftJoinAndSelect('a.condenado', 'cond')
+      .leftJoinAndSelect('a.victima', 'vic')
       .where('a.deletedAt IS NULL')
       .andWhere('a.estadoAgenda NOT IN (:...estados)', {
         estados: ['CANCELADO'],

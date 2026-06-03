@@ -217,10 +217,7 @@ export class EventoController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'crsId', required: false, type: Number })
   @ApiQuery({ name: 'tecnicoId', required: false, type: Number })
-  @ApiQuery({ name: 'paraQuien', required: false, type: String })
   @ApiQuery({ name: 'tipoEventoId', required: false, type: Number })
-  @ApiQuery({ name: 'condenadoId', required: false, type: Number })
-  @ApiQuery({ name: 'victimaId', required: false, type: Number })
   async findProcesos(@Query() filters: FindProcesoDto) {
     return this.eventoService.findAllProcesos(filters);
   }
@@ -424,7 +421,8 @@ export class EventoController {
   })
   @ApiResponse({
     status: 400,
-    description: 'El evento no es de tipo DESINSTALACION o no tiene persona asociada',
+    description:
+      'El evento no es de tipo DESINSTALACION o no tiene persona asociada',
   })
   @ApiResponse({
     status: 404,

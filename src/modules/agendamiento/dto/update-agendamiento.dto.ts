@@ -3,6 +3,8 @@ import {
   IsDateString,
   IsInt,
   IsString,
+  IsIn,
+  IsBoolean,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -13,6 +15,38 @@ export class UpdateAgendamientoDto {
   @IsOptional()
   @IsDateString()
   fechaAgendada?: string;
+
+  @ApiPropertyOptional({
+    description: 'Para quién es el proceso',
+    enum: ['CONDENADO', 'VICTIMA'],
+  })
+  @IsOptional()
+  @IsIn(['CONDENADO', 'VICTIMA'])
+  paraQuien?: string;
+
+  @ApiPropertyOptional({ description: 'ID del condenado' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({ description: 'ID de la víctima' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  victimaId?: number;
+
+  @ApiPropertyOptional({ description: 'URL para soportes virtuales' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  urlAcceso?: string;
+
+  @ApiPropertyOptional({ description: 'Agendamiento vigente del evento' })
+  @IsOptional()
+  @Type(() => Boolean)
+  @IsBoolean()
+  esVigente?: boolean;
 
   @ApiPropertyOptional({ description: 'Hora inicio del rango (HH:mm:ss)' })
   @IsOptional()
