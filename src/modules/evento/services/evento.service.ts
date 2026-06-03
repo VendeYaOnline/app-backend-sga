@@ -971,22 +971,81 @@ export class EventoService {
   }
 
   async findTrazabilidadInstalacion(eventoId: number) {
-    const evento = await this.eventoRepo.findOne({
+    const eventoDesinstalacion = await this.eventoRepo.findOne({
       where: { id: eventoId, deletedAt: IsNull() },
       relations: { tipoEvento: true },
     });
 
-    if (!evento) {
+    if (!eventoDesinstalacion) {
       throw new NotFoundException(`Evento con ID ${eventoId} no encontrado`);
     }
 
-    const proceso = await this.procesoRepo.findOne({
+    const procesoDesinstalacion = await this.procesoRepo.findOne({
       where: { eventoId },
+    });
+
+    if (!procesoDesinstalacion) {
+      throw new NotFoundException(
+        `El evento ${eventoId} no tiene un proceso asociado`,
+      );
+    }
+
+    const { solicitudId } = eventoDesinstalacion;
+    const { paraQuien, victimaId, condenadoId } = procesoDesinstalacion;
+    const personaId =
+      paraQuien === 'VICTIMA' ? victimaId : condenadoId;
+    const personaField =
+      paraQuien === 'VICTIMA' ? 'p.victimaId' : 'p.condenadoId';
+
+    if (personaId === null || personaId === undefined) {
+      throw new BadRequestException(
+        `El proceso de desinstalación no tiene ${paraQuien === 'VICTIMA' ? 'víctima' : 'condenado'} asociado`,
+      );
+    }
+
+    const instalacionProceso = await this.procesoRepo
+      .createQueryBuilder('p')
+      .innerJoinAndSelect('p.evento', 'e')
+      .innerJoinAndSelect('e.tipoEvento', 'te')
+      .leftJoinAndSelect('p.crs', 'crs')
+      .leftJoinAndSelect('p.region', 'region')
+      .leftJoinAndSelect('p.comuna', 'comuna')
+      .leftJoinAndSelect('p.tecnico', 'tecnico')
+      .leftJoinAndSelect('p.condenado', 'condenado')
+      .leftJoinAndSelect('p.victima', 'victima')
+      .leftJoinAndSelect('p.motivoNoRealizado', 'mnr')
+      .leftJoinAndSelect('p.agendamiento', 'ag')
+      .leftJoinAndSelect('ag.asignado', 'agAsignado')
+      .leftJoinAndSelect('ag.crs', 'agCrs')
+      .leftJoinAndSelect('ag.region', 'agRegion')
+      .leftJoinAndSelect('ag.comuna', 'agComuna')
+      .leftJoinAndSelect('ag.tipoLugar', 'tl')
+      .where('te.codigo = :codigo', { codigo: 'INSTALACION' })
+      .andWhere('e.solicitudId = :solicitudId', { solicitudId })
+      .andWhere('e.id != :eventoId', { eventoId })
+      .andWhere('e.deletedAt IS NULL')
+      .andWhere(`${personaField} = :personaId`, { personaId })
+      .orderBy('e.createdAt', 'DESC')
+      .getOne();
+
+    if (!instalacionProceso) {
+      throw new NotFoundException(
+        'No se encontró un evento de instalación correspondiente a esta desinstalación',
+      );
+    }
+
+    const instalacionEventoId = instalacionProceso.eventoId;
+
+    const proceso = await this.procesoRepo.findOne({
+      where: { eventoId: instalacionEventoId },
       relations: {
         crs: true,
         region: true,
         comuna: true,
         tecnico: true,
+        condenado: true,
+        victima: true,
+        motivoNoRealizado: true,
         agendamiento: {
           asignado: true,
           crs: true,
@@ -997,14 +1056,26 @@ export class EventoService {
       },
     });
 
+    const resolucion = await this.resolucionRepo.findOne({
+      where: { eventoId: instalacionEventoId },
+      relations: {
+        tribunal: true,
+        tipoCausa: true,
+        tipoLey: true,
+        crs: true,
+        tipoPena: true,
+      },
+    });
+
     const dispositivos = await this.procesoDispositivoRepo.find({
-      where: { eventoId },
+      where: { eventoId: instalacionEventoId },
       relations: { tipoAccesorio: true, rolDispositivo: true },
     });
 
     return {
-      evento,
+      evento: instalacionProceso.evento,
       proceso: proceso || null,
+      resolucion: resolucion || null,
       agendamiento: proceso?.agendamiento || null,
       dispositivos,
     };

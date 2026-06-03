@@ -414,20 +414,26 @@ export class EventoController {
   @ApiOperation({
     summary: 'Trazabilidad de instalación para desinstalación',
     description:
-      'Retorna el evento, su proceso, su agendamiento y sus dispositivos asociados.',
+      'Recibe el ID de un evento de DESINSTALACION y busca el evento de INSTALACION correspondiente ' +
+      '(misma solicitud, misma persona según paraQuien). Retorna el evento, proceso, agendamiento y ' +
+      'dispositivos de la instalación original.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Trazabilidad de instalación',
+    description: 'Trazabilidad de instalación encontrada',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'El evento no es de tipo DESINSTALACION o no tiene persona asociada',
   })
   @ApiResponse({
     status: 404,
-    description: 'No se encontró el evento',
+    description: 'No se encontró el evento o su instalación correspondiente',
   })
   @ApiParam({
     name: 'eventoId',
     type: Number,
-    description: 'ID del evento',
+    description: 'ID del evento de DESINSTALACION',
   })
   async findTrazabilidadInstalacion(
     @Param('eventoId', ParseIntPipe) eventoId: number,
