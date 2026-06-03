@@ -387,7 +387,12 @@ export class EventoService {
       let resolucionEventoId: number | null = null;
 
       for (const dto of resolucionDtos) {
-        const evento = await this.crearEventoConHijas(dto, userId, manager);
+        const evento = await this.crearEventoConHijas(
+          dto,
+          userId,
+          manager,
+          tipoMap,
+        );
         saved.push(evento);
         if (!resolucionEventoId) resolucionEventoId = evento.id;
       }
@@ -401,29 +406,24 @@ export class EventoService {
         }
       }
 
-      const condDtos = noResolucionDtos.filter(
-        (d) => d.proceso?.paraQuien === 'CONDENADO',
-      );
-      const victimaDtos = noResolucionDtos.filter(
-        (d) => d.proceso?.paraQuien === 'VICTIMA',
-      );
-      const otros = noResolucionDtos.filter(
-        (d) =>
-          d.proceso?.paraQuien !== 'CONDENADO' &&
-          d.proceso?.paraQuien !== 'VICTIMA',
+      const ordenParaQuien: Record<string, number> = {
+        CONDENADO: 1,
+        VICTIMA: 2,
+      };
+      const sortedNoResolucion = [...noResolucionDtos].sort(
+        (a, b) =>
+          (ordenParaQuien[a.proceso?.paraQuien ?? ''] ?? 3) -
+          (ordenParaQuien[b.proceso?.paraQuien ?? ''] ?? 3),
       );
 
-      for (const dto of condDtos) {
-        const evento = await this.crearEventoConHijas(dto, userId, manager);
+      for (const dto of sortedNoResolucion) {
+        const evento = await this.crearEventoConHijas(
+          dto,
+          userId,
+          manager,
+          tipoMap,
+        );
         saved.push(evento);
-      }
-
-      for (const dto of victimaDtos) {
-        saved.push(await this.crearEventoConHijas(dto, userId, manager));
-      }
-
-      for (const dto of otros) {
-        saved.push(await this.crearEventoConHijas(dto, userId, manager));
       }
 
       await queryRunner.commitTransaction();
@@ -453,6 +453,7 @@ export class EventoService {
     dto: CreateEventoCompletoDto,
     userId: number,
     manager: EntityManager,
+    tipoMap: Map<number, CatTipoEvento>,
   ): Promise<Evento> {
     if (dto.resolucion && dto.proceso) {
       throw new BadRequestException(
@@ -460,9 +461,7 @@ export class EventoService {
       );
     }
 
-    const tipoEvento = await manager.findOne(CatTipoEvento, {
-      where: { id: dto.tipoEventoId },
-    });
+    const tipoEvento = tipoMap.get(dto.tipoEventoId);
     if (!tipoEvento) {
       throw new BadRequestException('Tipo de evento no encontrado');
     }
@@ -542,17 +541,7 @@ export class EventoService {
       };
       const { agendamiento: agData, ...procesoData } = procesoRaw;
 
-      const proceso = manager.create(Proceso, {
-        eventoId: saved.id,
-        ...procesoData,
-        paraQuien: dto.proceso.paraQuien || 'CONDENADO',
-        numeroIntento: dto.proceso.numeroIntento || 1,
-        realizado: dto.proceso.realizado ?? false,
-      });
-      await manager.save(proceso);
-      this.logger.log(
-        `Proceso creado para evento ${saved.id} (tipo: ${codigo}, para: ${proceso.paraQuien})`,
-      );
+      let agendamientoId: number | null = null;
 
       if (agData) {
         const agendamiento = manager.create(Agendamiento, {
@@ -572,13 +561,24 @@ export class EventoService {
           createdBy: userId,
         } as any);
         const savedAgenda = await manager.save(agendamiento);
-
-        proceso.agendamientoId = savedAgenda.id;
-        await manager.save(proceso);
+        agendamientoId = savedAgenda.id;
         this.logger.log(
-          `Agendamiento ${savedAgenda.id} creado y vinculado a proceso ${saved.id}`,
+          `Agendamiento ${savedAgenda.id} creado para proceso ${saved.id}`,
         );
       }
+
+      const proceso = manager.create(Proceso, {
+        eventoId: saved.id,
+        ...procesoData,
+        agendamientoId,
+        paraQuien: dto.proceso.paraQuien || 'CONDENADO',
+        numeroIntento: dto.proceso.numeroIntento || 1,
+        realizado: dto.proceso.realizado ?? false,
+      });
+      await manager.save(proceso);
+      this.logger.log(
+        `Proceso creado para evento ${saved.id} (tipo: ${codigo}, para: ${proceso.paraQuien})`,
+      );
     }
 
     const accion = manager.create(AccionUsuario, {
