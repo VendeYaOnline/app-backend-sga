@@ -7,9 +7,84 @@ import {
   IsDateString,
   MaxLength,
   Min,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+export class CreateProcesoDispositivoDto {
+  @ApiPropertyOptional({
+    description: 'Número de serie del dispositivo',
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  numeroSerie?: string;
+
+  @ApiProperty({ description: 'ID del rol del dispositivo (FK a CAT_ROL_DISPOSITIVO)' })
+  @IsInt()
+  rolDispositivoId: number;
+
+  @ApiPropertyOptional({
+    description: 'Talla del dispositivo si aplica (ej: S/M/L/XL)',
+    maxLength: 10,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  talla?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones sobre el dispositivo',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  observaciones?: string;
+
+  @ApiPropertyOptional({
+    description: 'Indica si fue entregado/recibido físicamente',
+  })
+  @IsOptional()
+  @IsBoolean()
+  entregado?: boolean;
+}
+
+export class CreateProcesoSoporteDetalleDto {
+  @ApiPropertyOptional({
+    description: 'Medio de contacto usado en el soporte (ej: TELEFONICO, PRESENCIAL)',
+    maxLength: 30,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  medioContacto?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones del soporte',
+  })
+  @IsOptional()
+  @IsString()
+  observacionesSoporte?: string;
+}
+
+export class CreateProcesoSoporteMotivoDto {
+  @ApiProperty({ description: 'ID del tipo de problema (FK a CAT_TIPO_PROBLEMA_ST)' })
+  @IsInt()
+  tipoProblemaId: number;
+
+  @ApiPropertyOptional({
+    description: 'Observación específica del problema',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  observacion?: string;
+}
 
 export class CreateProcesoDto {
   @ApiProperty({
@@ -120,4 +195,32 @@ export class CreateProcesoDto {
   @IsOptional()
   @IsString()
   notas?: string;
+
+  @ApiPropertyOptional({
+    type: [CreateProcesoDispositivoDto],
+    description: 'Dispositivos a registrar en el proceso',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProcesoDispositivoDto)
+  dispositivos?: CreateProcesoDispositivoDto[];
+
+  @ApiPropertyOptional({
+    description: 'Detalle de soporte técnico (aplica para procesos de tipo SOPORTE)',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateProcesoSoporteDetalleDto)
+  soporteDetalle?: CreateProcesoSoporteDetalleDto;
+
+  @ApiPropertyOptional({
+    type: [CreateProcesoSoporteMotivoDto],
+    description: 'Motivos del soporte técnico (aplica para procesos de tipo SOPORTE). esMotivoPrincipal siempre se fuerza a false.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProcesoSoporteMotivoDto)
+  motivos?: CreateProcesoSoporteMotivoDto[];
 }

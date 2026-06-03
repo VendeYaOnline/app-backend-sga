@@ -616,39 +616,126 @@ export class EventoService {
       motivoNoRealizadoId?: number;
       detalleNoRealizado?: string;
       notas?: string;
+      dispositivos?: {
+        numeroSerie?: string;
+        rolDispositivoId: number;
+        talla?: string;
+        observaciones?: string;
+        entregado?: boolean;
+      }[];
+      soporteDetalle?: {
+        medioContacto?: string;
+        observacionesSoporte?: string;
+      };
+      motivos?: {
+        tipoProblemaId: number;
+        observacion?: string;
+      }[];
     },
     userId: number,
   ) {
-    const agendamientoRepo = this.dataSource.getRepository(Agendamiento);
-    const agendamiento = await agendamientoRepo.findOne({
-      where: { id: dto.agendamientoId, deletedAt: IsNull() },
-    });
-    if (!agendamiento) {
-      throw new NotFoundException(
-        `Agendamiento con ID ${dto.agendamientoId} no encontrado`,
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const agendamiento = await manager.findOne(Agendamiento, {
+        where: { id: dto.agendamientoId, deletedAt: IsNull() },
+      });
+      if (!agendamiento) {
+        throw new NotFoundException(
+          `Agendamiento con ID ${dto.agendamientoId} no encontrado`,
+        );
+      }
+
+      const eventoId = agendamiento.eventoId;
+
+      const existente = await manager.findOne(Proceso, {
+        where: { eventoId },
+      });
+      if (existente) {
+        throw new ConflictException(
+          `Ya existe un proceso para el evento ${eventoId}. Use PUT /procesos/${eventoId} para actualizarlo.`,
+        );
+      }
+
+      const { agendamientoId, dispositivos, soporteDetalle, motivos, ...restDto } = dto;
+      const nuevo = manager.create(Proceso, {
+        eventoId,
+        agendamientoId,
+        ...restDto,
+      });
+      const procesoGuardado = await manager.save(nuevo);
+
+      let dispositivosGuardados: ProcesoDispositivo[] = [];
+      if (dispositivos && dispositivos.length > 0) {
+        const entities = dispositivos.map((dispDto) =>
+          manager.create(ProcesoDispositivo, {
+            eventoId,
+            ...dispDto,
+            fechaRegistro: new Date(),
+          }),
+        );
+        dispositivosGuardados = await manager.save(entities);
+      }
+
+      let soporteDetalleGuardado: ProcesoSoporteDetalle | null = null;
+      if (soporteDetalle) {
+        soporteDetalleGuardado = manager.create(ProcesoSoporteDetalle, {
+          eventoId,
+          ...soporteDetalle,
+        });
+        soporteDetalleGuardado = await manager.save(soporteDetalleGuardado);
+      }
+
+      let motivosGuardados: ProcesoSoporteMotivo[] = [];
+      if (motivos && motivos.length > 0) {
+        const entities = motivos.map((m) =>
+          manager.create(ProcesoSoporteMotivo, {
+            eventoId,
+            tipoProblemaId: m.tipoProblemaId,
+            observacion: m.observacion ?? null,
+            esMotivoPrincipal: false,
+          }),
+        );
+        motivosGuardados = await manager.save(entities);
+      }
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'CREAR_PROCESO',
+        entidad: 'PROCESO',
+        entidadId: eventoId,
+        fechaAccion: new Date(),
+        detalles: JSON.stringify({
+          agendamientoId,
+          cantidadDispositivos: dispositivosGuardados.length,
+          tieneSoporteDetalle: !!soporteDetalleGuardado,
+          cantidadMotivos: motivosGuardados.length,
+        }),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(
+        `Proceso creado para evento ${eventoId} (agendamiento ${agendamientoId}) con ${dispositivosGuardados.length} dispositivo(s), soporte=${!!soporteDetalleGuardado}, ${motivosGuardados.length} motivo(s) por usuario ${userId}`,
       );
+
+      return {
+        ...procesoGuardado,
+        dispositivos: dispositivosGuardados,
+        soporteDetalle: soporteDetalleGuardado,
+        motivos: motivosGuardados,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-
-    const eventoId = agendamiento.eventoId;
-
-    const existente = await this.procesoRepo.findOne({ where: { eventoId } });
-    if (existente) {
-      throw new ConflictException(
-        `Ya existe un proceso para el evento ${eventoId}. Use PUT /procesos/${eventoId} para actualizarlo.`,
-      );
-    }
-
-    const { agendamientoId, ...restDto } = dto;
-    const nuevo = this.procesoRepo.create({
-      eventoId,
-      agendamientoId,
-      ...restDto,
-    });
-    const saved = await this.procesoRepo.save(nuevo);
-    this.logger.log(
-      `Proceso creado para evento ${eventoId} (agendamiento ${agendamientoId}) por usuario ${userId}`,
-    );
-    return saved;
   }
 
   async cerrarProceso(
