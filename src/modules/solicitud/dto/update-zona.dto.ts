@@ -54,7 +54,9 @@ export class UpdateZonaDto {
   @MaxLength(10)
   codigoPostal?: string;
 
-  @ApiPropertyOptional({ description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)',
+  })
   @IsOptional()
   @IsInt()
   tipoLugarId?: number;

@@ -167,17 +167,23 @@ export class CreateAgendamientoInlineDto {
   @IsInt()
   crsId?: number;
 
-  @ApiPropertyOptional({ description: 'ID de la region donde se realiza la visita' })
+  @ApiPropertyOptional({
+    description: 'ID de la region donde se realiza la visita',
+  })
   @IsOptional()
   @IsInt()
   regionId?: number;
 
-  @ApiPropertyOptional({ description: 'ID de la comuna donde se realiza la visita' })
+  @ApiPropertyOptional({
+    description: 'ID de la comuna donde se realiza la visita',
+  })
   @IsOptional()
   @IsInt()
   comunaId?: number;
 
-  @ApiPropertyOptional({ description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)' })
+  @ApiPropertyOptional({
+    description: 'ID del tipo de lugar (CASA, APARTAMENTO, etc.)',
+  })
   @IsOptional()
   @IsInt()
   tipoLugarId?: number;

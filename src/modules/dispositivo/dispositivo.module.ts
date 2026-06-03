@@ -9,7 +9,12 @@ import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProcesoDispositivo, Agendamiento, Proceso, AccionUsuario]),
+    TypeOrmModule.forFeature([
+      ProcesoDispositivo,
+      Agendamiento,
+      Proceso,
+      AccionUsuario,
+    ]),
   ],
   controllers: [DispositivoController],
   providers: [DispositivoService],

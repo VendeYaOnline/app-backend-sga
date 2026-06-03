@@ -14,7 +14,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateProcesoDispositivoDto } from './create-proceso-dispositivo.dto';
 
 export class UpdateProcesoInlineDto {
-  @ApiPropertyOptional({ description: 'Fecha y hora de ejecución real (ISO 8601)' })
+  @ApiPropertyOptional({
+    description: 'Fecha y hora de ejecución real (ISO 8601)',
+  })
   @IsOptional()
   @IsDateString()
   fechaEjecucion?: string;
@@ -39,7 +41,10 @@ export class UpdateProcesoInlineDto {
   @IsInt()
   motivoNoRealizadoId?: number;
 
-  @ApiPropertyOptional({ description: 'Detalle si no se realizó', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Detalle si no se realizó',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -60,7 +65,10 @@ export class UpdateProcesoInlineDto {
   @IsInt()
   comunaId?: number;
 
-  @ApiPropertyOptional({ description: 'Dirección real donde se ejecutó', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Dirección real donde se ejecutó',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -117,13 +125,19 @@ export class UpdateAgendamientoInlineDto {
   @IsInt()
   tipoLugarId?: number;
 
-  @ApiPropertyOptional({ description: 'Dirección de la agenda', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Dirección de la agenda',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
   direccionAgenda?: string;
 
-  @ApiPropertyOptional({ description: 'Notas del agendamiento', maxLength: 500 })
+  @ApiPropertyOptional({
+    description: 'Notas del agendamiento',
+    maxLength: 500,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)

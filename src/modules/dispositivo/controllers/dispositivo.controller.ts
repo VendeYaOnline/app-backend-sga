@@ -103,7 +103,11 @@ export class DispositivoController {
     @Body() dto: RegistrarInstalacionDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.dispositivoService.registrarInstalacion(eventoId, dto, user.sub);
+    return this.dispositivoService.registrarInstalacion(
+      eventoId,
+      dto,
+      user.sub,
+    );
   }
 
   @Put('procesos/:eventoId/dispositivos')

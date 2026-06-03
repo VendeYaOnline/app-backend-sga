@@ -1,13 +1,10 @@
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSolicitanteDto {
-  @ApiProperty({ description: 'Rol: FISCAL, DEFENSOR, JUEZ, TRIBUNAL, GENDARMERIA, OTRO' })
+  @ApiProperty({
+    description: 'Rol: FISCAL, DEFENSOR, JUEZ, TRIBUNAL, GENDARMERIA, OTRO',
+  })
   @IsString()
   @MaxLength(30)
   rolSolicitante: string;

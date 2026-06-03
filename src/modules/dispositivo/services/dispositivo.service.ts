@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ProcesoDispositivo } from '../entities/proceso-dispositivo.entity';
@@ -103,9 +99,7 @@ export class DispositivoService {
       if (dto.proceso && Object.keys(dto.proceso).length > 0) {
         Object.assign(proceso, dto.proceso);
         await manager.save(proceso);
-        this.logger.log(
-          `Proceso ${eventoId} actualizado durante instalación`,
-        );
+        this.logger.log(`Proceso ${eventoId} actualizado durante instalación`);
       }
 
       if (dto.agendamiento && Object.keys(dto.agendamiento).length > 0) {
@@ -138,8 +132,12 @@ export class DispositivoService {
         fechaAccion: new Date(),
         detalles: JSON.stringify({
           cantidadDispositivos: saved.length,
-          actualizoProceso: !!(dto.proceso && Object.keys(dto.proceso).length > 0),
-          actualizoAgendamiento: !!(dto.agendamiento && Object.keys(dto.agendamiento).length > 0),
+          actualizoProceso: !!(
+            dto.proceso && Object.keys(dto.proceso).length > 0
+          ),
+          actualizoAgendamiento: !!(
+            dto.agendamiento && Object.keys(dto.agendamiento).length > 0
+          ),
         }),
       });
       await manager.save(accion);

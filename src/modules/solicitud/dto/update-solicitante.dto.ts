@@ -1,13 +1,10 @@
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsOptional, IsBoolean, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateSolicitanteDto {
-  @ApiPropertyOptional({ description: 'Rol: FISCAL, DEFENSOR, JUEZ, TRIBUNAL, GENDARMERIA, OTRO' })
+  @ApiPropertyOptional({
+    description: 'Rol: FISCAL, DEFENSOR, JUEZ, TRIBUNAL, GENDARMERIA, OTRO',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(30)
