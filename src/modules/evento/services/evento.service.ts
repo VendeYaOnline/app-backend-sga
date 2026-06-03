@@ -599,6 +599,58 @@ export class EventoService {
     return this.procesoRepo.save(nuevo);
   }
 
+  async createProceso(
+    dto: {
+      agendamientoId: number;
+      tecnicoId?: number;
+      crsId?: number;
+      regionId?: number;
+      comunaId?: number;
+      direccionProceso?: string;
+      fechaProgramada?: string;
+      fechaEjecucion?: string;
+      numeroIntento?: number;
+      horaLlegada?: string;
+      horaSalida?: string;
+      realizado?: boolean;
+      motivoNoRealizadoId?: number;
+      detalleNoRealizado?: string;
+      notas?: string;
+    },
+    userId: number,
+  ) {
+    const agendamientoRepo = this.dataSource.getRepository(Agendamiento);
+    const agendamiento = await agendamientoRepo.findOne({
+      where: { id: dto.agendamientoId, deletedAt: IsNull() },
+    });
+    if (!agendamiento) {
+      throw new NotFoundException(
+        `Agendamiento con ID ${dto.agendamientoId} no encontrado`,
+      );
+    }
+
+    const eventoId = agendamiento.eventoId;
+
+    const existente = await this.procesoRepo.findOne({ where: { eventoId } });
+    if (existente) {
+      throw new ConflictException(
+        `Ya existe un proceso para el evento ${eventoId}. Use PUT /procesos/${eventoId} para actualizarlo.`,
+      );
+    }
+
+    const { agendamientoId, ...restDto } = dto;
+    const nuevo = this.procesoRepo.create({
+      eventoId,
+      agendamientoId,
+      ...restDto,
+    });
+    const saved = await this.procesoRepo.save(nuevo);
+    this.logger.log(
+      `Proceso creado para evento ${eventoId} (agendamiento ${agendamientoId}) por usuario ${userId}`,
+    );
+    return saved;
+  }
+
   async cerrarProceso(
     eventoId: number,
     dto: {

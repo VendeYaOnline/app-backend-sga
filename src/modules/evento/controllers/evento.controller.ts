@@ -27,6 +27,7 @@ import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { FindEventoDto } from '../dto/find-evento.dto';
 import { FindProcesoDto } from '../dto/find-proceso.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
+import { CreateProcesoDto } from '../dto/create-proceso.dto';
 import { UpdateResolucionDto } from '../dto/update-resolucion.dto';
 import { UpdateProcesoDto } from '../dto/update-proceso.dto';
 import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
@@ -220,6 +221,27 @@ export class EventoController {
   @ApiQuery({ name: 'tipoEventoId', required: false, type: Number })
   async findProcesos(@Query() filters: FindProcesoDto) {
     return this.eventoService.findAllProcesos(filters);
+  }
+
+  @Post('procesos')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Crear un proceso en terreno desde un agendamiento',
+    description:
+      'Crea un nuevo proceso en terreno asociado al agendamiento indicado. El eventoId se resuelve automáticamente desde el agendamiento.',
+  })
+  @ApiResponse({ status: 201, description: 'Proceso creado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
+  @ApiResponse({
+    status: 409,
+    description: 'Ya existe un proceso para el evento del agendamiento',
+  })
+  @ApiBody({ type: CreateProcesoDto })
+  async createProceso(
+    @Body() dto: CreateProcesoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventoService.createProceso(dto, user.sub);
   }
 
   @Put('procesos/:eventoId')
