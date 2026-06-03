@@ -73,6 +73,13 @@ export class UpdateProcesoInlineDto {
   @IsString()
   @MaxLength(500)
   direccionProceso?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID del tipo de lugar real de ejecución',
+  })
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
 }
 
 export class UpdateAgendamientoInlineDto {
@@ -150,6 +157,25 @@ export class UpdateAgendamientoInlineDto {
   @IsOptional()
   @IsIn(['PRESENCIAL', 'VIRTUAL'])
   tipoSoporte?: string;
+
+  @ApiPropertyOptional({ description: 'Número de intento secuencial' })
+  @IsOptional()
+  @IsInt()
+  numeroIntento?: number;
+
+  @ApiPropertyOptional({ description: 'ID del motivo de no realización' })
+  @IsOptional()
+  @IsInt()
+  motivoNoRealizadoId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Detalle del motivo de no realización',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  detalleNoRealizado?: string;
 }
 
 export class RegistrarInstalacionDto {

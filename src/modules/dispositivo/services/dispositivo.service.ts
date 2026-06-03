@@ -26,15 +26,15 @@ export class DispositivoService {
     private readonly procesoRepo: Repository<Proceso>,
   ) {}
 
-  async findDispositivosByEvento(eventoId: number) {
+  async findDispositivosByEvento(agendamientoId: number) {
     return this.procesoDispositivoRepo.find({
-      where: { eventoId },
+      where: { agendamientoId },
       relations: { rolDispositivo: true },
     });
   }
 
   async createProcesoDispositivos(
-    eventoId: number,
+    agendamientoId: number,
     dtos: CreateProcesoDispositivoDto[],
   ): Promise<ProcesoDispositivo[]> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -45,7 +45,7 @@ export class DispositivoService {
       const manager = queryRunner.manager;
       const dispositivos = dtos.map((dto) =>
         manager.create(ProcesoDispositivo, {
-          eventoId,
+          agendamientoId,
           ...dto,
           fechaRegistro: new Date(),
         }),
@@ -54,13 +54,13 @@ export class DispositivoService {
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `${saved.length} dispositivo(s) registrado(s) en proceso ${eventoId}`,
+        `${saved.length} dispositivo(s) registrado(s) en proceso ${agendamientoId}`,
       );
       return saved;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(
-        `Error al registrar dispositivos en proceso ${eventoId}`,
+        `Error al registrar dispositivos en proceso ${agendamientoId}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;
@@ -70,7 +70,7 @@ export class DispositivoService {
   }
 
   async registrarInstalacion(
-    eventoId: number,
+    agendamientoId: number,
     dto: RegistrarInstalacionDto,
     userId: number,
   ): Promise<ProcesoDispositivo[]> {
@@ -82,17 +82,17 @@ export class DispositivoService {
       const manager = queryRunner.manager;
 
       const proceso = await manager.findOne(Proceso, {
-        where: { eventoId },
+        where: { agendamientoId },
       });
       if (!proceso) {
         throw new NotFoundException(
-          `Proceso con evento ID ${eventoId} no encontrado`,
+          `Proceso con agendamiento ID ${agendamientoId} no encontrado`,
         );
       }
 
       const dispositivos = dto.dispositivos.map((dispDto) =>
         manager.create(ProcesoDispositivo, {
-          eventoId,
+          agendamientoId,
           ...dispDto,
           fechaRegistro: new Date(),
         }),
@@ -102,36 +102,36 @@ export class DispositivoService {
       if (dto.proceso && Object.keys(dto.proceso).length > 0) {
         Object.assign(proceso, dto.proceso);
         await manager.save(proceso);
-        this.logger.log(`Proceso ${eventoId} actualizado durante instalación`);
+        this.logger.log(
+          `Proceso ${agendamientoId} actualizado durante instalación`,
+        );
       }
 
       if (dto.agendamiento && Object.keys(dto.agendamiento).length > 0) {
-        const agendamientoId = proceso.agendamientoId;
+        const agendaId = proceso.agendamientoId;
 
-        if (agendamientoId) {
-          const agendamiento = await manager.findOne(Agendamiento, {
-            where: { id: agendamientoId },
-          });
+        const agendamiento = await manager.findOne(Agendamiento, {
+          where: { id: agendaId },
+        });
 
-          if (!agendamiento) {
-            throw new NotFoundException(
-              `Agendamiento con ID ${agendamientoId} no encontrado`,
-            );
-          }
-
-          Object.assign(agendamiento, dto.agendamiento);
-          await manager.save(agendamiento);
-          this.logger.log(
-            `Agendamiento ${agendamientoId} actualizado durante instalación del proceso ${eventoId}`,
+        if (!agendamiento) {
+          throw new NotFoundException(
+            `Agendamiento con ID ${agendaId} no encontrado`,
           );
         }
+
+        Object.assign(agendamiento, dto.agendamiento);
+        await manager.save(agendamiento);
+        this.logger.log(
+          `Agendamiento ${agendaId} actualizado durante instalación del proceso ${agendamientoId}`,
+        );
       }
 
       const accion = manager.create(AccionUsuario, {
         usuarioId: userId,
         tipoAccion: 'REGISTRAR_INSTALACION',
         entidad: 'PROCESO',
-        entidadId: eventoId,
+        entidadId: agendamientoId,
         fechaAccion: new Date(),
         detalles: JSON.stringify({
           cantidadDispositivos: saved.length,
@@ -147,13 +147,13 @@ export class DispositivoService {
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Instalación registrada: ${saved.length} dispositivo(s) en proceso ${eventoId} por usuario ${userId}`,
+        `Instalación registrada: ${saved.length} dispositivo(s) en proceso ${agendamientoId} por usuario ${userId}`,
       );
       return saved;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(
-        `Error al registrar instalación en proceso ${eventoId}`,
+        `Error al registrar instalación en proceso ${agendamientoId}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;
@@ -163,7 +163,7 @@ export class DispositivoService {
   }
 
   async replaceProcesoDispositivos(
-    eventoId: number,
+    agendamientoId: number,
     dtos: CreateProcesoDispositivoDto[],
     userId: number,
   ): Promise<ProcesoDispositivo[]> {
@@ -175,29 +175,29 @@ export class DispositivoService {
       const manager = queryRunner.manager;
 
       const proceso = await manager.findOne(Proceso, {
-        where: { eventoId },
+        where: { agendamientoId },
       });
       if (!proceso) {
         throw new NotFoundException(
-          `Proceso con evento ID ${eventoId} no encontrado`,
+          `Proceso con agendamiento ID ${agendamientoId} no encontrado`,
         );
       }
 
       const existentesCount = await manager.count(ProcesoDispositivo, {
-        where: { eventoId },
+        where: { agendamientoId },
       });
 
-      await manager.delete(ProcesoDispositivo, { eventoId });
+      await manager.delete(ProcesoDispositivo, { agendamientoId });
 
       if (!dtos || dtos.length === 0) {
         this.logger.log(
-          `Todos los dispositivos del proceso ${eventoId} fueron eliminados por usuario ${userId}`,
+          `Todos los dispositivos del proceso ${agendamientoId} fueron eliminados por usuario ${userId}`,
         );
       }
 
       const dispositivos = dtos.map((dto) =>
         manager.create(ProcesoDispositivo, {
-          eventoId,
+          agendamientoId,
           ...dto,
           fechaRegistro: new Date(),
         }),
@@ -208,7 +208,7 @@ export class DispositivoService {
         usuarioId: userId,
         tipoAccion: 'EDITAR_DISPOSITIVOS',
         entidad: 'PROCESO',
-        entidadId: eventoId,
+        entidadId: agendamientoId,
         fechaAccion: new Date(),
         detalles: JSON.stringify({
           cantidadAnterior: existentesCount,
@@ -221,13 +221,13 @@ export class DispositivoService {
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Dispositivos del proceso ${eventoId} reemplazados: ${existentesCount} eliminados, ${saved.length} creados por usuario ${userId}`,
+        `Dispositivos del proceso ${agendamientoId} reemplazados: ${existentesCount} eliminados, ${saved.length} creados por usuario ${userId}`,
       );
       return saved;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(
-        `Error al reemplazar dispositivos del proceso ${eventoId}`,
+        `Error al reemplazar dispositivos del proceso ${agendamientoId}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;

@@ -1,10 +1,10 @@
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { Evento } from './evento.entity';
+import { Proceso } from './proceso.entity';
 
 @Entity('sga.PROCESO_SOPORTE_DETALLE')
 export class ProcesoSoporteDetalle {
-  @PrimaryColumn({ name: 'evento_id', type: 'int' })
-  eventoId: number;
+  @PrimaryColumn({ name: 'agendamiento_id', type: 'int' })
+  agendamientoId: number;
 
   @Column({
     name: 'medio_contacto',
@@ -22,7 +22,10 @@ export class ProcesoSoporteDetalle {
   })
   observacionesSoporte: string | null;
 
-  @ManyToOne(() => Evento)
-  @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
-  evento: Evento;
+  @ManyToOne(() => Proceso)
+  @JoinColumn({
+    name: 'agendamiento_id',
+    referencedColumnName: 'agendamientoId',
+  })
+  proceso: Proceso;
 }

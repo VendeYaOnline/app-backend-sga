@@ -9,7 +9,7 @@ import { ViewEntity, ViewColumn, DataSource } from 'typeorm';
       .addSelect('a.condenado_id', 'condenadoId')
       .addSelect('a.victima_id', 'victimaId')
       .addSelect('pd.numero_serie', 'numeroSerie')
-      .addSelect('pd.evento_id', 'procesoOrigenId')
+      .addSelect('pd.agendamiento_id', 'procesoOrigenId')
       .addSelect('p.fecha_ejecucion', 'fechaUltimoMovimiento')
       .from('sga.PROCESO_DISPOSITIVO', 'pd')
       .innerJoin(
@@ -17,19 +17,19 @@ import { ViewEntity, ViewColumn, DataSource } from 'typeorm';
         'rd',
         'rd.id = pd.rol_dispositivo_id',
       )
-      .innerJoin('sga.PROCESO', 'p', 'p.evento_id = pd.evento_id')
+      .innerJoin('sga.PROCESO', 'p', 'p.agendamiento_id = pd.agendamiento_id')
       .innerJoin('sga.AGENDAMIENTO', 'a', 'a.id = p.agendamiento_id')
-      .innerJoin('sga.EVENTO', 'e', 'e.id = pd.evento_id')
+      .innerJoin('sga.EVENTO', 'e', 'e.id = p.evento_id')
       .where("rd.codigo IN ('INSTALADO', 'REEMPLAZADO_ENTRANTE')")
-      .andWhere('e.estado_evento = :estado', { estado: 'COMPLETADO' })
+      .andWhere('p.realizado = :realizado', { realizado: 1 })
       .andWhere(
         `NOT EXISTS (
           SELECT 1
           FROM sga.PROCESO_DISPOSITIVO pd2
           JOIN sga.CAT_ROL_DISPOSITIVO rd2 ON rd2.id = pd2.rol_dispositivo_id
-          JOIN sga.PROCESO p2 ON p2.evento_id = pd2.evento_id
+          JOIN sga.PROCESO p2 ON p2.agendamiento_id = pd2.agendamiento_id
           JOIN sga.AGENDAMIENTO a2 ON a2.id = p2.agendamiento_id
-          JOIN sga.EVENTO e2 ON e2.id = pd2.evento_id
+          JOIN sga.EVENTO e2 ON e2.id = p2.evento_id
           WHERE e2.solicitud_id = e.solicitud_id
             AND a2.para_quien = a.para_quien
             AND pd2.numero_serie = pd.numero_serie

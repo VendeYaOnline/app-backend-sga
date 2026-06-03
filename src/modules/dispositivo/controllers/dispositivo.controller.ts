@@ -30,7 +30,7 @@ import { RegistrarInstalacionDto } from '../dto/registrar-instalacion.dto';
 export class DispositivoController {
   constructor(private readonly dispositivoService: DispositivoService) {}
 
-  @Get('procesos/:eventoId/dispositivos')
+  @Get('procesos/:agendamientoId/dispositivos')
   @ApiOperation({
     summary: 'Historial de dispositivos en proceso',
     description: 'Retorna el historial de dispositivos asociados a un proceso',
@@ -38,17 +38,17 @@ export class DispositivoController {
   @ApiResponse({ status: 200, description: 'Historial de dispositivos' })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso',
+    description: 'ID del agendamiento/proceso',
   })
   async findDispositivosByEvento(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
   ) {
-    return this.dispositivoService.findDispositivosByEvento(eventoId);
+    return this.dispositivoService.findDispositivosByEvento(agendamientoId);
   }
 
-  @Post('procesos/:eventoId/dispositivos')
+  @Post('procesos/:agendamientoId/dispositivos')
   @HttpCode(201)
   @ApiOperation({
     summary: 'Registrar dispositivos en proceso',
@@ -64,21 +64,21 @@ export class DispositivoController {
     description: 'Proceso no encontrado',
   })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso',
+    description: 'ID del agendamiento/proceso',
   })
   async createProcesoDispositivos(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: CreateProcesoDispositivosDto,
   ) {
     return this.dispositivoService.createProcesoDispositivos(
-      eventoId,
+      agendamientoId,
       dto.dispositivos,
     );
   }
 
-  @Post('procesos/:eventoId/instalacion')
+  @Post('procesos/:agendamientoId/instalacion')
   @HttpCode(201)
   @ApiOperation({
     summary: 'Registrar instalación completa',
@@ -94,23 +94,23 @@ export class DispositivoController {
     description: 'Proceso o agendamiento no encontrado',
   })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso de instalación',
+    description: 'ID del agendamiento/proceso de instalación',
   })
   async registrarInstalacion(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: RegistrarInstalacionDto,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.dispositivoService.registrarInstalacion(
-      eventoId,
+      agendamientoId,
       dto,
       user.sub,
     );
   }
 
-  @Put('procesos/:eventoId/dispositivos')
+  @Put('procesos/:agendamientoId/dispositivos')
   @ApiOperation({
     summary: 'Reemplazar todos los dispositivos de un proceso',
     description:
@@ -125,17 +125,17 @@ export class DispositivoController {
     description: 'Proceso no encontrado',
   })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso',
+    description: 'ID del agendamiento/proceso',
   })
   async replaceProcesoDispositivos(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: CreateProcesoDispositivosDto,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.dispositivoService.replaceProcesoDispositivos(
-      eventoId,
+      agendamientoId,
       dto.dispositivos,
       user.sub,
     );

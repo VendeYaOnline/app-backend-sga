@@ -4,51 +4,17 @@ import { Usuario } from '../../auth/entities/usuario.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
+import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
 import { CatMotivoNoRealizado } from '../../catalogo/entities/cat-motivo-no-realizado.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 
 @Entity('sga.PROCESO')
 export class Proceso {
-  @PrimaryColumn({ name: 'evento_id', type: 'int' })
+  @PrimaryColumn({ name: 'agendamiento_id', type: 'int' })
+  agendamientoId: number;
+
+  @Column({ name: 'evento_id', type: 'int' })
   eventoId: number;
-
-  @Column({ name: 'numero_intento', type: 'int', default: 1 })
-  numeroIntento: number;
-
-  @Column({ name: 'agendamiento_id', type: 'int', nullable: true })
-  agendamientoId: number | null;
-
-  @Column({ name: 'tecnico_id', type: 'int', nullable: true })
-  tecnicoId: number | null;
-
-  @Column({ name: 'crs_id', type: 'int', nullable: true })
-  crsId: number | null;
-
-  @Column({ name: 'region_id', type: 'int', nullable: true })
-  regionId: number | null;
-
-  @Column({ name: 'comuna_id', type: 'int', nullable: true })
-  comunaId: number | null;
-
-  @Column({
-    name: 'direccion_proceso',
-    type: 'nvarchar',
-    length: 500,
-    nullable: true,
-  })
-  direccionProceso: string | null;
-
-  @Column({ name: 'fecha_programada', type: 'datetime2', nullable: true })
-  fechaProgramada: Date | null;
-
-  @Column({ name: 'fecha_ejecucion', type: 'datetime2', nullable: true })
-  fechaEjecucion: Date | null;
-
-  @Column({ name: 'hora_llegada', type: 'time', nullable: true })
-  horaLlegada: string | null;
-
-  @Column({ name: 'hora_salida', type: 'time', nullable: true })
-  horaSalida: string | null;
 
   @Column({ name: 'realizado', type: 'bit', nullable: true })
   realizado: boolean | null;
@@ -64,6 +30,38 @@ export class Proceso {
   })
   detalleNoRealizado: string | null;
 
+  @Column({ name: 'tecnico_id', type: 'int', nullable: true })
+  tecnicoId: number | null;
+
+  @Column({ name: 'crs_id', type: 'int', nullable: true })
+  crsId: number | null;
+
+  @Column({ name: 'region_id', type: 'int', nullable: true })
+  regionId: number | null;
+
+  @Column({ name: 'comuna_id', type: 'int', nullable: true })
+  comunaId: number | null;
+
+  @Column({ name: 'tipo_lugar_id', type: 'int', nullable: true })
+  tipoLugarId: number | null;
+
+  @Column({
+    name: 'direccion_proceso',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
+  direccionProceso: string | null;
+
+  @Column({ name: 'fecha_ejecucion', type: 'datetime2', nullable: true })
+  fechaEjecucion: Date | null;
+
+  @Column({ name: 'hora_llegada', type: 'time', nullable: true })
+  horaLlegada: string | null;
+
+  @Column({ name: 'hora_salida', type: 'time', nullable: true })
+  horaSalida: string | null;
+
   @Column({ name: 'fecha_cierre', type: 'datetime2', nullable: true })
   fechaCierre: Date | null;
 
@@ -72,6 +70,10 @@ export class Proceso {
 
   @Column({ name: 'notas', type: 'nvarchar', length: 'max', nullable: true })
   notas: string | null;
+
+  @ManyToOne(() => Agendamiento)
+  @JoinColumn({ name: 'agendamiento_id', referencedColumnName: 'id' })
+  agendamiento: Agendamiento;
 
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
@@ -93,6 +95,10 @@ export class Proceso {
   @JoinColumn({ name: 'comuna_id', referencedColumnName: 'id' })
   comuna: CatComuna;
 
+  @ManyToOne(() => CatTipoLugar)
+  @JoinColumn({ name: 'tipo_lugar_id', referencedColumnName: 'id' })
+  tipoLugar: CatTipoLugar;
+
   @ManyToOne(() => CatMotivoNoRealizado)
   @JoinColumn({ name: 'motivo_no_realizado_id', referencedColumnName: 'id' })
   motivoNoRealizado: CatMotivoNoRealizado;
@@ -100,8 +106,4 @@ export class Proceso {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'cerrado_by', referencedColumnName: 'id' })
   cerradoPor: Usuario;
-
-  @ManyToOne(() => Agendamiento)
-  @JoinColumn({ name: 'agendamiento_id', referencedColumnName: 'id' })
-  agendamiento: Agendamiento;
 }

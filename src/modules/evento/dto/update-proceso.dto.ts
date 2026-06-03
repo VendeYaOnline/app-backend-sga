@@ -5,7 +5,6 @@ import {
   IsBoolean,
   IsDateString,
   MaxLength,
-  Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -36,6 +35,13 @@ export class UpdateProcesoDto {
   comunaId?: number;
 
   @ApiPropertyOptional({
+    description: 'ID del tipo de lugar real de ejecución (FK a CAT_TIPO_LUGAR)',
+  })
+  @IsOptional()
+  @IsInt()
+  tipoLugarId?: number;
+
+  @ApiPropertyOptional({
     description: 'Dirección donde se ejecuta el proceso',
     maxLength: 500,
   })
@@ -45,27 +51,11 @@ export class UpdateProcesoDto {
   direccionProceso?: string;
 
   @ApiPropertyOptional({
-    description: 'Fecha y hora programada para el proceso (ISO 8601)',
-  })
-  @IsOptional()
-  @IsDateString()
-  fechaProgramada?: string;
-
-  @ApiPropertyOptional({
     description: 'Fecha y hora real de ejecución del proceso (ISO 8601)',
   })
   @IsOptional()
   @IsDateString()
   fechaEjecucion?: string;
-
-  @ApiPropertyOptional({
-    description: 'Número de intento (1 para el primero)',
-    minimum: 1,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  numeroIntento?: number;
 
   @ApiPropertyOptional({ description: 'Hora de llegada al lugar (HH:mm:ss)' })
   @IsOptional()

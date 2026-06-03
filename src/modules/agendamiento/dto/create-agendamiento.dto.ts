@@ -97,6 +97,30 @@ export class CreateAgendamientoDto {
   @MaxLength(500)
   direccionAgenda?: string;
 
+  @ApiPropertyOptional({
+    description: 'Número de intento secuencial',
+    default: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  numeroIntento?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID del motivo por el que no se pudo ejecutar',
+  })
+  @IsOptional()
+  @IsInt()
+  motivoNoRealizadoId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Detalle adicional del motivo de no realización',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  detalleNoRealizado?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

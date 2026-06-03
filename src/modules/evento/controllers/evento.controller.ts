@@ -244,7 +244,7 @@ export class EventoController {
     return this.eventoService.createProceso(dto, user.sub);
   }
 
-  @Put('procesos/:eventoId')
+  @Put('procesos/:agendamientoId')
   @ApiOperation({
     summary: 'Editar datos del proceso en terreno',
     description:
@@ -253,19 +253,19 @@ export class EventoController {
   @ApiResponse({ status: 200, description: 'Proceso actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso',
+    description: 'ID del agendamiento/proceso',
   })
   @ApiBody({ type: UpdateProcesoDto })
   async updateProceso(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: UpdateProcesoDto,
   ) {
-    return this.eventoService.updateProceso(eventoId, dto);
+    return this.eventoService.updateProceso(agendamientoId, dto);
   }
 
-  @Post('procesos/:eventoId/cerrar')
+  @Post('procesos/:agendamientoId/cerrar')
   @ApiOperation({
     summary: 'Cerrar proceso (realizado/no realizado)',
     description: 'Cierra un proceso en terreno indicando su resultado',
@@ -273,20 +273,20 @@ export class EventoController {
   @ApiResponse({ status: 200, description: 'Proceso cerrado exitosamente' })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso',
+    description: 'ID del agendamiento/proceso',
   })
   async cerrarProceso(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: any,
     @CurrentUser() user: JwtPayload,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return this.eventoService.cerrarProceso(eventoId, dto, user.sub);
+    return this.eventoService.cerrarProceso(agendamientoId, dto, user.sub);
   }
 
-  @Post('procesos/:eventoId/soporte-detalle')
+  @Post('procesos/:agendamientoId/soporte-detalle')
   @ApiOperation({
     summary: 'Agregar detalle de soporte técnico',
     description: 'Agrega un detalle de soporte técnico a un proceso',
@@ -297,33 +297,35 @@ export class EventoController {
   })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso',
+    description: 'ID del agendamiento/proceso',
   })
   async addSoporteDetalle(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: any,
   ) {
-    return this.eventoService.addSoporteDetalle(eventoId, dto);
+    return this.eventoService.addSoporteDetalle(agendamientoId, dto);
   }
 
-  @Get('procesos/:eventoId/soporte-motivos')
+  @Get('procesos/:agendamientoId/soporte-motivos')
   @ApiOperation({
     summary: 'Listar motivos de un soporte',
     description: 'Retorna los motivos asociados a un proceso de soporte',
   })
   @ApiResponse({ status: 200, description: 'Lista de motivos' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso de soporte',
+    description: 'ID del agendamiento/proceso de soporte',
   })
-  async findSoporteMotivos(@Param('eventoId', ParseIntPipe) eventoId: number) {
-    return this.eventoService.findSoporteMotivos(eventoId);
+  async findSoporteMotivos(
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
+  ) {
+    return this.eventoService.findSoporteMotivos(agendamientoId);
   }
 
-  @Post('procesos/:eventoId/soporte-motivos')
+  @Post('procesos/:agendamientoId/soporte-motivos')
   @HttpCode(201)
   @ApiOperation({
     summary: 'Agregar motivo a un soporte',
@@ -332,19 +334,19 @@ export class EventoController {
   @ApiResponse({ status: 201, description: 'Motivo agregado exitosamente' })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso de soporte',
+    description: 'ID del agendamiento/proceso de soporte',
   })
   @ApiBody({ type: CreateSoporteMotivoDto })
   async addSoporteMotivo(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Body() dto: CreateSoporteMotivoDto,
   ) {
-    return this.eventoService.addSoporteMotivo(eventoId, dto);
+    return this.eventoService.addSoporteMotivo(agendamientoId, dto);
   }
 
-  @Put('procesos/:eventoId/soporte-motivos/:motivoId')
+  @Put('procesos/:agendamientoId/soporte-motivos/:motivoId')
   @ApiOperation({
     summary: 'Editar motivo de soporte',
     description: 'Actualiza un motivo de problema de un proceso de soporte',
@@ -352,20 +354,24 @@ export class EventoController {
   @ApiResponse({ status: 200, description: 'Motivo actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Motivo no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso de soporte',
+    description: 'ID del agendamiento/proceso de soporte',
   })
   @ApiParam({ name: 'motivoId', type: Number, description: 'ID del motivo' })
   async updateSoporteMotivo(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Param('motivoId', ParseIntPipe) motivoId: number,
     @Body() dto: CreateSoporteMotivoDto,
   ) {
-    return this.eventoService.updateSoporteMotivo(motivoId, eventoId, dto);
+    return this.eventoService.updateSoporteMotivo(
+      motivoId,
+      agendamientoId,
+      dto,
+    );
   }
 
-  @Delete('procesos/:eventoId/soporte-motivos/:motivoId')
+  @Delete('procesos/:agendamientoId/soporte-motivos/:motivoId')
   @HttpCode(204)
   @ApiOperation({
     summary: 'Eliminar motivo de soporte',
@@ -374,16 +380,16 @@ export class EventoController {
   @ApiResponse({ status: 204, description: 'Motivo eliminado exitosamente' })
   @ApiResponse({ status: 404, description: 'Motivo no encontrado' })
   @ApiParam({
-    name: 'eventoId',
+    name: 'agendamientoId',
     type: Number,
-    description: 'ID del evento/proceso de soporte',
+    description: 'ID del agendamiento/proceso de soporte',
   })
   @ApiParam({ name: 'motivoId', type: Number, description: 'ID del motivo' })
   async deleteSoporteMotivo(
-    @Param('eventoId', ParseIntPipe) eventoId: number,
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
     @Param('motivoId', ParseIntPipe) motivoId: number,
   ) {
-    await this.eventoService.deleteSoporteMotivo(motivoId, eventoId);
+    await this.eventoService.deleteSoporteMotivo(motivoId, agendamientoId);
   }
 
   @Put('resoluciones/:eventoId')

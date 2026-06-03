@@ -125,14 +125,16 @@ export class EventoService {
     });
   }
 
-  async findProceso(eventoId: number) {
+  async findProceso(agendamientoId: number) {
     return this.procesoRepo.findOne({
-      where: { eventoId },
+      where: { agendamientoId },
       relations: {
+        evento: true,
         tecnico: true,
         crs: true,
         region: true,
         comuna: true,
+        tipoLugar: true,
         motivoNoRealizado: true,
         agendamiento: {
           condenado: true,
@@ -588,14 +590,16 @@ export class EventoService {
     return validacion;
   }
 
-  async updateProceso(eventoId: number, dto: any) {
-    const existente = await this.procesoRepo.findOne({ where: { eventoId } });
+  async updateProceso(agendamientoId: number, dto: any) {
+    const existente = await this.procesoRepo.findOne({
+      where: { agendamientoId },
+    });
     if (existente) {
       Object.assign(existente, dto);
       return this.procesoRepo.save(existente);
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const nuevo = this.procesoRepo.create({ eventoId, ...dto });
+    const nuevo = this.procesoRepo.create({ agendamientoId, ...dto });
     return this.procesoRepo.save(nuevo);
   }
 
@@ -606,10 +610,9 @@ export class EventoService {
       crsId?: number;
       regionId?: number;
       comunaId?: number;
+      tipoLugarId?: number;
       direccionProceso?: string;
-      fechaProgramada?: string;
       fechaEjecucion?: string;
-      numeroIntento?: number;
       horaLlegada?: string;
       horaSalida?: string;
       realizado?: boolean;
@@ -650,14 +653,12 @@ export class EventoService {
         );
       }
 
-      const eventoId = agendamiento.eventoId;
-
       const existente = await manager.findOne(Proceso, {
-        where: { eventoId },
+        where: { agendamientoId: dto.agendamientoId },
       });
       if (existente) {
         throw new ConflictException(
-          `Ya existe un proceso para el evento ${eventoId}. Use PUT /procesos/${eventoId} para actualizarlo.`,
+          `Ya existe un proceso para el agendamiento ${dto.agendamientoId}. Use PUT /procesos/${dto.agendamientoId} para actualizarlo.`,
         );
       }
 
@@ -669,8 +670,8 @@ export class EventoService {
         ...restDto
       } = dto;
       const nuevo = manager.create(Proceso, {
-        eventoId,
         agendamientoId,
+        eventoId: agendamiento.eventoId,
         ...restDto,
       });
       const procesoGuardado = await manager.save(nuevo);
@@ -679,7 +680,7 @@ export class EventoService {
       if (dispositivos && dispositivos.length > 0) {
         const entities = dispositivos.map((dispDto) =>
           manager.create(ProcesoDispositivo, {
-            eventoId,
+            agendamientoId,
             ...dispDto,
             fechaRegistro: new Date(),
           }),
@@ -690,7 +691,7 @@ export class EventoService {
       let soporteDetalleGuardado: ProcesoSoporteDetalle | null = null;
       if (soporteDetalle) {
         soporteDetalleGuardado = manager.create(ProcesoSoporteDetalle, {
-          eventoId,
+          agendamientoId,
           ...soporteDetalle,
         });
         soporteDetalleGuardado = await manager.save(soporteDetalleGuardado);
@@ -700,7 +701,7 @@ export class EventoService {
       if (motivos && motivos.length > 0) {
         const entities = motivos.map((m) =>
           manager.create(ProcesoSoporteMotivo, {
-            eventoId,
+            agendamientoId,
             tipoProblemaId: m.tipoProblemaId,
             observacion: m.observacion ?? null,
             esMotivoPrincipal: false,
@@ -713,7 +714,7 @@ export class EventoService {
         usuarioId: userId,
         tipoAccion: 'CREAR_PROCESO',
         entidad: 'PROCESO',
-        entidadId: eventoId,
+        entidadId: agendamientoId,
         fechaAccion: new Date(),
         detalles: JSON.stringify({
           agendamientoId,
@@ -727,7 +728,7 @@ export class EventoService {
       await queryRunner.commitTransaction();
 
       this.logger.log(
-        `Proceso creado para evento ${eventoId} (agendamiento ${agendamientoId}) con ${dispositivosGuardados.length} dispositivo(s), soporte=${!!soporteDetalleGuardado}, ${motivosGuardados.length} motivo(s) por usuario ${userId}`,
+        `Proceso creado para agendamiento ${agendamientoId} (evento ${agendamiento.eventoId}) con ${dispositivosGuardados.length} dispositivo(s), soporte=${!!soporteDetalleGuardado}, ${motivosGuardados.length} motivo(s) por usuario ${userId}`,
       );
 
       return {
@@ -745,7 +746,7 @@ export class EventoService {
   }
 
   async cerrarProceso(
-    eventoId: number,
+    agendamientoId: number,
     dto: {
       realizado: boolean;
       motivoNoRealizadoId?: number;
@@ -753,7 +754,9 @@ export class EventoService {
     },
     userId: number,
   ) {
-    const proceso = await this.procesoRepo.findOne({ where: { eventoId } });
+    const proceso = await this.procesoRepo.findOne({
+      where: { agendamientoId },
+    });
     if (!proceso) throw new NotFoundException('Proceso no encontrado');
 
     proceso.realizado = dto.realizado;
@@ -813,31 +816,25 @@ export class EventoService {
       }
 
       if (dto.estadoAgenda !== undefined || dto.realizado !== undefined) {
+        const agendamiento = await manager.findOne(Agendamiento, {
+          where: { eventoId, esVigente: true, deletedAt: IsNull() },
+        });
+        if (!agendamiento) {
+          throw new NotFoundException(
+            `No se encontró un agendamiento vigente para el evento ${eventoId}`,
+          );
+        }
+
         const proceso = await manager.findOne(Proceso, {
-          where: { eventoId },
+          where: { agendamientoId: agendamiento.id },
         });
         if (!proceso) {
           throw new NotFoundException(
-            `Proceso no encontrado para el evento ${eventoId}`,
+            `Proceso no encontrado para el agendamiento ${agendamiento.id}`,
           );
         }
 
         if (dto.estadoAgenda !== undefined) {
-          if (!proceso.agendamientoId) {
-            throw new UnprocessableEntityException(
-              'El proceso no tiene un agendamiento asociado',
-            );
-          }
-
-          const agendamiento = await manager.findOne(Agendamiento, {
-            where: { id: proceso.agendamientoId, deletedAt: IsNull() },
-          });
-          if (!agendamiento) {
-            throw new NotFoundException(
-              `Agendamiento con ID ${proceso.agendamientoId} no encontrado`,
-            );
-          }
-
           agendamiento.estadoAgenda = dto.estadoAgenda;
           agendamiento.updatedBy = userId;
           await manager.save(agendamiento);
@@ -949,6 +946,7 @@ export class EventoService {
         victimaId,
         estadoAgenda: 'EN_PROCESO',
         esVigente: true,
+        numeroIntento: (oldAgenda?.numeroIntento ?? 0) + 1,
         createdBy: userId,
       } as any);
       const savedAgenda = await manager.save(agendamiento);
@@ -1003,28 +1001,28 @@ export class EventoService {
     return this.resolucionCdRepo.save(nuevo);
   }
 
-  async addSoporteDetalle(eventoId: number, dto: any) {
+  async addSoporteDetalle(agendamientoId: number, dto: any) {
     const existente = await this.soporteDetalleRepo.findOne({
-      where: { eventoId },
+      where: { agendamientoId },
     });
     if (existente) {
       Object.assign(existente, dto);
       return this.soporteDetalleRepo.save(existente);
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const nuevo = this.soporteDetalleRepo.create({ eventoId, ...dto });
+    const nuevo = this.soporteDetalleRepo.create({ agendamientoId, ...dto });
     return this.soporteDetalleRepo.save(nuevo);
   }
 
-  async findSoporteMotivos(eventoId: number) {
+  async findSoporteMotivos(agendamientoId: number) {
     return this.soporteMotivoRepo.find({
-      where: { eventoId },
+      where: { agendamientoId },
       relations: { tipoProblema: true },
     });
   }
 
   async addSoporteMotivo(
-    eventoId: number,
+    agendamientoId: number,
     dto: {
       tipoProblemaId: number;
       esMotivoPrincipal?: boolean;
@@ -1033,17 +1031,17 @@ export class EventoService {
   ) {
     if (dto.esMotivoPrincipal) {
       await this.soporteMotivoRepo.update(
-        { eventoId, esMotivoPrincipal: true },
+        { agendamientoId, esMotivoPrincipal: true },
         { esMotivoPrincipal: false },
       );
     }
-    const motivo = this.soporteMotivoRepo.create({ eventoId, ...dto });
+    const motivo = this.soporteMotivoRepo.create({ agendamientoId, ...dto });
     return this.soporteMotivoRepo.save(motivo);
   }
 
   async updateSoporteMotivo(
     motivoId: number,
-    eventoId: number,
+    agendamientoId: number,
     dto: {
       tipoProblemaId?: number;
       esMotivoPrincipal?: boolean;
@@ -1051,13 +1049,13 @@ export class EventoService {
     },
   ) {
     const motivo = await this.soporteMotivoRepo.findOne({
-      where: { id: motivoId, eventoId },
+      where: { id: motivoId, agendamientoId },
     });
     if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
 
     if (dto.esMotivoPrincipal) {
       await this.soporteMotivoRepo.update(
-        { eventoId, esMotivoPrincipal: true },
+        { agendamientoId, esMotivoPrincipal: true },
         { esMotivoPrincipal: false },
       );
     }
@@ -1066,45 +1064,49 @@ export class EventoService {
     return this.soporteMotivoRepo.save(motivo);
   }
 
-  async deleteSoporteMotivo(motivoId: number, eventoId: number) {
+  async deleteSoporteMotivo(motivoId: number, agendamientoId: number) {
     const motivo = await this.soporteMotivoRepo.findOne({
-      where: { id: motivoId, eventoId },
+      where: { id: motivoId, agendamientoId },
     });
     if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
     await this.soporteMotivoRepo.delete(motivoId);
   }
 
   async findTrazabilidadInstalacion(eventoId: number) {
-    const [eventoDesinstalacion, procesoDesinstalacion] = await Promise.all([
-      this.eventoRepo.findOne({
-        where: { id: eventoId, deletedAt: IsNull() },
-        relations: { tipoEvento: true },
-      }),
-      this.procesoRepo.findOne({
-        where: { eventoId },
-        relations: { agendamiento: true },
-      }),
-    ]);
+    const eventoDesinstalacion = await this.eventoRepo.findOne({
+      where: { id: eventoId, deletedAt: IsNull() },
+      relations: { tipoEvento: true },
+    });
 
     if (!eventoDesinstalacion) {
       throw new NotFoundException(`Evento con ID ${eventoId} no encontrado`);
     }
 
-    if (!procesoDesinstalacion) {
-      throw new NotFoundException(
-        `El evento ${eventoId} no tiene un proceso asociado`,
+    const agendamiento = await this.dataSource
+      .getRepository(Agendamiento)
+      .findOne({
+        where: { eventoId, esVigente: true, deletedAt: IsNull() },
+      });
+
+    if (!agendamiento) {
+      throw new BadRequestException(
+        'No se encontró un agendamiento vigente para el evento de desinstalación',
       );
     }
 
-    if (!procesoDesinstalacion.agendamiento) {
-      throw new BadRequestException(
-        'El proceso no tiene un agendamiento asociado',
+    const procesoDesinstalacion = await this.procesoRepo.findOne({
+      where: { agendamientoId: agendamiento.id },
+      relations: { agendamiento: true },
+    });
+
+    if (!procesoDesinstalacion) {
+      throw new NotFoundException(
+        `El agendamiento ${agendamiento.id} no tiene un proceso asociado`,
       );
     }
 
     const { solicitudId } = eventoDesinstalacion;
-    const { paraQuien, victimaId, condenadoId } =
-      procesoDesinstalacion.agendamiento;
+    const { paraQuien, victimaId, condenadoId } = agendamiento;
     const personaId = paraQuien === 'VICTIMA' ? victimaId : condenadoId;
     const personaField =
       paraQuien === 'VICTIMA' ? 'ag.victimaId' : 'ag.condenadoId';
@@ -1123,6 +1125,7 @@ export class EventoService {
       .leftJoinAndSelect('p.crs', 'crs')
       .leftJoinAndSelect('p.region', 'region')
       .leftJoinAndSelect('p.comuna', 'comuna')
+      .leftJoinAndSelect('p.tipoLugar', 'tl')
       .leftJoinAndSelect('p.tecnico', 'tecnico')
       .leftJoinAndSelect('ag.condenado', 'condenado')
       .leftJoinAndSelect('ag.victima', 'victima')
@@ -1131,7 +1134,7 @@ export class EventoService {
       .leftJoinAndSelect('ag.crs', 'agCrs')
       .leftJoinAndSelect('ag.region', 'agRegion')
       .leftJoinAndSelect('ag.comuna', 'agComuna')
-      .leftJoinAndSelect('ag.tipoLugar', 'tl')
+      .leftJoinAndSelect('ag.tipoLugar', 'agTl')
       .where('te.codigo = :codigo', { codigo: 'INSTALACION' })
       .andWhere('e.solicitudId = :solicitudId', { solicitudId })
       .andWhere('e.id != :eventoId', { eventoId })
@@ -1146,11 +1149,11 @@ export class EventoService {
       );
     }
 
-    const instalacionEventoId = instalacionProceso.eventoId;
+    const instalacionAgendamientoId = instalacionProceso.agendamientoId;
 
     const [resolucion, dispositivos] = await Promise.all([
       this.resolucionRepo.findOne({
-        where: { eventoId: instalacionEventoId },
+        where: { eventoId: instalacionProceso.eventoId },
         relations: {
           tribunal: true,
           tipoCausa: true,
@@ -1160,7 +1163,7 @@ export class EventoService {
         },
       }),
       this.procesoDispositivoRepo.find({
-        where: { eventoId: instalacionEventoId },
+        where: { agendamientoId: instalacionAgendamientoId },
         relations: { rolDispositivo: true },
       }),
     ]);

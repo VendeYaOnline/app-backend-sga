@@ -14,6 +14,7 @@ import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
+import { CatMotivoNoRealizado } from '../../catalogo/entities/cat-motivo-no-realizado.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { Victima } from '../../persona/entities/victima.entity';
 
@@ -101,6 +102,20 @@ export class Agendamiento {
   })
   estadoAgenda: string;
 
+  @Column({ name: 'numero_intento', type: 'int', default: 1 })
+  numeroIntento: number;
+
+  @Column({ name: 'motivo_no_realizado_id', type: 'int', nullable: true })
+  motivoNoRealizadoId: number | null;
+
+  @Column({
+    name: 'detalle_no_realizado',
+    type: 'nvarchar',
+    length: 500,
+    nullable: true,
+  })
+  detalleNoRealizado: string | null;
+
   @Column({ name: 'notas', type: 'nvarchar', length: 500, nullable: true })
   notas: string | null;
 
@@ -153,4 +168,8 @@ export class Agendamiento {
   @ManyToOne(() => CatTipoLugar)
   @JoinColumn({ name: 'tipo_lugar_id', referencedColumnName: 'id' })
   tipoLugar: CatTipoLugar;
+
+  @ManyToOne(() => CatMotivoNoRealizado)
+  @JoinColumn({ name: 'motivo_no_realizado_id', referencedColumnName: 'id' })
+  motivoNoRealizado: CatMotivoNoRealizado;
 }
