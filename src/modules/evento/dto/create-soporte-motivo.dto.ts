@@ -1,4 +1,4 @@
-import { IsInt, IsBoolean, IsOptional, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsIn, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSoporteMotivoDto {
@@ -9,12 +9,14 @@ export class CreateSoporteMotivoDto {
   tipoProblemaId: number;
 
   @ApiPropertyOptional({
-    description: 'Si es el motivo principal del agendamiento',
-    default: false,
+    description:
+      'Momento en que se registra: AGENDAMIENTO (coordinador) o EJECUCION (técnico)',
+    enum: ['AGENDAMIENTO', 'EJECUCION'],
+    default: 'AGENDAMIENTO',
   })
   @IsOptional()
-  @IsBoolean()
-  esMotivoPrincipal?: boolean;
+  @IsIn(['AGENDAMIENTO', 'EJECUCION'])
+  momento?: string;
 
   @ApiPropertyOptional({
     description: 'Observación específica del problema',

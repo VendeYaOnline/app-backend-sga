@@ -36,6 +36,7 @@ export class AgendamientoService {
       asignadoA?: number;
       paraQuien?: string;
       estadoAgenda?: string;
+      estaAbierto?: boolean;
     },
   ) {
     const {
@@ -46,6 +47,7 @@ export class AgendamientoService {
       asignadoA,
       paraQuien,
       estadoAgenda,
+      estaAbierto,
     } = filters;
 
     const qb = this.agendamientoRepo
@@ -71,6 +73,8 @@ export class AgendamientoService {
     if (paraQuien) qb.andWhere('a.paraQuien = :pq', { pq: paraQuien });
     if (estadoAgenda)
       qb.andWhere('a.estadoAgenda = :est', { est: estadoAgenda });
+    if (estaAbierto !== undefined)
+      qb.andWhere('a.estaAbierto = :open', { open: estaAbierto });
 
     qb.orderBy('a.fechaAgendada', 'ASC');
 
@@ -118,6 +122,7 @@ export class AgendamientoService {
       ...dto,
       createdBy: userId,
       estadoAgenda,
+      estaAbierto: true,
     } as Partial<Agendamiento>);
     const saved = await this.agendamientoRepo.save(agendamiento);
     this.logger.log(`Agendamiento ${saved.id} creado por usuario ${userId}`);
@@ -188,6 +193,11 @@ export class AgendamientoService {
     const agendamiento = await this.findOne(id);
     agendamiento.estadoAgenda = dto.estadoAgenda;
     agendamiento.updatedBy = userId;
+    if (
+      ['COMPLETADO', 'NO_REALIZADO', 'CANCELADO'].includes(dto.estadoAgenda)
+    ) {
+      agendamiento.estaAbierto = false;
+    }
     if (dto.regionId !== undefined) agendamiento.regionId = dto.regionId;
     if (dto.comunaId !== undefined) agendamiento.comunaId = dto.comunaId;
     if (dto.tipoLugarId !== undefined)
@@ -291,6 +301,7 @@ export class AgendamientoService {
       const manager = queryRunner.manager;
 
       actual.esVigente = false;
+      actual.estaAbierto = false;
       actual.updatedBy = userId;
       await manager.save(actual);
 

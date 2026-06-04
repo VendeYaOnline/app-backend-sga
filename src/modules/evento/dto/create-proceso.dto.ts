@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
+  IsIn,
   IsDateString,
   MaxLength,
   IsArray,
@@ -81,6 +82,17 @@ export class CreateProcesoSoporteMotivoDto {
   tipoProblemaId: number;
 
   @ApiPropertyOptional({
+    description:
+      'Momento en que se registra: AGENDAMIENTO (coordinador) o EJECUCION (técnico)',
+    enum: ['AGENDAMIENTO', 'EJECUCION'],
+    default: 'EJECUCION',
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['AGENDAMIENTO', 'EJECUCION'])
+  momento?: string;
+
+  @ApiPropertyOptional({
     description: 'Observación específica del problema',
     maxLength: 500,
   })
@@ -99,20 +111,8 @@ export class CreateProcesoDto {
   agendamientoId: number;
 
   @ApiPropertyOptional({
-    description: 'ID del técnico asignado (FK a USUARIO)',
+    description: 'ID de la región',
   })
-  @IsOptional()
-  @IsInt()
-  tecnicoId?: number;
-
-  @ApiPropertyOptional({
-    description: 'ID del CRS donde se ejecuta el proceso',
-  })
-  @IsOptional()
-  @IsInt()
-  crsId?: number;
-
-  @ApiPropertyOptional({ description: 'ID de la región' })
   @IsOptional()
   @IsInt()
   regionId?: number;
@@ -213,7 +213,7 @@ export class CreateProcesoDto {
   @ApiPropertyOptional({
     type: [CreateProcesoSoporteMotivoDto],
     description:
-      'Motivos del soporte técnico (aplica para procesos de tipo SOPORTE). esMotivoPrincipal siempre se fuerza a false.',
+      'Motivos del soporte técnico (aplica para procesos de tipo SOPORTE). El campo momento define si es AGENDAMIENTO (coordinador) o EJECUCION (técnico).',
   })
   @IsOptional()
   @IsArray()

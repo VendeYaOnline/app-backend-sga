@@ -96,6 +96,9 @@ export class Agendamiento {
   @Column({ name: 'es_vigente', type: 'bit', default: 1 })
   esVigente: boolean;
 
+  @Column({ name: 'esta_abierto', type: 'bit', default: 1 })
+  estaAbierto: boolean;
+
   @Column({
     name: 'estado_agenda',
     type: 'nvarchar',

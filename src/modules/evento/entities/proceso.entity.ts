@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import { Evento } from './evento.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
-import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
@@ -37,12 +36,6 @@ export class Proceso {
     nullable: true,
   })
   detalleNoRealizado: string | null;
-
-  @Column({ name: 'tecnico_id', type: 'int', nullable: true })
-  tecnicoId: number | null;
-
-  @Column({ name: 'crs_id', type: 'int', nullable: true })
-  crsId: number | null;
 
   @Column({ name: 'region_id', type: 'int', nullable: true })
   regionId: number | null;
@@ -86,14 +79,6 @@ export class Proceso {
   @ManyToOne(() => Evento)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;
-
-  @ManyToOne(() => Usuario)
-  @JoinColumn({ name: 'tecnico_id', referencedColumnName: 'id' })
-  tecnico: Usuario;
-
-  @ManyToOne(() => CatCrs)
-  @JoinColumn({ name: 'crs_id', referencedColumnName: 'id' })
-  crs: CatCrs;
 
   @ManyToOne(() => CatRegion)
   @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })

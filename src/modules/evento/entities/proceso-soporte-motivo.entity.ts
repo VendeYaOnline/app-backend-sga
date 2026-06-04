@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Proceso } from './proceso.entity';
+import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { CatTipoProblemaSt } from '../../catalogo/entities/cat-tipo-problema-st.entity';
 
 @Entity('sga.PROCESO_SOPORTE_MOTIVO')
@@ -19,8 +19,13 @@ export class ProcesoSoporteMotivo {
   @Column({ name: 'tipo_problema_id', type: 'int' })
   tipoProblemaId: number;
 
-  @Column({ name: 'es_motivo_principal', type: 'bit', default: 0 })
-  esMotivoPrincipal: boolean;
+  @Column({
+    name: 'momento',
+    type: 'nvarchar',
+    length: 20,
+    default: 'AGENDAMIENTO',
+  })
+  momento: string;
 
   @Column({
     name: 'observacion',
@@ -30,12 +35,12 @@ export class ProcesoSoporteMotivo {
   })
   observacion: string | null;
 
-  @ManyToOne(() => Proceso)
+  @ManyToOne(() => Agendamiento)
   @JoinColumn({
     name: 'agendamiento_id',
-    referencedColumnName: 'agendamientoId',
+    referencedColumnName: 'id',
   })
-  proceso: Proceso;
+  agendamiento: Agendamiento;
 
   @ManyToOne(() => CatTipoProblemaSt)
   @JoinColumn({ name: 'tipo_problema_id', referencedColumnName: 'id' })

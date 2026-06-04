@@ -52,6 +52,8 @@ export class EventoService {
     private readonly tipoEventoRepo: Repository<CatTipoEvento>,
     @InjectRepository(CatTipoEventoValidacion)
     private readonly tipoEventoValidacionRepo: Repository<CatTipoEventoValidacion>,
+    @InjectRepository(Agendamiento)
+    private readonly agendamientoRepo: Repository<Agendamiento>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -130,12 +132,11 @@ export class EventoService {
       where: { agendamientoId },
       relations: {
         evento: true,
-        tecnico: true,
-        crs: true,
         region: true,
         comuna: true,
         tipoLugar: true,
         motivoNoRealizado: true,
+        cerradoPor: true,
         agendamiento: {
           condenado: true,
           victima: true,
@@ -157,19 +158,18 @@ export class EventoService {
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.evento', 'e')
       .leftJoinAndSelect('p.agendamiento', 'ag')
-      .leftJoinAndSelect('p.tecnico', 't')
-      .leftJoinAndSelect('p.crs', 'c')
       .leftJoinAndSelect('p.region', 'r')
       .leftJoinAndSelect('p.comuna', 'co')
       .leftJoinAndSelect('p.motivoNoRealizado', 'mnr')
+      .leftJoinAndSelect('p.cerradoPor', 'cp')
       .leftJoinAndSelect('ag.condenado', 'cond')
       .leftJoinAndSelect('ag.victima', 'vic')
       .leftJoinAndSelect('ag.asignado', 'agAsig')
       .leftJoinAndSelect('ag.crs', 'agCrs')
       .where('e.deletedAt IS NULL');
 
-    if (crsId) qb.andWhere('p.crsId = :crsId', { crsId });
-    if (tecnicoId) qb.andWhere('p.tecnicoId = :tecnicoId', { tecnicoId });
+    if (crsId) qb.andWhere('ag.crsId = :crsId', { crsId });
+    if (tecnicoId) qb.andWhere('ag.asignadoA = :tecnicoId', { tecnicoId });
     if (tipoEventoId)
       qb.andWhere('e.tipoEventoId = :tipoEventoId', { tipoEventoId });
 
@@ -595,6 +595,7 @@ export class EventoService {
         victimaId: agData.victimaId ?? null,
         estadoAgenda: 'EN_PROCESO',
         esVigente: true,
+        estaAbierto: true,
         createdBy: userId,
       } as any);
       const savedAgenda = await manager.save(agendamiento);
@@ -681,8 +682,6 @@ export class EventoService {
   async createProceso(
     dto: {
       agendamientoId: number;
-      tecnicoId?: number;
-      crsId?: number;
       regionId?: number;
       comunaId?: number;
       tipoLugarId?: number;
@@ -707,6 +706,7 @@ export class EventoService {
       };
       motivos?: {
         tipoProblemaId: number;
+        momento?: string;
         observacion?: string;
       }[];
     },
@@ -779,7 +779,7 @@ export class EventoService {
             agendamientoId,
             tipoProblemaId: m.tipoProblemaId,
             observacion: m.observacion ?? null,
-            esMotivoPrincipal: false,
+            momento: m.momento ?? 'EJECUCION',
           }),
         );
         motivosGuardados = await manager.save(entities);
@@ -843,7 +843,13 @@ export class EventoService {
       proceso.detalleNoRealizado = dto.detalleNoRealizado ?? null;
     }
 
-    return this.procesoRepo.save(proceso);
+    await this.procesoRepo.save(proceso);
+
+    await this.agendamientoRepo.update(agendamientoId, { estaAbierto: false });
+
+    return this.procesoRepo.findOne({
+      where: { agendamientoId },
+    });
   }
 
   async cerrarProcesoCompleto(
@@ -889,6 +895,10 @@ export class EventoService {
       }
 
       await manager.save(proceso);
+
+      await manager.update(Agendamiento, agendamientoId, {
+        estaAbierto: false,
+      });
 
       if (dto.dispositivos !== undefined && dto.dispositivos.length > 0) {
         await manager.delete(ProcesoDispositivo, { agendamientoId });
@@ -1003,6 +1013,13 @@ export class EventoService {
         if (dto.estadoAgenda !== undefined) {
           agendamiento.estadoAgenda = dto.estadoAgenda;
           agendamiento.updatedBy = userId;
+          if (
+            ['COMPLETADO', 'NO_REALIZADO', 'CANCELADO'].includes(
+              dto.estadoAgenda,
+            )
+          ) {
+            agendamiento.estaAbierto = false;
+          }
           await manager.save(agendamiento);
           resumen.push(`estadoAgenda=${dto.estadoAgenda}`);
         }
@@ -1073,6 +1090,7 @@ export class EventoService {
       if (oldAgenda) {
         oldAgenda.estadoAgenda = 'NO_REALIZADO';
         oldAgenda.esVigente = false;
+        oldAgenda.estaAbierto = false;
         oldAgenda.updatedBy = userId;
         await manager.save(oldAgenda);
       }
@@ -1112,6 +1130,7 @@ export class EventoService {
         victimaId,
         estadoAgenda: 'EN_PROCESO',
         esVigente: true,
+        estaAbierto: true,
         numeroIntento: (oldAgenda?.numeroIntento ?? 0) + 1,
         createdBy: userId,
       } as any);
@@ -1191,17 +1210,15 @@ export class EventoService {
     agendamientoId: number,
     dto: {
       tipoProblemaId: number;
-      esMotivoPrincipal?: boolean;
+      momento?: string;
       observacion?: string;
     },
   ) {
-    if (dto.esMotivoPrincipal) {
-      await this.soporteMotivoRepo.update(
-        { agendamientoId, esMotivoPrincipal: true },
-        { esMotivoPrincipal: false },
-      );
-    }
-    const motivo = this.soporteMotivoRepo.create({ agendamientoId, ...dto });
+    const motivo = this.soporteMotivoRepo.create({
+      agendamientoId,
+      ...dto,
+      momento: dto.momento ?? 'AGENDAMIENTO',
+    });
     return this.soporteMotivoRepo.save(motivo);
   }
 
@@ -1210,7 +1227,7 @@ export class EventoService {
     agendamientoId: number,
     dto: {
       tipoProblemaId?: number;
-      esMotivoPrincipal?: boolean;
+      momento?: string;
       observacion?: string;
     },
   ) {
@@ -1218,13 +1235,6 @@ export class EventoService {
       where: { id: motivoId, agendamientoId },
     });
     if (!motivo) throw new NotFoundException('Motivo de soporte no encontrado');
-
-    if (dto.esMotivoPrincipal) {
-      await this.soporteMotivoRepo.update(
-        { agendamientoId, esMotivoPrincipal: true },
-        { esMotivoPrincipal: false },
-      );
-    }
 
     Object.assign(motivo, dto);
     return this.soporteMotivoRepo.save(motivo);

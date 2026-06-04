@@ -4,13 +4,15 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class FindProcesoDto extends PaginationDto {
-  @ApiPropertyOptional({ description: 'Filtrar por CRS ID' })
+  @ApiPropertyOptional({ description: 'Filtrar por CRS ID (via AGENDAMIENTO)' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   crsId?: number;
 
-  @ApiPropertyOptional({ description: 'Filtrar por técnico ID' })
+  @ApiPropertyOptional({
+    description: 'Filtrar por técnico ID (via AGENDAMIENTO.asignado_a)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

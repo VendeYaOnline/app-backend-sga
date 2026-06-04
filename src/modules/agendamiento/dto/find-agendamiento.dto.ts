@@ -1,5 +1,5 @@
-import { IsOptional, IsInt, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsInt, IsString, IsBoolean } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
@@ -36,4 +36,16 @@ export class FindAgendamientoDto extends PaginationDto {
   @IsOptional()
   @IsString()
   estadoAgenda?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por agendamientos abiertos (true) o cerrados (false)',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value as boolean | undefined;
+  })
+  @IsBoolean()
+  estaAbierto?: boolean;
 }

@@ -10,20 +10,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 export class UpdateProcesoDto {
-  @ApiPropertyOptional({
-    description: 'ID del técnico asignado (FK a USUARIO)',
-  })
-  @IsOptional()
-  @IsInt()
-  tecnicoId?: number;
-
-  @ApiPropertyOptional({
-    description: 'ID del CRS donde se ejecuta el proceso',
-  })
-  @IsOptional()
-  @IsInt()
-  crsId?: number;
-
   @ApiPropertyOptional({ description: 'ID de la región' })
   @IsOptional()
   @IsInt()
