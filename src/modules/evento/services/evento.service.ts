@@ -826,38 +826,21 @@ export class EventoService {
     }
   }
 
-  async cerrarProceso(
-    agendamientoId: number,
-    dto: {
-      realizado: boolean;
-      motivoNoRealizadoId?: number;
-      detalleNoRealizado?: string;
-    },
-    userId: number,
-  ) {
-    const proceso = await this.procesoRepo.findOne({
-      where: { agendamientoId },
+  async cerrarProceso(agendamientoId: number) {
+    const agendamiento = await this.agendamientoRepo.findOne({
+      where: { id: agendamientoId, deletedAt: IsNull() },
     });
-    if (!proceso) throw new NotFoundException('Proceso no encontrado');
-
-    proceso.realizado = dto.realizado;
-    proceso.fechaCierre = new Date();
-    proceso.cerradoBy = userId;
-
-    if (!dto.realizado) {
-      proceso.motivoNoRealizadoId = dto.motivoNoRealizadoId ?? null;
-      proceso.detalleNoRealizado = dto.detalleNoRealizado ?? null;
+    if (!agendamiento) {
+      throw new NotFoundException(
+        `Agendamiento con ID ${agendamientoId} no encontrado`,
+      );
     }
 
-    await this.procesoRepo.save(proceso);
+    agendamiento.estaAbierto = false;
+    await this.agendamientoRepo.save(agendamiento);
+    this.logger.log(`Agendamiento ${agendamientoId}: estaAbierto = false`);
 
-    await this.agendamientoRepo.update(agendamientoId, {
-      estadoAgenda: dto.realizado ? 'COMPLETADO' : 'NO_REALIZADO',
-    });
-
-    return this.procesoRepo.findOne({
-      where: { agendamientoId },
-    });
+    return agendamiento;
   }
 
   async cerrarProcesoCompleto(

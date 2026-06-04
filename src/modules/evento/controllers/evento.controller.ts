@@ -269,23 +269,25 @@ export class EventoController {
 
   @Patch('procesos/:agendamientoId/cerrar')
   @ApiOperation({
-    summary: 'Cerrar proceso (realizado/no realizado)',
-    description: 'Actualiza el estado de cierre de un proceso en terreno',
+    summary: 'Cerrar agendamiento',
+    description:
+      'Cierra el agendamiento cambiando su campo estaAbierto a false. ' +
+      'Este cambio es manual, realizado por el coordinador.',
   })
-  @ApiResponse({ status: 200, description: 'Proceso cerrado exitosamente' })
-  @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
+  @ApiResponse({
+    status: 200,
+    description: 'Agendamiento cerrado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
   @ApiParam({
     name: 'agendamientoId',
     type: Number,
-    description: 'ID del agendamiento/proceso',
+    description: 'ID del agendamiento',
   })
-  @ApiBody({ type: CerrarProcesoDto })
   async cerrarProceso(
     @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
-    @Body() dto: CerrarProcesoDto,
-    @CurrentUser() user: JwtPayload,
   ) {
-    return this.eventoService.cerrarProceso(agendamientoId, dto, user.sub);
+    return this.eventoService.cerrarProceso(agendamientoId);
   }
 
   @Post('procesos/:agendamientoId/cerrar-completo')
