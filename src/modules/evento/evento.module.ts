@@ -14,6 +14,7 @@ import { CatTipoEvento } from '../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { CatTipoCausa } from '../catalogo/entities/cat-tipo-causa.entity';
 import { ProcesoDispositivo } from '../dispositivo/entities/proceso-dispositivo.entity';
+import { Agendamiento } from '../agendamiento/entities/agendamiento.entity';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ProcesoDispositivo } from '../dispositivo/entities/proceso-dispositivo.
       CatTipoEvento,
       CatTipoEventoValidacion,
       CatTipoCausa,
+      Agendamiento,
     ]),
   ],
   controllers: [EventoController],
