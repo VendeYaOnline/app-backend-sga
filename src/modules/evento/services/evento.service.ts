@@ -350,6 +350,81 @@ export class EventoService {
         }
       }
 
+      const dtosDesinstalacion = dtos.filter((d) => {
+        const tipo = tipoMap.get(d.tipoEventoId);
+        return tipo?.codigo === 'DESINSTALACION';
+      });
+      const dtosSoporte = dtos.filter((d) => {
+        const tipo = tipoMap.get(d.tipoEventoId);
+        return tipo?.codigo === 'SOPORTE';
+      });
+
+      if (dtosDesinstalacion.length > 0 || dtosSoporte.length > 0) {
+        const tiposProceso = await manager.find(CatTipoEvento, {
+          where: { codigo: In(['INSTALACION', 'DESINSTALACION', 'SOPORTE']) },
+        });
+        const tipoInstId = tiposProceso.find(
+          (t) => t.codigo === 'INSTALACION',
+        )?.id;
+        const tipoDesinstId = tiposProceso.find(
+          (t) => t.codigo === 'DESINSTALACION',
+        )?.id;
+
+        const solicitudesAValidar = [
+          ...new Set([
+            ...dtosDesinstalacion.map((d) => d.solicitudId),
+            ...dtosSoporte.map((d) => d.solicitudId),
+          ]),
+        ];
+
+        const tipoIdsConsulta: number[] = [];
+        if (tipoInstId != null) tipoIdsConsulta.push(tipoInstId);
+        if (tipoDesinstId != null) tipoIdsConsulta.push(tipoDesinstId);
+
+        if (tipoIdsConsulta.length > 0) {
+          const eventosPrevios = await manager.find(Evento, {
+            where: {
+              solicitudId: In(solicitudesAValidar),
+              tipoEventoId: In(tipoIdsConsulta),
+              estadoEvento: 'APROBADO',
+              deletedAt: IsNull(),
+            },
+          });
+
+          const solicitudesConInstalacion = new Set(
+            eventosPrevios
+              .filter((e) => e.tipoEventoId === tipoInstId)
+              .map((e) => e.solicitudId),
+          );
+          const solicitudesConDesinstalacion = new Set(
+            eventosPrevios
+              .filter((e) => e.tipoEventoId === tipoDesinstId)
+              .map((e) => e.solicitudId),
+          );
+
+          for (const dto of dtosDesinstalacion) {
+            if (!solicitudesConInstalacion.has(dto.solicitudId)) {
+              throw new ConflictException(
+                `No se puede crear un evento de desinstalación para la solicitud ${dto.solicitudId} porque no existe un evento de instalación previo en estado APROBADO`,
+              );
+            }
+          }
+
+          for (const dto of dtosSoporte) {
+            if (!solicitudesConInstalacion.has(dto.solicitudId)) {
+              throw new ConflictException(
+                `No se puede crear un evento de soporte para la solicitud ${dto.solicitudId} porque no existe un evento de instalación previo en estado APROBADO`,
+              );
+            }
+            if (solicitudesConDesinstalacion.has(dto.solicitudId)) {
+              throw new ConflictException(
+                `No se puede crear un evento de soporte para la solicitud ${dto.solicitudId} porque ya existe un evento de desinstalación`,
+              );
+            }
+          }
+        }
+      }
+
       const codigosResolucion = [
         'DECRETO_MONITOREO_INICIAL',
         'PRORROGA_EXTENSION',
