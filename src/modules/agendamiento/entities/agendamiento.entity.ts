@@ -6,9 +6,11 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
+  OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { Evento } from '../../evento/entities/evento.entity';
+import { Proceso } from '../../evento/entities/proceso.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
@@ -172,4 +174,7 @@ export class Agendamiento {
   @ManyToOne(() => CatMotivoNoRealizado)
   @JoinColumn({ name: 'motivo_no_realizado_id', referencedColumnName: 'id' })
   motivoNoRealizado: CatMotivoNoRealizado;
+
+  @OneToOne(() => Proceso, (p) => p.agendamiento)
+  proceso: Proceso;
 }

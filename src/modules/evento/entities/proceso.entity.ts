@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Evento } from './evento.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
@@ -7,6 +14,7 @@ import { CatComuna } from '../../catalogo/entities/cat-comuna.entity';
 import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
 import { CatMotivoNoRealizado } from '../../catalogo/entities/cat-motivo-no-realizado.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
+import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
 
 @Entity('sga.PROCESO')
 export class Proceso {
@@ -106,4 +114,7 @@ export class Proceso {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'cerrado_by', referencedColumnName: 'id' })
   cerradoPor: Usuario;
+
+  @OneToMany(() => ProcesoDispositivo, (pd) => pd.proceso)
+  procesoDispositivos: ProcesoDispositivo[];
 }

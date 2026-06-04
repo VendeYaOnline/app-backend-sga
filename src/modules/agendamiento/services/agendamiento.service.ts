@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
-import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
 import { Agendamiento } from '../entities/agendamiento.entity';
 
 @Injectable()
@@ -50,6 +49,9 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.tipoLugar', 'tl')
       .leftJoinAndSelect('a.condenado', 'cond')
       .leftJoinAndSelect('a.victima', 'vic')
+      .leftJoinAndSelect('a.proceso', 'p')
+      .leftJoinAndSelect('p.procesoDispositivos', 'pd')
+      .leftJoinAndSelect('pd.rolDispositivo', 'rd')
       .where('a.deletedAt IS NULL');
 
     if (tipoEventoId)
@@ -88,6 +90,7 @@ export class AgendamientoService {
         tipoLugar: true,
         condenado: true,
         victima: true,
+        proceso: { procesoDispositivos: { rolDispositivo: true } },
       },
     });
     if (!agendamiento)
