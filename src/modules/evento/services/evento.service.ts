@@ -751,6 +751,12 @@ export class EventoService {
       });
       const procesoGuardado = await manager.save(nuevo);
 
+      if (dto.realizado !== undefined) {
+        await manager.update(Agendamiento, agendamientoId, {
+          estadoAgenda: dto.realizado ? 'COMPLETADO' : 'NO_REALIZADO',
+        });
+      }
+
       let dispositivosGuardados: ProcesoDispositivo[] = [];
       if (dispositivos && dispositivos.length > 0) {
         const entities = dispositivos.map((dispDto) =>
