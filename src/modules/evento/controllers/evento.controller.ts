@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -266,10 +267,10 @@ export class EventoController {
     return this.eventoService.updateProceso(agendamientoId, dto);
   }
 
-  @Post('procesos/:agendamientoId/cerrar')
+  @Patch('procesos/:agendamientoId/cerrar')
   @ApiOperation({
     summary: 'Cerrar proceso (realizado/no realizado)',
-    description: 'Cierra un proceso en terreno indicando su resultado',
+    description: 'Actualiza el estado de cierre de un proceso en terreno',
   })
   @ApiResponse({ status: 200, description: 'Proceso cerrado exitosamente' })
   @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
@@ -278,12 +279,12 @@ export class EventoController {
     type: Number,
     description: 'ID del agendamiento/proceso',
   })
+  @ApiBody({ type: CerrarProcesoDto })
   async cerrarProceso(
     @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
-    @Body() dto: any,
+    @Body() dto: CerrarProcesoDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.eventoService.cerrarProceso(agendamientoId, dto, user.sub);
   }
 
