@@ -228,19 +228,17 @@ export class AgendamientoService {
 
       await manager.save(proceso);
 
-      if (dto.dispositivos !== undefined) {
+      if (dto.dispositivos !== undefined && dto.dispositivos.length > 0) {
         await manager.delete(ProcesoDispositivo, { agendamientoId: id });
 
-        if (dto.dispositivos.length > 0) {
-          const nuevos = dto.dispositivos.map((d) =>
-            manager.create(ProcesoDispositivo, {
-              agendamientoId: id,
-              ...d,
-              fechaRegistro: new Date(),
-            }),
-          );
-          await manager.save(nuevos);
-        }
+        const nuevos = dto.dispositivos.map((d) =>
+          manager.create(ProcesoDispositivo, {
+            agendamientoId: id,
+            ...d,
+            fechaRegistro: new Date(),
+          }),
+        );
+        await manager.save(nuevos);
       }
 
       const accion = manager.create(AccionUsuario, {
