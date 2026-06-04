@@ -1086,6 +1086,12 @@ export class EventoService {
       );
     }
 
+    if (!agendamiento.evento) {
+      throw new BadRequestException(
+        `El agendamiento ${agendamientoId} no tiene evento asociado`,
+      );
+    }
+
     const { solicitudId } = agendamiento.evento;
     const { paraQuien, condenadoId, victimaId } = agendamiento;
     const personaField =
@@ -1098,7 +1104,6 @@ export class EventoService {
       );
     }
 
-    // Buscar el último SOPORTE completado para la misma solicitud+persona (excluyendo el actual)
     const ultimoSoporte = await this.procesoRepo
       .createQueryBuilder('p')
       .innerJoin('p.agendamiento', 'ag')
@@ -1127,7 +1132,6 @@ export class EventoService {
       };
     }
 
-    // Fallback: buscar la INSTALACION completada para la misma solicitud+persona
     const instalacion = await this.procesoRepo
       .createQueryBuilder('p')
       .innerJoin('p.agendamiento', 'ag')
@@ -1142,7 +1146,7 @@ export class EventoService {
 
     if (!instalacion) {
       throw new NotFoundException(
-        'No se encontró ninguna instalación ni soporte previo realizado para esta persona en la solicitud',
+        'No se encontró ningún proceso previo realizado para esta persona en la solicitud',
       );
     }
 
