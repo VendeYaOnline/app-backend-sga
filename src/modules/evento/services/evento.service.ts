@@ -602,6 +602,21 @@ export class EventoService {
       this.logger.log(
         `Agendamiento ${savedAgenda.id} creado para evento ${saved.id} (tipo: ${codigo})`,
       );
+
+      if (agData.motivos && agData.motivos.length > 0) {
+        const motivosEntities = agData.motivos.map((m) =>
+          manager.create(ProcesoSoporteMotivo, {
+            agendamientoId: savedAgenda.id,
+            tipoProblemaId: m.tipoProblemaId,
+            observacion: m.observacion ?? null,
+            momento: 'AGENDAMIENTO',
+          }),
+        );
+        await manager.save(motivosEntities);
+        this.logger.log(
+          `${motivosEntities.length} motivo(s) de soporte guardados para agendamiento ${savedAgenda.id}`,
+        );
+      }
     }
 
     const accion = manager.create(AccionUsuario, {

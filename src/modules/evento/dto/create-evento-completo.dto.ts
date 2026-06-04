@@ -8,9 +8,27 @@ import {
   MaxLength,
   Min,
   ValidateNested,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class CreateAgendamientoMotivoInlineDto {
+  @ApiProperty({
+    description: 'ID del tipo de problema (FK a CAT_TIPO_PROBLEMA_ST)',
+  })
+  @IsInt()
+  tipoProblemaId: number;
+
+  @ApiPropertyOptional({
+    description: 'Observación específica del problema',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  observacion?: string;
+}
 
 export class CreateResolucionInlineDto {
   @ApiPropertyOptional({ description: 'ID del tribunal' })
@@ -244,6 +262,17 @@ export class CreateAgendamientoInlineDto {
   @IsString()
   @MaxLength(500)
   notas?: string;
+
+  @ApiPropertyOptional({
+    type: [CreateAgendamientoMotivoInlineDto],
+    description:
+      'Motivos del soporte (solo para procesos SOPORTE). Se guardan en proceso_soporte_motivo con momento=AGENDAMIENTO.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateAgendamientoMotivoInlineDto)
+  motivos?: CreateAgendamientoMotivoInlineDto[];
 }
 
 export class CreateEventoCompletoDto {
