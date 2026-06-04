@@ -27,6 +27,7 @@ import { CreateAgendamientoDto } from '../dto/create-agendamiento.dto';
 import { UpdateAgendamientoDto } from '../dto/update-agendamiento.dto';
 import { UpdateEstadoAgendamientoDto } from '../dto/update-estado-agendamiento.dto';
 import { UpdateProcesoAgendamientoDto } from '../dto/update-proceso-agendamiento.dto';
+import { ReagendarAgendamientoDto } from '../dto/reagendar-agendamiento.dto';
 
 @ApiTags('Agendamientos')
 @ApiBearerAuth()
@@ -204,5 +205,30 @@ export class AgendamientoController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.agendamientoService.updateProceso(id, dto, user.sub);
+  }
+
+  @Post(':id/reagendar')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Reagendar un agendamiento',
+    description:
+      'Marca el agendamiento actual como no vigente (esVigente=false) y crea uno nuevo con esVigente=true, heredando evento, CRS, sujeto (condenado/victima) e incrementando numeroIntento.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Agendamiento reagendado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID del agendamiento a reagendar',
+  })
+  async reagendar(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ReagendarAgendamientoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.agendamientoService.reagendar(id, dto, user.sub);
   }
 }

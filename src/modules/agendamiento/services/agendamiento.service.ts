@@ -13,6 +13,7 @@ import { Proceso } from '../../evento/entities/proceso.entity';
 import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
 import { UpdateProcesoAgendamientoDto } from '../dto/update-proceso-agendamiento.dto';
+import { ReagendarAgendamientoDto } from '../dto/reagendar-agendamiento.dto';
 
 @Injectable()
 export class AgendamientoService {
@@ -272,6 +273,81 @@ export class AgendamientoService {
     }
 
     return this.findOne(id);
+  }
+
+  async reagendar(
+    id: number,
+    dto: ReagendarAgendamientoDto,
+    userId: number,
+  ): Promise<Agendamiento> {
+    const actual = await this.findOne(id);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      actual.esVigente = false;
+      actual.updatedBy = userId;
+      await manager.save(actual);
+
+      const nuevo = manager.create(Agendamiento, {
+        eventoId: actual.eventoId,
+        crsId: actual.crsId,
+        paraQuien: actual.paraQuien,
+        condenadoId: actual.condenadoId,
+        victimaId: actual.victimaId,
+        fechaAgendada: dto.fechaAgendada,
+        horaInicioRango: dto.horaInicioRango,
+        horaFinRango: dto.horaFinRango,
+        asignadoA: dto.asignadoA,
+        regionId: dto.regionId,
+        comunaId: dto.comunaId,
+        tipoLugarId: dto.tipoLugarId,
+        direccionAgenda: dto.direccionAgenda,
+        urlAcceso: dto.urlAcceso,
+        tipoSoporte: dto.tipoSoporte,
+        notas: dto.notas,
+        esVigente: true,
+        estadoAgenda: 'EN_PROCESO',
+        numeroIntento: actual.numeroIntento + 1,
+        createdBy: userId,
+      });
+      const saved = await manager.save(nuevo);
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'REAGENDAR',
+        entidad: 'AGENDAMIENTO',
+        entidadId: saved.id,
+        fechaAccion: new Date(),
+        detalles: JSON.stringify({
+          agendamientoOriginal: id,
+          nuevoNumeroIntento: saved.numeroIntento,
+          fechaAnterior: actual.fechaAgendada,
+          fechaNueva: dto.fechaAgendada,
+        }),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Agendamiento ${id} reagendado -> nuevo ${saved.id} por usuario ${userId}`,
+      );
+
+      return this.findOne(saved.id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `Error al reagendar agendamiento ${id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findCalendario(filters: {
