@@ -61,7 +61,8 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.proceso', 'p')
       .leftJoinAndSelect('p.procesoDispositivos', 'pd')
       .leftJoinAndSelect('pd.rolDispositivo', 'rd')
-      .where('a.deletedAt IS NULL');
+      .where('a.deletedAt IS NULL')
+      .andWhere('a.esVigente = :vigente', { vigente: true });
 
     if (tipoEventoId)
       qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
