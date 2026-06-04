@@ -771,6 +771,97 @@ export class EventoService {
     return this.procesoRepo.save(proceso);
   }
 
+  async cerrarProcesoCompleto(
+    agendamientoId: number,
+    dto: {
+      realizado: boolean;
+      motivoNoRealizadoId?: number;
+      detalleNoRealizado?: string;
+      horaLlegada?: string;
+      horaSalida?: string;
+      dispositivos?: {
+        numeroSerie: string;
+        rolDispositivoId: number;
+        talla?: string;
+        observaciones?: string;
+        entregado?: boolean;
+      }[];
+    },
+    userId: number,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const proceso = await manager.findOne(Proceso, {
+        where: { agendamientoId },
+      });
+      if (!proceso) throw new NotFoundException('Proceso no encontrado');
+
+      if (dto.horaLlegada !== undefined) proceso.horaLlegada = dto.horaLlegada;
+      if (dto.horaSalida !== undefined) proceso.horaSalida = dto.horaSalida;
+
+      proceso.realizado = dto.realizado;
+      proceso.fechaCierre = new Date();
+      proceso.cerradoBy = userId;
+
+      if (!dto.realizado) {
+        proceso.motivoNoRealizadoId = dto.motivoNoRealizadoId ?? null;
+        proceso.detalleNoRealizado = dto.detalleNoRealizado ?? null;
+      }
+
+      await manager.save(proceso);
+
+      if (dto.dispositivos !== undefined && dto.dispositivos.length > 0) {
+        await manager.delete(ProcesoDispositivo, { agendamientoId });
+
+        const nuevos = dto.dispositivos.map((d) =>
+          manager.create(ProcesoDispositivo, {
+            agendamientoId,
+            ...d,
+            fechaRegistro: new Date(),
+          }),
+        );
+        await manager.save(nuevos);
+      }
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'CERRAR_PROCESO',
+        entidad: 'PROCESO',
+        entidadId: agendamientoId,
+        fechaAccion: new Date(),
+        detalles: JSON.stringify({
+          realizado: dto.realizado,
+          horaLlegada: dto.horaLlegada ?? null,
+          horaSalida: dto.horaSalida ?? null,
+          dispositivosActualizados: dto.dispositivos !== undefined,
+          cantidadDispositivos: dto.dispositivos?.length ?? null,
+        }),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Proceso ${agendamientoId} cerrado por usuario ${userId}`,
+      );
+
+      return manager.findOne(Proceso, { where: { agendamientoId } });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `Error al cerrar proceso ${agendamientoId}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
   async finalizarEventoCompleto(
     eventoId: number,
     dto: {

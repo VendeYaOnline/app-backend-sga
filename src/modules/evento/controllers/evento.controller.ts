@@ -35,6 +35,7 @@ import { EjecutarValidacionDto } from '../dto/validacion.dto';
 import { CreateSoporteMotivoDto } from '../dto/create-soporte-motivo.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 import { FinalizarEventoDto } from '../dto/finalizar-evento.dto';
+import { CerrarProcesoDto } from '../dto/cerrar-proceso.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 
 @ApiTags('Eventos')
@@ -286,6 +287,33 @@ export class EventoController {
     return this.eventoService.cerrarProceso(agendamientoId, dto, user.sub);
   }
 
+  @Post('procesos/:agendamientoId/cerrar-completo')
+  @ApiOperation({
+    summary: 'Cerrar proceso completo (instalación/desinstalación)',
+    description:
+      'Cierra un proceso en terreno registrando resultado, dispositivos, hora de llegada y salida. ' +
+      'Todo se ejecuta en una transacción atómica. Si se envían dispositivos, se reemplazan los existentes.',
+  })
+  @ApiResponse({ status: 200, description: 'Proceso cerrado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Proceso no encontrado' })
+  @ApiParam({
+    name: 'agendamientoId',
+    type: Number,
+    description: 'ID del agendamiento/proceso',
+  })
+  @ApiBody({ type: CerrarProcesoDto })
+  async cerrarProcesoCompleto(
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
+    @Body() dto: CerrarProcesoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.eventoService.cerrarProcesoCompleto(
+      agendamientoId,
+      dto,
+      user.sub,
+    );
+  }
+
   @Post('procesos/:agendamientoId/soporte-detalle')
   @ApiOperation({
     summary: 'Agregar detalle de soporte técnico',
@@ -330,7 +358,8 @@ export class EventoController {
         },
         agendamientoOrigenId: {
           type: 'number',
-          description: 'ID del agendamiento del proceso del que provienen los dispositivos',
+          description:
+            'ID del agendamiento del proceso del que provienen los dispositivos',
         },
         fechaEjecucion: {
           type: 'string',
@@ -358,12 +387,19 @@ export class EventoController {
       },
     },
   })
-  @ApiResponse({ status: 404, description: 'Agendamiento o proceso previo no encontrado' })
-  @ApiResponse({ status: 400, description: 'El agendamiento no tiene persona asociada' })
+  @ApiResponse({
+    status: 404,
+    description: 'Agendamiento o proceso previo no encontrado',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'El agendamiento no tiene persona asociada',
+  })
   @ApiParam({
     name: 'agendamientoId',
     type: Number,
-    description: 'ID del agendamiento del evento de soporte o desinstalación actual',
+    description:
+      'ID del agendamiento del evento de soporte o desinstalación actual',
   })
   async findDispositivosReferencia(
     @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
