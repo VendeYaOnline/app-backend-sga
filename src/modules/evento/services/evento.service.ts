@@ -845,7 +845,10 @@ export class EventoService {
 
     await this.procesoRepo.save(proceso);
 
-    await this.agendamientoRepo.update(agendamientoId, { estaAbierto: false });
+    await this.agendamientoRepo.update(agendamientoId, {
+      estaAbierto: false,
+      estadoAgenda: dto.realizado ? 'COMPLETADO' : 'NO_REALIZADO',
+    });
 
     return this.procesoRepo.findOne({
       where: { agendamientoId },
@@ -898,6 +901,7 @@ export class EventoService {
 
       await manager.update(Agendamiento, agendamientoId, {
         estaAbierto: false,
+        estadoAgenda: dto.realizado ? 'COMPLETADO' : 'NO_REALIZADO',
       });
 
       if (dto.dispositivos !== undefined && dto.dispositivos.length > 0) {
