@@ -1072,6 +1072,93 @@ export class EventoService {
     await this.soporteMotivoRepo.delete(motivoId);
   }
 
+  async findDispositivosReferencia(agendamientoId: number) {
+    const agendamiento = await this.dataSource
+      .getRepository(Agendamiento)
+      .findOne({
+        where: { id: agendamientoId, deletedAt: IsNull() },
+        relations: { evento: { tipoEvento: true } },
+      });
+
+    if (!agendamiento) {
+      throw new NotFoundException(
+        `Agendamiento ${agendamientoId} no encontrado`,
+      );
+    }
+
+    const { solicitudId } = agendamiento.evento;
+    const { paraQuien, condenadoId, victimaId } = agendamiento;
+    const personaField =
+      paraQuien === 'VICTIMA' ? 'ag.victimaId' : 'ag.condenadoId';
+    const personaId = paraQuien === 'VICTIMA' ? victimaId : condenadoId;
+
+    if (!personaId) {
+      throw new BadRequestException(
+        `El agendamiento no tiene ${paraQuien === 'VICTIMA' ? 'víctima' : 'condenado'} asociado`,
+      );
+    }
+
+    // Buscar el último SOPORTE completado para la misma solicitud+persona (excluyendo el actual)
+    const ultimoSoporte = await this.procesoRepo
+      .createQueryBuilder('p')
+      .innerJoin('p.agendamiento', 'ag')
+      .innerJoin('p.evento', 'e')
+      .innerJoin('e.tipoEvento', 'te')
+      .where('te.codigo = :codigo', { codigo: 'SOPORTE' })
+      .andWhere('e.solicitudId = :solicitudId', { solicitudId })
+      .andWhere(`${personaField} = :personaId`, { personaId })
+      .andWhere('p.realizado = :realizado', { realizado: true })
+      .andWhere('p.agendamientoId != :currentId', {
+        currentId: agendamientoId,
+      })
+      .orderBy('p.fechaEjecucion', 'DESC')
+      .getOne();
+
+    if (ultimoSoporte) {
+      const dispositivos = await this.procesoDispositivoRepo.find({
+        where: { agendamientoId: ultimoSoporte.agendamientoId },
+        relations: { rolDispositivo: true },
+      });
+      return {
+        fuente: 'SOPORTE' as const,
+        agendamientoOrigenId: ultimoSoporte.agendamientoId,
+        fechaEjecucion: ultimoSoporte.fechaEjecucion,
+        dispositivos,
+      };
+    }
+
+    // Fallback: buscar la INSTALACION completada para la misma solicitud+persona
+    const instalacion = await this.procesoRepo
+      .createQueryBuilder('p')
+      .innerJoin('p.agendamiento', 'ag')
+      .innerJoin('p.evento', 'e')
+      .innerJoin('e.tipoEvento', 'te')
+      .where('te.codigo = :codigo', { codigo: 'INSTALACION' })
+      .andWhere('e.solicitudId = :solicitudId', { solicitudId })
+      .andWhere(`${personaField} = :personaId`, { personaId })
+      .andWhere('p.realizado = :realizado', { realizado: true })
+      .orderBy('p.fechaEjecucion', 'DESC')
+      .getOne();
+
+    if (!instalacion) {
+      throw new NotFoundException(
+        'No se encontró ninguna instalación ni soporte previo realizado para esta persona en la solicitud',
+      );
+    }
+
+    const dispositivos = await this.procesoDispositivoRepo.find({
+      where: { agendamientoId: instalacion.agendamientoId },
+      relations: { rolDispositivo: true },
+    });
+
+    return {
+      fuente: 'INSTALACION' as const,
+      agendamientoOrigenId: instalacion.agendamientoId,
+      fechaEjecucion: instalacion.fechaEjecucion,
+      dispositivos,
+    };
+  }
+
   async findTrazabilidadInstalacion(eventoId: number) {
     const eventoDesinstalacion = await this.eventoRepo.findOne({
       where: { id: eventoId, deletedAt: IsNull() },

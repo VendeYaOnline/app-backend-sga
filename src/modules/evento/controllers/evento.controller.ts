@@ -308,6 +308,69 @@ export class EventoController {
     return this.eventoService.addSoporteDetalle(agendamientoId, dto);
   }
 
+  @Get('procesos/:agendamientoId/dispositivos-referencia')
+  @ApiOperation({
+    summary: 'Obtener dispositivos de referencia para soporte o desinstalación',
+    description:
+      'Retorna los dispositivos registrados en el proceso anterior más reciente para la misma persona y solicitud. ' +
+      'Si existe al menos un SOPORTE completado, usa el último. Si no, usa la INSTALACIÓN. ' +
+      'Válido para pre-cargar dispositivos al crear un proceso de soporte o desinstalación.',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Dispositivos de referencia encontrados. El campo "fuente" indica si vienen de SOPORTE o INSTALACION.',
+    schema: {
+      type: 'object',
+      properties: {
+        fuente: {
+          type: 'string',
+          enum: ['SOPORTE', 'INSTALACION'],
+          description: 'Origen de los dispositivos retornados',
+        },
+        agendamientoOrigenId: {
+          type: 'number',
+          description: 'ID del agendamiento del proceso del que provienen los dispositivos',
+        },
+        fechaEjecucion: {
+          type: 'string',
+          format: 'date-time',
+          nullable: true,
+          description: 'Fecha en que se ejecutó el proceso origen',
+        },
+        dispositivos: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              agendamientoId: { type: 'number' },
+              numeroSerie: { type: 'string' },
+              rolDispositivoId: { type: 'number' },
+              talla: { type: 'string', nullable: true },
+              observaciones: { type: 'string', nullable: true },
+              entregado: { type: 'boolean', nullable: true },
+              fechaRegistro: { type: 'string', format: 'date-time' },
+              rolDispositivo: { type: 'object' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Agendamiento o proceso previo no encontrado' })
+  @ApiResponse({ status: 400, description: 'El agendamiento no tiene persona asociada' })
+  @ApiParam({
+    name: 'agendamientoId',
+    type: Number,
+    description: 'ID del agendamiento del evento de soporte o desinstalación actual',
+  })
+  async findDispositivosReferencia(
+    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
+  ) {
+    return this.eventoService.findDispositivosReferencia(agendamientoId);
+  }
+
   @Get('procesos/:agendamientoId/soporte-motivos')
   @ApiOperation({
     summary: 'Listar motivos de un soporte',
