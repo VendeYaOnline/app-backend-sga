@@ -26,6 +26,7 @@ import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
 import { CreateAgendamientoDto } from '../dto/create-agendamiento.dto';
 import { UpdateAgendamientoDto } from '../dto/update-agendamiento.dto';
 import { UpdateEstadoAgendamientoDto } from '../dto/update-estado-agendamiento.dto';
+import { UpdateProcesoAgendamientoDto } from '../dto/update-proceso-agendamiento.dto';
 
 @ApiTags('Agendamientos')
 @ApiBearerAuth()
@@ -183,5 +184,25 @@ export class AgendamientoController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.agendamientoService.updateEstado(id, dto, user.sub);
+  }
+
+  @Put(':id/proceso')
+  @ApiOperation({
+    summary: 'Editar proceso de un agendamiento',
+    description:
+      'Actualiza la hora de llegada y salida del proceso asociado al agendamiento. Opcionalmente reemplaza todos los dispositivos (elimina los existentes y crea los nuevos).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Proceso actualizado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID del agendamiento' })
+  async updateProceso(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProcesoAgendamientoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.agendamientoService.updateProceso(id, dto, user.sub);
   }
 }

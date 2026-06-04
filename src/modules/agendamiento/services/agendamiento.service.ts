@@ -9,6 +9,10 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { Agendamiento } from '../entities/agendamiento.entity';
+import { Proceso } from '../../evento/entities/proceso.entity';
+import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
+import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
+import { UpdateProcesoAgendamientoDto } from '../dto/update-proceso-agendamiento.dto';
 
 @Injectable()
 export class AgendamientoService {
@@ -18,6 +22,10 @@ export class AgendamientoService {
     @InjectDataSource() private readonly dataSource: DataSource,
     @InjectRepository(Agendamiento)
     private readonly agendamientoRepo: Repository<Agendamiento>,
+    @InjectRepository(Proceso)
+    private readonly procesoRepo: Repository<Proceso>,
+    @InjectRepository(ProcesoDispositivo)
+    private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
   ) {}
 
   async findAll(
@@ -183,6 +191,89 @@ export class AgendamientoService {
     if (dto.tipoLugarId !== undefined)
       agendamiento.tipoLugarId = dto.tipoLugarId;
     return this.agendamientoRepo.save(agendamiento);
+  }
+
+  async updateProceso(
+    id: number,
+    dto: UpdateProcesoAgendamientoDto,
+    userId: number,
+  ): Promise<Agendamiento> {
+    await this.findOne(id);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      let proceso = await manager.findOne(Proceso, {
+        where: { agendamientoId: id },
+      });
+
+      if (!proceso) {
+        proceso = manager.create(Proceso, {
+          agendamientoId: id,
+          eventoId: (
+            await manager.findOne(Agendamiento, {
+              where: { id },
+              select: { eventoId: true },
+            })
+          )?.eventoId,
+        });
+      }
+
+      if (dto.horaLlegada !== undefined) proceso.horaLlegada = dto.horaLlegada;
+      if (dto.horaSalida !== undefined) proceso.horaSalida = dto.horaSalida;
+
+      await manager.save(proceso);
+
+      if (dto.dispositivos !== undefined) {
+        await manager.delete(ProcesoDispositivo, { agendamientoId: id });
+
+        if (dto.dispositivos.length > 0) {
+          const nuevos = dto.dispositivos.map((d) =>
+            manager.create(ProcesoDispositivo, {
+              agendamientoId: id,
+              ...d,
+              fechaRegistro: new Date(),
+            }),
+          );
+          await manager.save(nuevos);
+        }
+      }
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'EDITAR_PROCESO',
+        entidad: 'AGENDAMIENTO',
+        entidadId: id,
+        fechaAccion: new Date(),
+        detalles: JSON.stringify({
+          horaLlegada: dto.horaLlegada,
+          horaSalida: dto.horaSalida,
+          dispositivosActualizados: dto.dispositivos !== undefined,
+          cantidadDispositivos: dto.dispositivos?.length ?? null,
+        }),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Proceso del agendamiento ${id} actualizado por usuario ${userId}`,
+      );
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `Error al actualizar proceso del agendamiento ${id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return this.findOne(id);
   }
 
   async findCalendario(filters: {
