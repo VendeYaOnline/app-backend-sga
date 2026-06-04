@@ -826,23 +826,6 @@ export class EventoService {
     }
   }
 
-  async cerrarProceso(agendamientoId: number) {
-    const agendamiento = await this.agendamientoRepo.findOne({
-      where: { id: agendamientoId, deletedAt: IsNull() },
-    });
-    if (!agendamiento) {
-      throw new NotFoundException(
-        `Agendamiento con ID ${agendamientoId} no encontrado`,
-      );
-    }
-
-    agendamiento.estaAbierto = false;
-    await this.agendamientoRepo.save(agendamiento);
-    this.logger.log(`Agendamiento ${agendamientoId}: estaAbierto = false`);
-
-    return agendamiento;
-  }
-
   async cerrarProcesoCompleto(
     agendamientoId: number,
     dto: {

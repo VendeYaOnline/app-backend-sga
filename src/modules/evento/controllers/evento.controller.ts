@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Put,
-  Patch,
   Delete,
   Body,
   Param,
@@ -265,29 +264,6 @@ export class EventoController {
     @Body() dto: UpdateProcesoDto,
   ) {
     return this.eventoService.updateProceso(agendamientoId, dto);
-  }
-
-  @Patch('procesos/:agendamientoId/cerrar')
-  @ApiOperation({
-    summary: 'Cerrar agendamiento',
-    description:
-      'Cierra el agendamiento cambiando su campo estaAbierto a false. ' +
-      'Este cambio es manual, realizado por el coordinador.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Agendamiento cerrado exitosamente',
-  })
-  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
-  @ApiParam({
-    name: 'agendamientoId',
-    type: Number,
-    description: 'ID del agendamiento',
-  })
-  async cerrarProceso(
-    @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
-  ) {
-    return this.eventoService.cerrarProceso(agendamientoId);
   }
 
   @Post('procesos/:agendamientoId/cerrar-completo')

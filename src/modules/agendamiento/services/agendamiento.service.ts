@@ -408,4 +408,16 @@ export class AgendamientoService {
       .map((a) => a.asignadoA);
     return { ocupados, idsOcupados };
   }
+
+  async cerrar(id: number): Promise<Agendamiento> {
+    const agendamiento = await this.findOne(id);
+
+    agendamiento.estaAbierto = false;
+    await this.agendamientoRepo.save(agendamiento);
+    this.logger.log(
+      `Agendamiento ${id}: estaAbierto = false (cerrado manualmente)`,
+    );
+
+    return agendamiento;
+  }
 }

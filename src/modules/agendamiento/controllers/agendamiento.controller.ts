@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Body,
   Param,
   Query,
@@ -224,6 +225,23 @@ export class AgendamientoController {
     type: Number,
     description: 'ID del agendamiento a reagendar',
   })
+  @Patch(':id/cerrar')
+  @ApiOperation({
+    summary: 'Cerrar agendamiento',
+    description:
+      'Cierra manualmente un agendamiento cambiando su campo estaAbierto a false. ' +
+      'Esta acción es realizada por el coordinador.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Agendamiento cerrado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID del agendamiento' })
+  async cerrar(@Param('id', ParseIntPipe) id: number) {
+    return this.agendamientoService.cerrar(id);
+  }
+
   async reagendar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ReagendarAgendamientoDto,
