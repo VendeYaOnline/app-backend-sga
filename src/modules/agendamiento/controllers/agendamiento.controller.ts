@@ -208,23 +208,6 @@ export class AgendamientoController {
     return this.agendamientoService.updateProceso(id, dto, user.sub);
   }
 
-  @Post(':id/reagendar')
-  @HttpCode(201)
-  @ApiOperation({
-    summary: 'Reagendar un agendamiento',
-    description:
-      'Marca el agendamiento actual como no vigente (esVigente=false) y crea uno nuevo con esVigente=true, heredando evento, CRS, sujeto (condenado/victima) e incrementando numeroIntento.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Agendamiento reagendado exitosamente',
-  })
-  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
-  @ApiParam({
-    name: 'id',
-    type: Number,
-    description: 'ID del agendamiento a reagendar',
-  })
   @Patch(':id/cerrar')
   @ApiOperation({
     summary: 'Cerrar agendamiento',
@@ -242,6 +225,23 @@ export class AgendamientoController {
     return this.agendamientoService.cerrar(id);
   }
 
+  @Post(':id/reagendar')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Reagendar un agendamiento',
+    description:
+      'Marca el agendamiento actual como no vigente (esVigente=false) y crea uno nuevo con esVigente=true, heredando evento, CRS, sujeto (condenado/victima) e incrementando numeroIntento.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Agendamiento reagendado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'ID del agendamiento a reagendar',
+  })
   async reagendar(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ReagendarAgendamientoDto,
