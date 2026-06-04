@@ -846,7 +846,6 @@ export class EventoService {
     await this.procesoRepo.save(proceso);
 
     await this.agendamientoRepo.update(agendamientoId, {
-      estaAbierto: false,
       estadoAgenda: dto.realizado ? 'COMPLETADO' : 'NO_REALIZADO',
     });
 
@@ -900,7 +899,6 @@ export class EventoService {
       await manager.save(proceso);
 
       await manager.update(Agendamiento, agendamientoId, {
-        estaAbierto: false,
         estadoAgenda: dto.realizado ? 'COMPLETADO' : 'NO_REALIZADO',
       });
 
@@ -1017,13 +1015,6 @@ export class EventoService {
         if (dto.estadoAgenda !== undefined) {
           agendamiento.estadoAgenda = dto.estadoAgenda;
           agendamiento.updatedBy = userId;
-          if (
-            ['COMPLETADO', 'NO_REALIZADO', 'CANCELADO'].includes(
-              dto.estadoAgenda,
-            )
-          ) {
-            agendamiento.estaAbierto = false;
-          }
           await manager.save(agendamiento);
           resumen.push(`estadoAgenda=${dto.estadoAgenda}`);
         }
@@ -1094,7 +1085,6 @@ export class EventoService {
       if (oldAgenda) {
         oldAgenda.estadoAgenda = 'NO_REALIZADO';
         oldAgenda.esVigente = false;
-        oldAgenda.estaAbierto = false;
         oldAgenda.updatedBy = userId;
         await manager.save(oldAgenda);
       }

@@ -193,11 +193,6 @@ export class AgendamientoService {
     const agendamiento = await this.findOne(id);
     agendamiento.estadoAgenda = dto.estadoAgenda;
     agendamiento.updatedBy = userId;
-    if (
-      ['COMPLETADO', 'NO_REALIZADO', 'CANCELADO'].includes(dto.estadoAgenda)
-    ) {
-      agendamiento.estaAbierto = false;
-    }
     if (dto.regionId !== undefined) agendamiento.regionId = dto.regionId;
     if (dto.comunaId !== undefined) agendamiento.comunaId = dto.comunaId;
     if (dto.tipoLugarId !== undefined)
@@ -301,7 +296,6 @@ export class AgendamientoService {
       const manager = queryRunner.manager;
 
       actual.esVigente = false;
-      actual.estaAbierto = false;
       actual.updatedBy = userId;
       await manager.save(actual);
 
