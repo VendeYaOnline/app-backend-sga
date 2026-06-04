@@ -759,16 +759,20 @@ export class EventoService {
     });
     if (!proceso) throw new NotFoundException('Proceso no encontrado');
 
-    proceso.realizado = dto.realizado;
-    proceso.fechaCierre = new Date();
-    proceso.cerradoBy = userId;
+    const toUpdate: Partial<Proceso> = {
+      realizado: dto.realizado,
+      fechaCierre: new Date(),
+      cerradoBy: userId,
+    };
 
     if (!dto.realizado) {
-      proceso.motivoNoRealizadoId = dto.motivoNoRealizadoId ?? null;
-      proceso.detalleNoRealizado = dto.detalleNoRealizado ?? null;
+      toUpdate.motivoNoRealizadoId = dto.motivoNoRealizadoId ?? null;
+      toUpdate.detalleNoRealizado = dto.detalleNoRealizado ?? null;
     }
 
-    return this.procesoRepo.save(proceso);
+    await this.procesoRepo.update({ agendamientoId }, toUpdate);
+
+    return this.procesoRepo.findOne({ where: { agendamientoId } });
   }
 
   async cerrarProcesoCompleto(
