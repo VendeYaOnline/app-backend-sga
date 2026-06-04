@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { Evento } from './evento.entity';
@@ -14,6 +15,7 @@ import { CatTipoLugar } from '../../catalogo/entities/cat-tipo-lugar.entity';
 import { CatMotivoNoRealizado } from '../../catalogo/entities/cat-motivo-no-realizado.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
+import { ProcesoSoporteDetalle } from './proceso-soporte-detalle.entity';
 
 @Entity('sga.PROCESO')
 export class Proceso {
@@ -102,4 +104,7 @@ export class Proceso {
 
   @OneToMany(() => ProcesoDispositivo, (pd) => pd.proceso)
   procesoDispositivos: ProcesoDispositivo[];
+
+  @OneToOne(() => ProcesoSoporteDetalle, (d) => d.proceso)
+  soporteDetalle: ProcesoSoporteDetalle;
 }

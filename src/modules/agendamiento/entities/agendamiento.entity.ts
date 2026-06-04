@@ -7,10 +7,12 @@ import {
   DeleteDateColumn,
   ManyToOne,
   OneToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { Evento } from '../../evento/entities/evento.entity';
 import { Proceso } from '../../evento/entities/proceso.entity';
+import { ProcesoSoporteMotivo } from '../../evento/entities/proceso-soporte-motivo.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
@@ -180,4 +182,7 @@ export class Agendamiento {
 
   @OneToOne(() => Proceso, (p) => p.agendamiento)
   proceso: Proceso;
+
+  @OneToMany(() => ProcesoSoporteMotivo, (m) => m.agendamiento)
+  soporteMotivos: ProcesoSoporteMotivo[];
 }

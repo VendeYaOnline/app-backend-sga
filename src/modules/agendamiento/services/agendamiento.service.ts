@@ -63,6 +63,9 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.proceso', 'p')
       .leftJoinAndSelect('p.procesoDispositivos', 'pd')
       .leftJoinAndSelect('pd.rolDispositivo', 'rd')
+      .leftJoinAndSelect('p.soporteDetalle', 'psd')
+      .leftJoinAndSelect('a.soporteMotivos', 'psm')
+      .leftJoinAndSelect('psm.tipoProblema', 'tp')
       .where('a.deletedAt IS NULL')
       .andWhere('a.esVigente = :vigente', { vigente: true });
 
@@ -104,7 +107,11 @@ export class AgendamientoService {
         tipoLugar: true,
         condenado: true,
         victima: true,
-        proceso: { procesoDispositivos: { rolDispositivo: true } },
+        proceso: {
+          procesoDispositivos: { rolDispositivo: true },
+          soporteDetalle: true,
+        },
+        soporteMotivos: { tipoProblema: true },
       },
     });
     if (!agendamiento)
