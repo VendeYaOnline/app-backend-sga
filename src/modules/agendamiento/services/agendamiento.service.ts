@@ -34,6 +34,7 @@ export class AgendamientoService {
       tipoEventoId?: number;
       eventoId?: number;
       asignadoA?: number;
+      tecnicoId?: number;
       paraQuien?: string;
       estadoAgenda?: string;
       estaAbierto?: boolean;
@@ -45,6 +46,7 @@ export class AgendamientoService {
       tipoEventoId,
       eventoId,
       asignadoA,
+      tecnicoId,
       paraQuien,
       estadoAgenda,
       estaAbierto,
@@ -56,6 +58,7 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.asignado', 'u')
       .leftJoinAndSelect('u.usuarioRoles', 'ur')
       .leftJoinAndSelect('ur.rol', 'rol')
+      .leftJoinAndSelect('a.tecnico', 'tec')
       .leftJoinAndSelect('a.crs', 'c')
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')
@@ -75,6 +78,7 @@ export class AgendamientoService {
       qb.andWhere('e.tipoEventoId = :tid', { tid: tipoEventoId });
     if (eventoId) qb.andWhere('a.eventoId = :eid', { eid: eventoId });
     if (asignadoA) qb.andWhere('a.asignadoA = :uid', { uid: asignadoA });
+    if (tecnicoId) qb.andWhere('a.tecnicoId = :tid', { tid: tecnicoId });
     if (paraQuien) qb.andWhere('a.paraQuien = :pq', { pq: paraQuien });
     if (estadoAgenda)
       qb.andWhere('a.estadoAgenda = :est', { est: estadoAgenda });
@@ -103,6 +107,7 @@ export class AgendamientoService {
       relations: {
         evento: true,
         asignado: { usuarioRoles: { rol: true } },
+        tecnico: true,
         crs: true,
         region: true,
         comuna: true,
@@ -318,6 +323,7 @@ export class AgendamientoService {
         horaInicioRango: dto.horaInicioRango,
         horaFinRango: dto.horaFinRango,
         asignadoA: dto.asignadoA,
+        tecnicoId: dto.tecnicoId ?? actual.tecnicoId,
         regionId: dto.regionId,
         comunaId: dto.comunaId,
         tipoLugarId: dto.tipoLugarId,
@@ -369,6 +375,7 @@ export class AgendamientoService {
     fechaDesde?: string;
     fechaHasta?: string;
     asignadoA?: number;
+    tecnicoId?: number;
     crsId?: number;
   }) {
     const qb = this.agendamientoRepo
@@ -377,6 +384,7 @@ export class AgendamientoService {
       .leftJoinAndSelect('a.asignado', 'u')
       .leftJoinAndSelect('u.usuarioRoles', 'ur')
       .leftJoinAndSelect('ur.rol', 'rol')
+      .leftJoinAndSelect('a.tecnico', 'tec')
       .leftJoinAndSelect('a.crs', 'c')
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')
@@ -396,6 +404,8 @@ export class AgendamientoService {
       });
     if (filters.asignadoA)
       qb.andWhere('a.asignadoA = :uid', { uid: filters.asignadoA });
+    if (filters.tecnicoId)
+      qb.andWhere('a.tecnicoId = :tid', { tid: filters.tecnicoId });
     if (filters.crsId) qb.andWhere('a.crsId = :crs', { crs: filters.crsId });
 
     qb.orderBy('a.fechaAgendada', 'ASC');

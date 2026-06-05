@@ -61,6 +61,14 @@ export class CreateAgendamientoDto {
   asignadoA?: number;
 
   @ApiPropertyOptional({
+    description:
+      'ID del técnico que ejecutará el proceso en terreno (puede diferir de asignadoA)',
+  })
+  @IsOptional()
+  @IsInt()
+  tecnicoId?: number;
+
+  @ApiPropertyOptional({
     description: 'URL para soportes virtuales (Teams, Zoom, etc.)',
   })
   @IsOptional()

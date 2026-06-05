@@ -50,6 +50,9 @@ export class Agendamiento {
   @Column({ name: 'asignado_a', type: 'int', nullable: true })
   asignadoA: number | null;
 
+  @Column({ name: 'tecnico_id', type: 'int', nullable: true })
+  tecnicoId: number | null;
+
   @Column({ name: 'tomado_at', type: 'datetime2', nullable: true })
   tomadoAt: Date | null;
 
@@ -163,6 +166,10 @@ export class Agendamiento {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'asignado_a', referencedColumnName: 'id' })
   asignado: Usuario;
+
+  @ManyToOne(() => Usuario)
+  @JoinColumn({ name: 'tecnico_id', referencedColumnName: 'id' })
+  tecnico: Usuario;
 
   @ManyToOne(() => CatRegion)
   @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })

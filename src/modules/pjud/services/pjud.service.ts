@@ -251,6 +251,7 @@ export class PjudService {
     llamada.procesadoOk = false;
     llamada.procesadoAt = null;
     llamada.errorDesc = null;
+    llamada.intentos += 1;
     return this.pjudLlamadaRepo.save(llamada);
   }
 
@@ -295,6 +296,7 @@ export class PjudService {
         /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
         llamada.duracionMs = (llamada.duracionMs || 0) + (Date.now() - start);
         llamada.errorDesc = null;
+        llamada.intentos += 1;
         procesados++;
 
         this.logger.log(`Llamada ${llamada.id} reprocesada exitosamente`);
@@ -302,6 +304,7 @@ export class PjudService {
         llamada.errorDesc =
           error instanceof Error ? error.message : String(error);
         llamada.duracionMs = (llamada.duracionMs || 0) + (Date.now() - start);
+        llamada.intentos += 1;
         fallidos++;
 
         this.logger.error(

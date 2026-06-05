@@ -23,6 +23,14 @@ export class FindAgendamientoDto extends PaginationDto {
   asignadoA?: number;
 
   @ApiPropertyOptional({
+    description: 'Filtrar por técnico ejecutor ID',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  tecnicoId?: number;
+
+  @ApiPropertyOptional({
     description: 'Filtrar por destinatario (CONDENADO o VICTIMA)',
   })
   @IsOptional()

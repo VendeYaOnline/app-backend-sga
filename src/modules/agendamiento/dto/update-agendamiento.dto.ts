@@ -72,6 +72,15 @@ export class UpdateAgendamientoDto {
   @IsInt()
   asignadoA?: number;
 
+  @ApiPropertyOptional({
+    description:
+      'ID del técnico que ejecutará el proceso en terreno (puede diferir de asignadoA)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  tecnicoId?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

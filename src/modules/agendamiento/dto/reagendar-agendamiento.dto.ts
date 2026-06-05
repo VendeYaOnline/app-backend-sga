@@ -28,6 +28,14 @@ export class ReagendarAgendamientoDto {
   @IsInt()
   asignadoA?: number;
 
+  @ApiPropertyOptional({
+    description:
+      'ID del técnico ejecutor en terreno (si no se pasa, hereda del original)',
+  })
+  @IsOptional()
+  @IsInt()
+  tecnicoId?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsInt()

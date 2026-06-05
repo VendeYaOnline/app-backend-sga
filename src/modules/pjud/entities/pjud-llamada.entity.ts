@@ -71,6 +71,9 @@ export class PjudLlamada {
   })
   errorDesc: string | null;
 
+  @Column({ name: 'intentos', type: 'int', default: 1 })
+  intentos: number;
+
   @Column({ name: 'procesado_ok', type: 'bit', default: 0 })
   procesadoOk: boolean;
 
