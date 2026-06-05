@@ -56,4 +56,28 @@ export class FindAgendamientoDto extends PaginationDto {
   })
   @IsBoolean()
   estaAbierto?: boolean;
+
+  @ApiPropertyOptional({ description: 'Filtrar por solicitud ID (vía evento)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  solicitudId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por condenado ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  condenadoId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por víctima ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  victimaId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por CRS ID' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  crsId?: number;
 }

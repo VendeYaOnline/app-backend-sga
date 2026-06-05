@@ -46,7 +46,7 @@ export class AgendamientoController {
   @ApiOperation({
     summary: 'Listar agendamientos con filtros',
     description:
-      'Retorna lista paginada de agendamientos con filtros opcionales por tipo de evento, evento, asignado y estado',
+      'Retorna lista paginada de agendamientos con filtros opcionales por tipo de evento, evento, asignado, estado, solicitud, condenado, víctima y CRS',
   })
   @ApiResponse({ status: 200, description: 'Lista de agendamientos' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -80,6 +80,30 @@ export class AgendamientoController {
     required: false,
     type: String,
     description: 'Filtrar por estado de agenda',
+  })
+  @ApiQuery({
+    name: 'solicitudId',
+    required: false,
+    type: Number,
+    description: 'Filtrar por solicitud ID (vía evento)',
+  })
+  @ApiQuery({
+    name: 'condenadoId',
+    required: false,
+    type: Number,
+    description: 'Filtrar por condenado ID',
+  })
+  @ApiQuery({
+    name: 'victimaId',
+    required: false,
+    type: Number,
+    description: 'Filtrar por víctima ID',
+  })
+  @ApiQuery({
+    name: 'crsId',
+    required: false,
+    type: Number,
+    description: 'Filtrar por CRS ID',
   })
   async findAll(@Query() filters: FindAgendamientoDto) {
     return this.agendamientoService.findAll(filters);

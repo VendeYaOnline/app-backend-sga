@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
 import { Agendamiento } from '../entities/agendamiento.entity';
 import { Proceso } from '../../evento/entities/proceso.entity';
 import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
@@ -29,17 +29,7 @@ export class AgendamientoService {
     private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
   ) {}
 
-  async findAll(
-    filters: PaginationDto & {
-      tipoEventoId?: number;
-      eventoId?: number;
-      asignadoA?: number;
-      tecnicoId?: number;
-      paraQuien?: string;
-      estadoAgenda?: string;
-      estaAbierto?: boolean;
-    },
-  ) {
+  async findAll(filters: FindAgendamientoDto) {
     const {
       page = 1,
       limit = 20,
@@ -50,6 +40,10 @@ export class AgendamientoService {
       paraQuien,
       estadoAgenda,
       estaAbierto,
+      solicitudId,
+      condenadoId,
+      victimaId,
+      crsId,
     } = filters;
 
     const qb = this.agendamientoRepo
@@ -84,6 +78,13 @@ export class AgendamientoService {
       qb.andWhere('a.estadoAgenda = :est', { est: estadoAgenda });
     if (estaAbierto !== undefined)
       qb.andWhere('a.estaAbierto = :open', { open: estaAbierto });
+
+    if (solicitudId)
+      qb.andWhere('e.solicitudId = :solId', { solId: solicitudId });
+    if (condenadoId)
+      qb.andWhere('a.condenadoId = :condId', { condId: condenadoId });
+    if (victimaId) qb.andWhere('a.victimaId = :vicId', { vicId: victimaId });
+    if (crsId) qb.andWhere('a.crsId = :crsId', { crsId });
 
     qb.orderBy('a.fechaAgendada', 'ASC');
 
