@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiTags,
+  ApiBearerAuth,
   ApiQuery,
   ApiOperation,
   ApiResponse,
@@ -15,10 +16,10 @@ import {
 } from '@nestjs/swagger';
 import { CatalogoService } from '../services/catalogo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { PermisosGuard } from '../../../common/guards/permisos.guard';
 
 @ApiTags('Catálogos')
-@UseGuards(JwtAuthGuard, PermisosGuard)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('catalogos')
 export class CatalogoController {
   constructor(private readonly catalogoService: CatalogoService) {}
