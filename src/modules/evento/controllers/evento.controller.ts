@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { EventoService } from '../services/evento.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { FindEventoDto } from '../dto/find-evento.dto';
@@ -45,7 +46,7 @@ import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller()
 export class EventoController {
   constructor(private readonly eventoService: EventoService) {}

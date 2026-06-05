@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { AgendamientoService } from '../services/agendamiento.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -35,7 +36,7 @@ import { ReagendarAgendamientoDto } from '../dto/reagendar-agendamiento.dto';
 
 @ApiTags('Agendamientos')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('agendamientos')
 export class AgendamientoController {
   constructor(private readonly agendamientoService: AgendamientoService) {}

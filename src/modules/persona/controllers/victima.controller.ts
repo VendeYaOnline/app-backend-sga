@@ -28,12 +28,13 @@ import { UpdateVictimaDto } from '../dto/update-victima.dto';
 import { CreateContactoDto } from '../dto/create-contacto.dto';
 import { FindVictimaDto } from '../dto/find-victima.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 
 @ApiTags('Víctimas')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('victimas')
 export class VictimaController {
   constructor(private readonly personaService: PersonaService) {}

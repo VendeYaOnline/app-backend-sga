@@ -34,6 +34,7 @@ import { UpdateZonaDto } from '../dto/update-zona.dto';
 import { CreateSolicitanteDto } from '../dto/create-solicitante.dto';
 import { UpdateSolicitanteDto } from '../dto/update-solicitante.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
@@ -41,7 +42,7 @@ import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Solicitudes IFT')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('solicitudes')
 export class SolicitudController {
   constructor(private readonly solicitudService: SolicitudService) {}

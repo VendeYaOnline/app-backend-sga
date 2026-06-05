@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { PrefacturacionService } from '../services/prefacturacion.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -30,7 +31,7 @@ import { CreatePeriodoDto, CreateDetalleDto } from '../dto/prefacturacion.dto';
 
 @ApiTags('Prefacturacion')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('prefacturacion')
 export class PrefacturacionController {
   constructor(private readonly prefacturacionService: PrefacturacionService) {}

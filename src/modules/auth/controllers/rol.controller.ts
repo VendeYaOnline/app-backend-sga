@@ -22,12 +22,13 @@ import { UpdateRolDto } from '../dto/update-rol.dto';
 import { AssignPermisosDto } from '../dto/assign-permisos.dto';
 import { RolService } from '../services/rol.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Roles y Permisos')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('roles')
 export class RolController {
   constructor(private readonly rolService: RolService) {}

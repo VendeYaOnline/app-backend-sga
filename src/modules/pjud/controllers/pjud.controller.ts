@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { PjudService } from '../services/pjud.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { PjudAuthGuard } from '../../../common/guards/pjud-auth.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
@@ -67,7 +68,7 @@ export class PjudController {
 
   @Get('consulta-ift/:crrId')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Consultar IFT por CRR ID',
@@ -87,7 +88,7 @@ export class PjudController {
   @Post('enviar-factibilidad/:solicitudId')
   @HttpCode(201)
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Enviar factibilidad al PJUD',
@@ -115,7 +116,7 @@ export class PjudController {
   @Post('enviar-incumplimiento/:solicitudId')
   @HttpCode(201)
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Enviar incumplimiento al PJUD',
@@ -143,7 +144,7 @@ export class PjudController {
   @Post('enviar-alarma-cenco')
   @HttpCode(201)
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Enviar alarma CENCO al PJUD',
@@ -160,7 +161,7 @@ export class PjudController {
 
   @Get('llamadas')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Listar llamadas PJUD',
@@ -179,7 +180,7 @@ export class PjudController {
   @Post('llamadas/reprocesar/:id')
   @HttpCode(200)
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Reprocesar llamada PJUD',
@@ -198,7 +199,7 @@ export class PjudController {
 
   @Get('llamadas/pendientes')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Listar llamadas PJUD pendientes de procesar',
@@ -213,7 +214,7 @@ export class PjudController {
   @Post('test-ift')
   @HttpCode(201)
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Simular recepción IFT desde PJUD (testing)',

@@ -26,6 +26,7 @@ import { UpdateUsuarioDto } from '../dto/update-usuario.dto';
 import { FindUsuarioDto } from '../dto/find-usuario.dto';
 import { AssignRolDto } from '../dto/assign-rol.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
@@ -33,7 +34,7 @@ import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('usuarios')
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}

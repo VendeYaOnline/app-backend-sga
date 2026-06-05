@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { DispositivoService } from '../services/dispositivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -28,7 +29,7 @@ import { RegistrarInstalacionDto } from '../dto/registrar-instalacion.dto';
 
 @ApiTags('Dispositivos')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller()
 export class DispositivoController {
   constructor(private readonly dispositivoService: DispositivoService) {}

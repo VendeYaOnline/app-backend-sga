@@ -15,9 +15,10 @@ import {
 } from '@nestjs/swagger';
 import { CatalogoService } from '../services/catalogo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 
 @ApiTags('Catálogos')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('catalogos')
 export class CatalogoController {
   constructor(private readonly catalogoService: CatalogoService) {}

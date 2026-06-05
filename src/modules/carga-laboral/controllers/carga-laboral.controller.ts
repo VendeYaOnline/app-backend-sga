@@ -8,13 +8,14 @@ import {
 } from '@nestjs/swagger';
 import { CargaLaboralService } from '../services/carga-laboral.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { FindCargaLaboralDto } from '../dto/find-carga-laboral.dto';
 
 @ApiTags('Carga Laboral')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('carga-laboral')
 export class CargaLaboralController {
   constructor(private readonly cargaLaboralService: CargaLaboralService) {}

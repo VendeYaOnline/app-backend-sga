@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { NotificacionService } from '../services/notificacion.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -30,7 +31,7 @@ import { CreatePlantillaDto, UpdatePlantillaDto } from '../dto/plantilla.dto';
 
 @ApiTags('Notificaciones')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('notificaciones')
 export class NotificacionController {
   constructor(private readonly notificacionService: NotificacionService) {}

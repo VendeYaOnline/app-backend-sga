@@ -28,12 +28,13 @@ import { UpdateCondenadoDto } from '../dto/update-condenado.dto';
 import { FindCondenadoDto } from '../dto/find-condenado.dto';
 import { CreateContactoDto } from '../dto/create-contacto.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 
 @ApiTags('Condenados')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('condenados')
 export class CondenadoController {
   constructor(private readonly personaService: PersonaService) {}

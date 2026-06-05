@@ -24,6 +24,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ArchivoService } from '../services/archivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -31,7 +32,7 @@ import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 
 @ApiTags('Archivos')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermisosGuard)
 @Controller('archivos')
 export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}

@@ -13,6 +13,7 @@ import { SetupDto } from '../dto/setup.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { UseGuards } from '@nestjs/common';
 
 @ApiTags('Auth')
@@ -77,7 +78,7 @@ export class AuthController {
 
   @Get('me')
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermisosGuard)
   @ApiOperation({
     summary: 'Obtener perfil del usuario autenticado',
     description: 'Retorna los datos del usuario actual a partir del token JWT',
