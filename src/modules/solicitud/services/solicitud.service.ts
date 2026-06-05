@@ -252,21 +252,21 @@ export class SolicitudService {
             },
           });
           if (existente) {
-            throw new ConflictException(
-              `Ya existe un condenado con RUN ${dto.condenado.runCondenado}`,
-            );
+            condenadoId = existente.id;
           }
         }
 
-        const nuevoCondenado = manager.create(Condenado, {
-          ...dto.condenado,
-          createdBy: userId,
-        });
-        const savedCondenado = await manager.save(nuevoCondenado);
-        condenadoId = savedCondenado.id;
-        this.logger.log(
-          `Condenado ${savedCondenado.id} creado junto con solicitud`,
-        );
+        if (!condenadoId) {
+          const nuevoCondenado = manager.create(Condenado, {
+            ...dto.condenado,
+            createdBy: userId,
+          });
+          const savedCondenado = await manager.save(nuevoCondenado);
+          condenadoId = savedCondenado.id;
+          this.logger.log(
+            `Condenado ${savedCondenado.id} creado junto con solicitud`,
+          );
+        }
       }
 
       if (!condenadoId) {

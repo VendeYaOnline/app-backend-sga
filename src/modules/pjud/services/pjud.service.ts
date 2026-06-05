@@ -94,7 +94,7 @@ export class PjudService {
     return this.pjudLlamadaRepo.find({
       where: {
         procesadoOk: false,
-        direccion: 'IN',
+        direccion: 'ENTRANTE',
       },
       order: { fechaLlamada: 'ASC' },
     });
@@ -105,7 +105,7 @@ export class PjudService {
 
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'RECEPCION_IFT',
-      direccion: 'IN',
+      direccion: 'ENTRANTE',
       crrIdSolicitud: dto.crrIdSolicitud,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
@@ -152,7 +152,7 @@ export class PjudService {
 
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'RECEPCION_DECRETO',
-      direccion: 'IN',
+      direccion: 'ENTRANTE',
       solicitudId: dto.solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
@@ -206,7 +206,7 @@ export class PjudService {
   ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_FACTIBILIDAD',
-      direccion: 'OUT',
+      direccion: 'SALIENTE',
       solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
@@ -220,7 +220,7 @@ export class PjudService {
   ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_INCUMPLIMIENTO',
-      direccion: 'OUT',
+      direccion: 'SALIENTE',
       solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
@@ -231,7 +231,7 @@ export class PjudService {
   async enviarAlarmaCenco(dto: PjudEnvioDto): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_ALARMA_CENCO',
-      direccion: 'OUT',
+      direccion: 'SALIENTE',
       solicitudId: dto.solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
