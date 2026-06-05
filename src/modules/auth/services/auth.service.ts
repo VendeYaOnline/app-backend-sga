@@ -43,27 +43,15 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const usuario = await this.usuarioRepo.findOne({
-      where: { email: dto.email, deletedAt: IsNull() },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        run: true,
-        nombres: true,
-        apellidoPaterno: true,
-        apellidoMaterno: true,
-        activo: true,
-        bloqueado: true,
-        bloqueadoAt: true,
-        intentosFallidos: true,
-        debeCambiarPass: true,
-        ultimoLogin: true,
-        passHash: true,
-      },
-    });
+    const usuario = await this.usuarioRepo
+      .createQueryBuilder('u')
+      .where('u.email = :email', { email: dto.email })
+      .andWhere('u.deletedAt IS NULL')
+      .addSelect('u.passHash')
+      .getOne();
+
     if (!usuario) {
-      throw new UnauthorizedException('Credenciales inválidas');
+      throw new UnauthorizedException('Credenciales invalidas');
     }
 
     if (!usuario.activo || usuario.bloqueado) {
