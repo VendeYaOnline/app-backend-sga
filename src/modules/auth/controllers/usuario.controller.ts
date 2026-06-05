@@ -14,6 +14,7 @@ import {
 import {
   ApiTags,
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiResponse,
   ApiParam,
@@ -26,7 +27,9 @@ import { FindUsuarioDto } from '../dto/find-usuario.dto';
 import { AssignRolDto } from '../dto/assign-rol.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
@@ -36,6 +39,7 @@ export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
   @Get()
+  @RequirePermiso(PERMISOS.USUARIO_LEER)
   @ApiOperation({
     summary: 'Listar usuarios con paginación y filtros',
     description:
@@ -77,6 +81,7 @@ export class UsuarioController {
   }
 
   @Get(':id')
+  @RequirePermiso(PERMISOS.USUARIO_LEER)
   @ApiOperation({
     summary: 'Obtener detalle de un usuario',
     description:
@@ -91,6 +96,8 @@ export class UsuarioController {
 
   @Post()
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.USUARIO_CREAR)
+  @ApiBody({ type: CreateUsuarioDto })
   @ApiOperation({
     summary: 'Crear un nuevo usuario',
     description:
@@ -106,6 +113,8 @@ export class UsuarioController {
   }
 
   @Put(':id')
+  @RequirePermiso(PERMISOS.USUARIO_EDITAR)
+  @ApiBody({ type: UpdateUsuarioDto })
   @ApiOperation({
     summary: 'Actualizar datos de un usuario',
     description: 'Modifica los datos de un usuario existente',
@@ -124,6 +133,7 @@ export class UsuarioController {
 
   @Delete(':id')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.USUARIO_ELIMINAR)
   @ApiOperation({
     summary: 'Desactivar usuario (soft delete)',
     description: 'Marca al usuario como eliminado sin borrar sus registros',
@@ -140,6 +150,8 @@ export class UsuarioController {
 
   @Post(':id/roles')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.USUARIO_EDITAR)
+  @ApiBody({ type: AssignRolDto })
   @ApiOperation({
     summary: 'Asignar un rol al usuario',
     description: 'Agrega un rol a la lista de roles del usuario',
@@ -158,6 +170,7 @@ export class UsuarioController {
 
   @Delete(':id/roles/:rolId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.USUARIO_EDITAR)
   @ApiOperation({
     summary: 'Remover un rol del usuario',
     description: 'Quita un rol específico de la lista de roles del usuario',

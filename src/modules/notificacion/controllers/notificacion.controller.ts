@@ -21,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { NotificacionService } from '../services/notificacion.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -34,6 +36,7 @@ export class NotificacionController {
   constructor(private readonly notificacionService: NotificacionService) {}
 
   @Get()
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar notificaciones del usuario',
     description:
@@ -53,6 +56,7 @@ export class NotificacionController {
   }
 
   @Get('no-leidas')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Contar notificaciones no leídas',
     description:
@@ -67,6 +71,7 @@ export class NotificacionController {
   }
 
   @Put(':id/leida')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Marcar notificación como leída',
     description: 'Marca una notificación específica como leída',
@@ -87,6 +92,7 @@ export class NotificacionController {
 
   @Put('leer-todas')
   @HttpCode(200)
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Marcar todas las notificaciones como leídas',
     description:
@@ -98,10 +104,10 @@ export class NotificacionController {
   })
   async marcarTodasLeidas(@CurrentUser() user: JwtPayload) {
     await this.notificacionService.marcarTodasLeidas(user.sub);
-    return { message: 'Todas las notificaciones marcadas como leídas' };
   }
 
   @Get('plantillas')
+  @RequirePermiso(PERMISOS.ROL_GESTIONAR)
   @ApiOperation({
     summary: 'Listar plantillas de notificación',
     description: 'Retorna todas las plantillas de notificación disponibles',
@@ -112,6 +118,7 @@ export class NotificacionController {
   }
 
   @Get('plantillas/:id')
+  @RequirePermiso(PERMISOS.ROL_GESTIONAR)
   @ApiOperation({
     summary: 'Ver detalle de una plantilla',
     description:
@@ -126,6 +133,7 @@ export class NotificacionController {
 
   @Post('plantillas')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.ROL_GESTIONAR)
   @ApiOperation({
     summary: 'Crear una nueva plantilla',
     description: 'Crea una nueva plantilla de notificación',
@@ -133,12 +141,12 @@ export class NotificacionController {
   @ApiResponse({ status: 201, description: 'Plantilla creada exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiBody({ type: CreatePlantillaDto })
-  async createPlantilla(@Body() dto: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  async createPlantilla(@Body() dto: CreatePlantillaDto) {
     return this.notificacionService.createPlantilla(dto);
   }
 
   @Put('plantillas/:id')
+  @RequirePermiso(PERMISOS.ROL_GESTIONAR)
   @ApiOperation({
     summary: 'Actualizar una plantilla',
     description:
@@ -153,7 +161,7 @@ export class NotificacionController {
   @ApiBody({ type: UpdatePlantillaDto })
   async updatePlantilla(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: any,
+    @Body() dto: UpdatePlantillaDto,
   ) {
     return this.notificacionService.updatePlantilla(id, dto);
   }

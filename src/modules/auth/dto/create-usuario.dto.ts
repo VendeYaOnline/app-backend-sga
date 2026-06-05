@@ -5,9 +5,12 @@ import {
   IsOptional,
   IsBoolean,
   IsInt,
+  IsArray,
+  ArrayMinSize,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUsuarioDto {
@@ -84,4 +87,16 @@ export class CreateUsuarioDto {
   @IsOptional()
   @IsBoolean()
   debeCambiarPass?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'IDs de roles a asignar al crear el usuario',
+    type: [Number],
+    example: [1, 2],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @Type(() => Number)
+  @IsInt({ each: true })
+  rolIds?: number[];
 }

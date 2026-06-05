@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiQuery,
@@ -7,8 +14,10 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { CatalogoService } from '../services/catalogo.service';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 @ApiTags('Catálogos')
+@UseGuards(JwtAuthGuard)
 @Controller('catalogos')
 export class CatalogoController {
   constructor(private readonly catalogoService: CatalogoService) {}

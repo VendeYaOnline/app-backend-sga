@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { CreatePeriodoDto, CreateDetalleDto } from '../dto/prefacturacion.dto';
 import { PrefactPeriodo } from '../entities/prefact-periodo.entity';
 import { PrefactDetalle } from '../entities/prefact-detalle.entity';
 
@@ -57,10 +58,7 @@ export class PrefacturacionService {
     return periodo;
   }
 
-  async crearPeriodo(dto: {
-    anio: number;
-    mes: number;
-  }): Promise<PrefactPeriodo> {
+  async crearPeriodo(dto: CreatePeriodoDto): Promise<PrefactPeriodo> {
     const existente = await this.periodoRepo.findOne({
       where: { anio: dto.anio, mes: dto.mes },
     });
@@ -89,7 +87,7 @@ export class PrefacturacionService {
     });
   }
 
-  async crearDetalle(dto: Record<string, unknown>): Promise<PrefactDetalle> {
+  async crearDetalle(dto: CreateDetalleDto): Promise<PrefactDetalle> {
     const detalle = this.detalleRepo.create(dto);
     return this.detalleRepo.save(detalle);
   }

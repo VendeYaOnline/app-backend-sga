@@ -15,6 +15,7 @@ import { EventoService } from '../../evento/services/evento.service';
 import { CreateSolicitudDto } from '../../solicitud/dto/create-solicitud.dto';
 import { RecepcionIftDto } from '../dto/recepcion-ift.dto';
 import { RecepcionDecretoDto } from '../dto/recepcion-decreto.dto';
+import { PjudEnvioDto } from '../dto/pjud-envio.dto';
 
 @Injectable()
 export class PjudService {
@@ -201,7 +202,7 @@ export class PjudService {
 
   async enviarFactibilidad(
     solicitudId: number,
-    dto: Record<string, unknown>,
+    dto: PjudEnvioDto,
   ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_FACTIBILIDAD',
@@ -215,7 +216,7 @@ export class PjudService {
 
   async enviarIncumplimiento(
     solicitudId: number,
-    dto: Record<string, unknown>,
+    dto: PjudEnvioDto,
   ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_INCUMPLIMIENTO',
@@ -227,10 +228,7 @@ export class PjudService {
     return this.pjudLlamadaRepo.save(llamada);
   }
 
-  async enviarAlarmaCenco(dto: {
-    solicitudId: number;
-    [key: string]: unknown;
-  }): Promise<PjudLlamada> {
+  async enviarAlarmaCenco(dto: PjudEnvioDto): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_ALARMA_CENCO',
       direccion: 'OUT',

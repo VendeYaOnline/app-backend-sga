@@ -106,7 +106,18 @@ export class SolicitudService {
         hasta: `${where.fechaHasta} 23:59:59`,
       });
 
-    qb.orderBy('s.estadoAt', 'DESC');
+    const allowedSortColumns = [
+      'createdAt',
+      'updatedAt',
+      'estadoAt',
+      'rucCausa',
+      'ritCausa',
+    ];
+    const sortColumn = allowedSortColumns.includes(filters.sortBy || '')
+      ? filters.sortBy
+      : 'estadoAt';
+    const sortDir = filters.sortOrder === 'ASC' ? 'ASC' : 'DESC';
+    qb.orderBy(`s.${sortColumn}`, sortDir);
 
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();

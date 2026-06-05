@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   HttpCode,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
 import { SolicitudService } from '../services/solicitud.service';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
@@ -25,13 +27,17 @@ import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
 import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
 import { CreateFactibilidadDto } from '../dto/create-factibilidad.dto';
+import { CreateSolicitudVictimaDto } from '../dto/create-solicitud-victima.dto';
+import { CreateSolicitudDelitoSimpleDto } from '../dto/create-solicitud-delito-simple.dto';
 import { CreateZonaDto } from '../dto/create-solicitud.dto';
 import { UpdateZonaDto } from '../dto/update-zona.dto';
 import { CreateSolicitanteDto } from '../dto/create-solicitante.dto';
 import { UpdateSolicitanteDto } from '../dto/update-solicitante.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Solicitudes IFT')
 @ApiBearerAuth()
@@ -41,6 +47,7 @@ export class SolicitudController {
   constructor(private readonly solicitudService: SolicitudService) {}
 
   @Get()
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar solicitudes IFT con filtros',
     description:
@@ -118,12 +125,26 @@ export class SolicitudController {
     type: String,
     description: 'Filtrar hasta fecha de creación (YYYY-MM-DD)',
   })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    type: String,
+    description:
+      'Columna por la cual ordenar (createdAt, updatedAt, estadoAt, rucCausa, ritCausa)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    type: String,
+    description: 'Dirección del ordenamiento (ASC o DESC, default: DESC)',
+  })
   @ApiResponse({ status: 200, description: 'Lista paginada de solicitudes' })
   async findAll(@Query() filters: FindSolicitudDto) {
     return this.solicitudService.findAll(filters);
   }
 
   @Get(':id')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Obtener detalle completo de una solicitud',
     description:
@@ -138,6 +159,7 @@ export class SolicitudController {
 
   @Post()
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.SOLICITUD_CREAR)
   @ApiOperation({
     summary: 'Crear una nueva solicitud IFT (con zonas, delitos y víctimas)',
     description:
@@ -148,6 +170,7 @@ export class SolicitudController {
     status: 400,
     description: 'Datos inválidos o faltan campos requeridos',
   })
+  @ApiBody({ type: CreateSolicitudDto })
   async create(
     @Body() dto: CreateSolicitudDto,
     @CurrentUser() user: JwtPayload,
@@ -156,6 +179,7 @@ export class SolicitudController {
   }
 
   @Put(':id')
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
   @ApiOperation({
     summary: 'Editar datos generales de la solicitud',
     description:
@@ -168,6 +192,7 @@ export class SolicitudController {
   })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
+  @ApiBody({ type: UpdateSolicitudDto })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSolicitudDto,
@@ -178,6 +203,7 @@ export class SolicitudController {
 
   @Delete(':id')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.SOLICITUD_ELIMINAR)
   @ApiOperation({
     summary: 'Anular solicitud (soft delete)',
     description:
@@ -194,6 +220,7 @@ export class SolicitudController {
   }
 
   @Post(':id/transicion')
+  @RequirePermiso(PERMISOS.SOLICITUD_TRANSICIONAR)
   @ApiOperation({
     summary: 'Ejecutar transición de estado (state machine)',
     description:
@@ -210,6 +237,7 @@ export class SolicitudController {
     status: 422,
     description: 'Transición no permitida por regla de negocio',
   })
+  @ApiBody({ type: TransicionEstadoDto })
   async cambiarEstado(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: TransicionEstadoDto,
@@ -219,6 +247,7 @@ export class SolicitudController {
   }
 
   @Get(':id/historial')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Ver historial de cambios de estado',
     description:
@@ -235,6 +264,7 @@ export class SolicitudController {
   }
 
   @Get(':id/transiciones-permitidas')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Consultar transiciones permitidas según estado y rol',
     description:
@@ -254,6 +284,7 @@ export class SolicitudController {
   }
 
   @Get(':id/zonas')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar zonas de la solicitud',
     description:
@@ -268,6 +299,8 @@ export class SolicitudController {
 
   @Post(':id/zonas')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiBody({ type: CreateZonaDto })
   @ApiOperation({
     summary: 'Agregar una zona (inclusión/exclusión)',
     description:
@@ -286,6 +319,8 @@ export class SolicitudController {
   }
 
   @Put(':id/zonas/:zonaId')
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiBody({ type: UpdateZonaDto })
   @ApiOperation({
     summary: 'Editar zona',
     description: 'Modifica los datos de una zona de la solicitud',
@@ -306,6 +341,7 @@ export class SolicitudController {
 
   @Delete(':id/zonas/:zonaId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
   @ApiOperation({
     summary: 'Eliminar zona',
     description: 'Elimina una zona geográfica de la solicitud',
@@ -323,6 +359,7 @@ export class SolicitudController {
   }
 
   @Put(':id/zonas/:zonaId/validar')
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
   @ApiOperation({
     summary: 'Marcar zona como validada',
     description:
@@ -341,6 +378,7 @@ export class SolicitudController {
   }
 
   @Get(':id/solicitantes')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar solicitantes',
     description: 'Retorna los solicitantes asociados a la solicitud',
@@ -354,6 +392,8 @@ export class SolicitudController {
 
   @Post(':id/solicitantes')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiBody({ type: CreateSolicitanteDto })
   @ApiOperation({
     summary: 'Agregar solicitante',
     description: 'Agrega un solicitante a la solicitud',
@@ -373,6 +413,8 @@ export class SolicitudController {
   }
 
   @Put(':id/solicitantes/:solicitanteId')
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiBody({ type: UpdateSolicitanteDto })
   @ApiOperation({
     summary: 'Editar solicitante',
     description: 'Modifica los datos de un solicitante de la solicitud',
@@ -402,6 +444,7 @@ export class SolicitudController {
 
   @Delete(':id/solicitantes/:solicitanteId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
   @ApiOperation({
     summary: 'Remover solicitante',
     description: 'Quita un solicitante de la solicitud',
@@ -429,6 +472,8 @@ export class SolicitudController {
 
   @Post(':id/victimas')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiBody({ type: CreateSolicitudVictimaDto })
   @ApiOperation({
     summary: 'Vincular víctima con radio de prohibición',
     description:
@@ -440,8 +485,11 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async addVictima(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { victimaId: number; radioProhibicionMetros?: number },
+    @Body() dto: CreateSolicitudVictimaDto,
   ) {
+    if (!dto.victimaId) {
+      throw new BadRequestException('victimaId es requerido');
+    }
     return this.solicitudService.addVictima(
       id,
       dto.victimaId,
@@ -451,6 +499,7 @@ export class SolicitudController {
 
   @Delete(':id/victimas/:victimaId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
   @ApiOperation({
     summary: 'Desvincular víctima',
     description: 'Quita la vinculación de una víctima de la solicitud',
@@ -478,6 +527,8 @@ export class SolicitudController {
 
   @Post(':id/delitos')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiBody({ type: CreateSolicitudDelitoSimpleDto })
   @ApiOperation({
     summary: 'Asociar delito a la solicitud',
     description: 'Vincula un delito del catálogo a la solicitud',
@@ -488,13 +539,14 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async addDelito(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: { delitoId: number },
+    @Body() dto: CreateSolicitudDelitoSimpleDto,
   ) {
     return this.solicitudService.addDelito(id, dto.delitoId);
   }
 
   @Delete(':id/delitos/:delitoId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
   @ApiOperation({
     summary: 'Desasociar delito',
     description: 'Quita la asociación de un delito de la solicitud',
@@ -512,6 +564,8 @@ export class SolicitudController {
 
   @Post(':id/factibilidad')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.SOLICITUD_EMITIR_FACTIBILIDAD)
+  @ApiBody({ type: CreateFactibilidadDto })
   @ApiOperation({
     summary: 'Emitir informe de factibilidad técnica',
     description:
@@ -536,6 +590,7 @@ export class SolicitudController {
   }
 
   @Get(':id/factibilidad')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Ver informe de factibilidad',
     description: 'Retorna el informe de factibilidad técnica de la solicitud',

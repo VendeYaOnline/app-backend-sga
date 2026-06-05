@@ -18,7 +18,10 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { PersonaService } from '../services/persona.service';
 import { CreateCondenadoDto } from '../dto/create-condenado.dto';
 import { UpdateCondenadoDto } from '../dto/update-condenado.dto';
@@ -36,6 +39,7 @@ export class CondenadoController {
   constructor(private readonly personaService: PersonaService) {}
 
   @Get()
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Buscar condenados con filtros',
     description:
@@ -83,6 +87,7 @@ export class CondenadoController {
   }
 
   @Get(':id')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Obtener detalle de un condenado',
     description:
@@ -97,6 +102,8 @@ export class CondenadoController {
 
   @Post()
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.CONDENADO_CREAR)
+  @ApiBody({ type: CreateCondenadoDto })
   @ApiOperation({
     summary: 'Registrar un nuevo condenado',
     description:
@@ -112,6 +119,8 @@ export class CondenadoController {
   }
 
   @Put(':id')
+  @RequirePermiso(PERMISOS.CONDENADO_EDITAR)
+  @ApiBody({ type: UpdateCondenadoDto })
   @ApiOperation({
     summary: 'Actualizar datos del condenado',
     description: 'Modifica los datos personales de un condenado existente',
@@ -133,6 +142,7 @@ export class CondenadoController {
 
   @Delete(':id')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.CONDENADO_EDITAR)
   @ApiOperation({
     summary: 'Desactivar condenado (soft delete)',
     description:
@@ -152,6 +162,7 @@ export class CondenadoController {
   }
 
   @Get(':id/contactos')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar contactos del condenado',
     description:
@@ -166,6 +177,8 @@ export class CondenadoController {
 
   @Post(':id/contactos')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.CONDENADO_EDITAR)
+  @ApiBody({ type: CreateContactoDto })
   @ApiOperation({
     summary: 'Agregar teléfono/contacto al condenado',
     description:
@@ -184,6 +197,7 @@ export class CondenadoController {
 
   @Delete(':id/contactos/:contactoId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.CONDENADO_EDITAR)
   @ApiOperation({
     summary: 'Eliminar contacto del condenado',
     description: 'Quita un número de teléfono o contacto del condenado',

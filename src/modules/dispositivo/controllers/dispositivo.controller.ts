@@ -15,9 +15,12 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { DispositivoService } from '../services/dispositivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { CreateProcesoDispositivosDto } from '../dto/create-proceso-dispositivo.dto';
@@ -31,6 +34,7 @@ export class DispositivoController {
   constructor(private readonly dispositivoService: DispositivoService) {}
 
   @Get('procesos/:agendamientoId/dispositivos')
+  @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
   @ApiOperation({
     summary: 'Historial de dispositivos en proceso',
     description: 'Retorna el historial de dispositivos asociados a un proceso',
@@ -50,6 +54,8 @@ export class DispositivoController {
 
   @Post('procesos/:agendamientoId/dispositivos')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
+  @ApiBody({ type: CreateProcesoDispositivosDto })
   @ApiOperation({
     summary: 'Registrar dispositivos en proceso',
     description:
@@ -80,6 +86,8 @@ export class DispositivoController {
 
   @Post('procesos/:agendamientoId/instalacion')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
+  @ApiBody({ type: RegistrarInstalacionDto })
   @ApiOperation({
     summary: 'Registrar instalación completa',
     description:
@@ -111,6 +119,8 @@ export class DispositivoController {
   }
 
   @Put('procesos/:agendamientoId/dispositivos')
+  @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
+  @ApiBody({ type: CreateProcesoDispositivosDto })
   @ApiOperation({
     summary: 'Reemplazar todos los dispositivos de un proceso',
     description:

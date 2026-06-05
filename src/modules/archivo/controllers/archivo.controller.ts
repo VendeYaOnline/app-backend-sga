@@ -24,6 +24,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ArchivoService } from '../services/archivo.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 
@@ -35,6 +37,7 @@ export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}
 
   @Post('upload')
+  @RequirePermiso(PERMISOS.ARCHIVO_SUBIR)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({
@@ -72,6 +75,7 @@ export class ArchivoController {
   }
 
   @Get(':uuid')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Descargar archivo por UUID',
     description: 'Descarga un archivo desde el sistema usando su UUID',
@@ -84,6 +88,7 @@ export class ArchivoController {
   }
 
   @Get('entidad/:entidad/:entidadId')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar archivos por entidad',
     description: 'Retorna los archivos asociados a una entidad específica',
@@ -107,6 +112,7 @@ export class ArchivoController {
   }
 
   @Delete('referencias/:id')
+  @RequirePermiso(PERMISOS.ARCHIVO_ELIMINAR)
   @ApiOperation({
     summary: 'Eliminar referencia de archivo (soft delete)',
     description: 'Elimina lógicamente una referencia de archivo',
@@ -122,6 +128,5 @@ export class ArchivoController {
     @CurrentUser() user: JwtPayload,
   ) {
     await this.archivoService.softDeleteReferencia(id, user.sub);
-    return { message: 'Referencia eliminada exitosamente' };
   }
 }

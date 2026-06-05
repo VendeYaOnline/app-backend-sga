@@ -21,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { PrefacturacionService } from '../services/prefacturacion.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -34,6 +36,7 @@ export class PrefacturacionController {
   constructor(private readonly prefacturacionService: PrefacturacionService) {}
 
   @Get('periodos')
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Listar periodos de prefacturación',
     description: 'Retorna lista paginada de periodos de prefacturación',
@@ -46,6 +49,7 @@ export class PrefacturacionController {
   }
 
   @Get('periodos/:id')
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Ver detalle de un periodo',
     description: 'Retorna el detalle de un periodo de prefacturación',
@@ -59,6 +63,7 @@ export class PrefacturacionController {
 
   @Post('periodos')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Crear un nuevo periodo',
     description: 'Crea un nuevo periodo de prefacturación (año/mes)',
@@ -66,12 +71,12 @@ export class PrefacturacionController {
   @ApiResponse({ status: 201, description: 'Periodo creado exitosamente' })
   @ApiResponse({ status: 409, description: 'El periodo ya existe' })
   @ApiBody({ type: CreatePeriodoDto })
-  async crearPeriodo(@Body() dto: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  async crearPeriodo(@Body() dto: CreatePeriodoDto) {
     return this.prefacturacionService.crearPeriodo(dto);
   }
 
   @Put('periodos/:id/cerrar')
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Cerrar periodo de prefacturación',
     description:
@@ -89,6 +94,7 @@ export class PrefacturacionController {
   }
 
   @Get('periodos/:periodoId/detalles')
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Ver detalles de un periodo',
     description: 'Retorna los detalles de prefacturación de un periodo',
@@ -101,6 +107,7 @@ export class PrefacturacionController {
   }
 
   @Get('periodos/:periodoId/resumen')
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Ver resumen de un periodo',
     description:
@@ -115,6 +122,7 @@ export class PrefacturacionController {
 
   @Post('detalles')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.PREFACTURACION_GESTIONAR)
   @ApiOperation({
     summary: 'Agregar detalle de prefacturación',
     description: 'Agrega un nuevo detalle a un periodo de prefacturación',
@@ -122,8 +130,7 @@ export class PrefacturacionController {
   @ApiResponse({ status: 201, description: 'Detalle creado exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiBody({ type: CreateDetalleDto })
-  async crearDetalle(@Body() dto: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  async crearDetalle(@Body() dto: CreateDetalleDto) {
     return this.prefacturacionService.crearDetalle(dto);
   }
 }

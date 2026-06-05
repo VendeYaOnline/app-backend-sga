@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { CreatePlantillaDto, UpdatePlantillaDto } from '../dto/plantilla.dto';
 import { Notificacion } from '../entities/notificacion.entity';
 import { NotificacionUsuario } from '../entities/notificacion-usuario.entity';
 import { NotificacionPlantilla } from '../entities/notificacion-plantilla.entity';
@@ -97,13 +98,16 @@ export class NotificacionService {
   }
 
   async createPlantilla(
-    dto: Record<string, unknown>,
+    dto: CreatePlantillaDto,
   ): Promise<NotificacionPlantilla> {
     const plantilla = this.plantillaRepo.create(dto);
     return this.plantillaRepo.save(plantilla);
   }
 
-  async updatePlantilla(id: number, dto: any): Promise<NotificacionPlantilla> {
+  async updatePlantilla(
+    id: number,
+    dto: UpdatePlantillaDto,
+  ): Promise<NotificacionPlantilla> {
     const plantilla = await this.findPlantilla(id);
     Object.assign(plantilla, dto);
     return this.plantillaRepo.save(plantilla);

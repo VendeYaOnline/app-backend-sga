@@ -23,6 +23,7 @@ import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { CreateEventoDto } from '../dto/create-evento.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 
@@ -634,7 +635,7 @@ export class EventoService {
 
   async update(
     id: number,
-    dto: Record<string, unknown>,
+    dto: CreateEventoDto,
     userId: number,
   ): Promise<Evento> {
     const evento = await this.findOne(id);

@@ -9,6 +9,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
+import { PermisosGuard } from './common/guards/permisos.guard';
 import { CatalogoModule } from './modules/catalogo/catalogo.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PersonaModule } from './modules/persona/persona.module';
@@ -78,6 +79,10 @@ import { NormalizeSubscriber } from './common/subscribers/normalize.subscriber';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermisosGuard,
     },
   ],
 })

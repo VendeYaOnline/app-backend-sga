@@ -1,9 +1,32 @@
-import { IsOptional, IsString, IsInt, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  IsDateString,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class FindSolicitudDto extends PaginationDto {
+  @ApiPropertyOptional({
+    description: 'Campo por el cual ordenar',
+    enum: ['createdAt', 'updatedAt', 'estadoAt', 'rucCausa', 'ritCausa'],
+    default: 'estadoAt',
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Dirección del ordenamiento',
+    enum: ['ASC', 'DESC'],
+    default: 'DESC',
+  })
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  sortOrder?: 'ASC' | 'DESC';
   @ApiPropertyOptional({ description: 'Filtrar por ID de estado actual' })
   @IsOptional()
   @Type(() => Number)

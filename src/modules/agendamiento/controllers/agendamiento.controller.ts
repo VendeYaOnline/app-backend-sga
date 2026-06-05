@@ -18,9 +18,12 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AgendamientoService } from '../services/agendamiento.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
@@ -38,6 +41,7 @@ export class AgendamientoController {
   constructor(private readonly agendamientoService: AgendamientoService) {}
 
   @Get()
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
   @ApiOperation({
     summary: 'Listar agendamientos con filtros',
     description:
@@ -81,6 +85,7 @@ export class AgendamientoController {
   }
 
   @Get('calendario')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
   @ApiOperation({
     summary: 'Vista calendario de agendamientos',
     description:
@@ -92,12 +97,14 @@ export class AgendamientoController {
   })
   @ApiQuery({ name: 'fechaDesde', required: false, type: String })
   @ApiQuery({ name: 'fechaHasta', required: false, type: String })
-  async findCalendario(@Query() filters: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  async findCalendario(
+    @Query() filters: { fechaDesde?: string; fechaHasta?: string },
+  ) {
     return this.agendamientoService.findCalendario(filters);
   }
 
   @Get('tecnicos/disponibles')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
   @ApiOperation({
     summary: 'Consultar técnicos disponibles en rango',
     description: 'Retorna técnicos disponibles para una fecha y rango horario',
@@ -126,6 +133,7 @@ export class AgendamientoController {
   }
 
   @Get(':id')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
   @ApiOperation({
     summary: 'Ver detalle de un agendamiento',
     description: 'Retorna el detalle completo de un agendamiento por su ID',
@@ -139,6 +147,8 @@ export class AgendamientoController {
 
   @Post()
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
+  @ApiBody({ type: CreateAgendamientoDto })
   @ApiOperation({
     summary: 'Crear un nuevo agendamiento',
     description: 'Crea un agendamiento asociado a un evento',
@@ -153,6 +163,8 @@ export class AgendamientoController {
   }
 
   @Put(':id')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
+  @ApiBody({ type: UpdateAgendamientoDto })
   @ApiOperation({
     summary: 'Actualizar/reprogramar agendamiento',
     description: 'Actualiza los datos de un agendamiento existente',
@@ -172,6 +184,8 @@ export class AgendamientoController {
   }
 
   @Put(':id/estado')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
+  @ApiBody({ type: UpdateEstadoAgendamientoDto })
   @ApiOperation({
     summary: 'Cambiar estado del agendamiento',
     description:
@@ -189,6 +203,8 @@ export class AgendamientoController {
   }
 
   @Put(':id/proceso')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
+  @ApiBody({ type: UpdateProcesoAgendamientoDto })
   @ApiOperation({
     summary: 'Editar proceso de un agendamiento',
     description:
@@ -209,6 +225,7 @@ export class AgendamientoController {
   }
 
   @Patch(':id/cerrar')
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
   @ApiOperation({
     summary: 'Cerrar agendamiento',
     description:
@@ -227,6 +244,8 @@ export class AgendamientoController {
 
   @Post(':id/reagendar')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.AGENDAMIENTO_GESTIONAR)
+  @ApiBody({ type: ReagendarAgendamientoDto })
   @ApiOperation({
     summary: 'Reagendar un agendamiento',
     description:

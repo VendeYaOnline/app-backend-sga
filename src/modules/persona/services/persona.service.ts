@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
@@ -28,6 +29,8 @@ export class PersonaService {
     @InjectRepository(VictimaContacto)
     private readonly victimaContactoRepo: Repository<VictimaContacto>,
   ) {}
+
+  private readonly logger = new Logger(PersonaService.name);
 
   async findCondenados(filters: FindCondenadoDto & { search?: string }) {
     const {
@@ -122,7 +125,9 @@ export class PersonaService {
       }
     }
     const condenado = this.condenadoRepo.create({ ...dto, createdBy: userId });
-    return this.condenadoRepo.save(condenado);
+    const saved = await this.condenadoRepo.save(condenado);
+    this.logger.log(`Condenado creado: ID ${saved.id}`);
+    return saved;
   }
 
   async updateCondenado(
@@ -132,7 +137,9 @@ export class PersonaService {
   ): Promise<Condenado> {
     const condenado = await this.findCondenadoById(id);
     Object.assign(condenado, dto, { updatedBy: userId });
-    return this.condenadoRepo.save(condenado);
+    const updated = await this.condenadoRepo.save(condenado);
+    this.logger.log(`Condenado actualizado: ID ${updated.id}`);
+    return updated;
   }
 
   async softDeleteCondenado(id: number, userId: number): Promise<void> {
@@ -140,6 +147,7 @@ export class PersonaService {
     condenado.deletedAt = new Date();
     condenado.deletedBy = userId;
     await this.condenadoRepo.save(condenado);
+    this.logger.log(`Condenado eliminado (soft delete): ID ${id}`);
   }
 
   async addContactoCondenado(
@@ -225,7 +233,9 @@ export class PersonaService {
 
   async createVictima(dto: CreateVictimaDto, userId: number): Promise<Victima> {
     const victima = this.victimaRepo.create({ ...dto, createdBy: userId });
-    return this.victimaRepo.save(victima);
+    const saved = await this.victimaRepo.save(victima);
+    this.logger.log(`Víctima creada: ID ${saved.id}`);
+    return saved;
   }
 
   async updateVictima(
@@ -235,7 +245,9 @@ export class PersonaService {
   ): Promise<Victima> {
     const victima = await this.findVictimaById(id);
     Object.assign(victima, dto, { updatedBy: userId });
-    return this.victimaRepo.save(victima);
+    const updated = await this.victimaRepo.save(victima);
+    this.logger.log(`Víctima actualizada: ID ${updated.id}`);
+    return updated;
   }
 
   async softDeleteVictima(id: number, userId: number): Promise<void> {
@@ -243,6 +255,7 @@ export class PersonaService {
     victima.deletedAt = new Date();
     victima.deletedBy = userId;
     await this.victimaRepo.save(victima);
+    this.logger.log(`Víctima eliminada (soft delete): ID ${id}`);
   }
 
   async addContactoVictima(

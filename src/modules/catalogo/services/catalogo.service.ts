@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CatRegion } from '../entities/cat-region.entity';
@@ -75,6 +75,8 @@ export class CatalogoService {
     @InjectRepository(CatTipoHorario)
     private readonly tipoHorarioRepo: Repository<CatTipoHorario>,
   ) {}
+
+  private readonly logger = new Logger(CatalogoService.name);
 
   async findRegiones() {
     return this.regionRepo.find({

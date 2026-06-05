@@ -2,9 +2,12 @@ import {
   Injectable,
   BadRequestException,
   ConflictException,
+  NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository, IsNull, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateUsuarioDto } from '../dto/create-usuario.dto';
@@ -16,6 +19,7 @@ import { CatRol } from '../entities/cat-rol.entity';
 @Injectable()
 export class UsuarioService {
   constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
     @InjectRepository(UsuarioRol)
@@ -23,6 +27,8 @@ export class UsuarioService {
     @InjectRepository(CatRol)
     private readonly rolRepo: Repository<CatRol>,
   ) {}
+
+  private readonly logger = new Logger(UsuarioService.name);
 
   async findAll(
     filters: PaginationDto & {
@@ -196,18 +202,61 @@ export class UsuarioService {
 
     const existingRun = await this.findByRun(dto.run);
     if (existingRun) {
-      throw new ConflictException(`El RUN "${dto.run}" ya está registrado`);
+      throw new ConflictException(`El RUN "${dto.run}" ya esta registrado`);
     }
 
     const salt = await bcrypt.genSalt(10);
     const passHash = await bcrypt.hash(dto.password, salt);
 
-    const usuario = this.usuarioRepo.create({
-      ...dto,
-      passHash,
-      createdBy: userId,
-    });
-    return this.usuarioRepo.save(usuario);
+    if (dto.rolIds?.length) {
+      const roles = await this.rolRepo.find({
+        where: { id: In(dto.rolIds) },
+      });
+      const foundIds = new Set(roles.map((r) => r.id));
+      const missingIds = dto.rolIds.filter((rid) => !foundIds.has(rid));
+      if (missingIds.length > 0) {
+        throw new NotFoundException(
+          `Roles no encontrados: ${missingIds.join(', ')}`,
+        );
+      }
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const usuario = manager.create(Usuario, {
+        ...dto,
+        passHash,
+        createdBy: userId,
+      });
+      const saved = await manager.save(usuario);
+
+      if (dto.rolIds?.length) {
+        const usuarioRoles = dto.rolIds.map((rolId) =>
+          manager.create(UsuarioRol, {
+            usuarioId: saved.id,
+            rolId,
+            asignadoBy: userId,
+          }),
+        );
+        await manager.save(usuarioRoles);
+      }
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Usuario creado: ID ${saved.id}${dto.rolIds?.length ? ` con ${dto.rolIds.length} rol(es)` : ''}`,
+      );
+      return saved;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async update(
@@ -238,7 +287,9 @@ export class UsuarioService {
     }
 
     Object.assign(usuario, dto, { updatedBy: userId });
-    return this.usuarioRepo.save(usuario);
+    const updated = await this.usuarioRepo.save(usuario);
+    this.logger.log(`Usuario actualizado: ID ${updated.id}`);
+    return updated;
   }
 
   async softDelete(id: number, userId: number): Promise<void> {
@@ -246,6 +297,7 @@ export class UsuarioService {
     usuario.deletedAt = new Date();
     usuario.deletedBy = userId;
     await this.usuarioRepo.save(usuario);
+    this.logger.log(`Usuario eliminado (soft delete): ID ${id}`);
   }
 
   async assignRol(
@@ -269,6 +321,7 @@ export class UsuarioService {
       asignadoBy: userId,
     });
     await this.usuarioRolRepo.save(usuarioRol);
+    this.logger.log(`Rol asignado: Usuario ID ${usuarioId}, Rol ID ${rolId}`);
   }
 
   async removeRol(usuarioId: number, rolId: number): Promise<void> {
@@ -279,5 +332,6 @@ export class UsuarioService {
       throw new BadRequestException('El usuario no tiene este rol asignado');
     }
     await this.usuarioRolRepo.remove(usuarioRol);
+    this.logger.log(`Rol removido: Usuario ID ${usuarioId}, Rol ID ${rolId}`);
   }
 }

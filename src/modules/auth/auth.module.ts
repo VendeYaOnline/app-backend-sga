@@ -8,6 +8,7 @@ import { UsuarioController } from './controllers/usuario.controller';
 import { RolController } from './controllers/rol.controller';
 import { AuthService } from './services/auth.service';
 import { UsuarioService } from './services/usuario.service';
+import { RolService } from './services/rol.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { Usuario } from './entities/usuario.entity';
 import { UsuarioRol } from './entities/usuario-rol.entity';
@@ -38,7 +39,7 @@ import { RolPermiso } from './entities/rol-permiso.entity';
     }),
   ],
   controllers: [AuthController, UsuarioController, RolController],
-  providers: [AuthService, UsuarioService, JwtStrategy],
+  providers: [AuthService, UsuarioService, RolService, JwtStrategy],
   exports: [AuthService, UsuarioService, JwtModule],
 })
 export class AuthModule {}

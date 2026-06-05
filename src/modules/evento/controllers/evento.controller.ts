@@ -27,7 +27,10 @@ import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import { FindEventoDto } from '../dto/find-evento.dto';
 import { FindProcesoDto } from '../dto/find-proceso.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
-import { CreateProcesoDto } from '../dto/create-proceso.dto';
+import {
+  CreateProcesoDto,
+  CreateProcesoSoporteDetalleDto,
+} from '../dto/create-proceso.dto';
 import { UpdateResolucionDto } from '../dto/update-resolucion.dto';
 import { UpdateProcesoDto } from '../dto/update-proceso.dto';
 import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
@@ -37,6 +40,8 @@ import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 import { FinalizarEventoDto } from '../dto/finalizar-evento.dto';
 import { CerrarProcesoDto } from '../dto/cerrar-proceso.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -46,6 +51,7 @@ export class EventoController {
   constructor(private readonly eventoService: EventoService) {}
 
   @Get('eventos')
+  @RequirePermiso(PERMISOS.EVENTO_LEER)
   @ApiOperation({
     summary: 'Listar eventos con filtros',
     description: 'Retorna lista paginada de eventos con filtros opcionales',
@@ -56,6 +62,7 @@ export class EventoController {
   }
 
   @Get('eventos/:id')
+  @RequirePermiso(PERMISOS.EVENTO_LEER)
   @ApiOperation({
     summary: 'Ver detalle de un evento',
     description: 'Retorna el detalle completo de un evento por su ID',
@@ -68,6 +75,7 @@ export class EventoController {
   }
 
   @Post('eventos')
+  @RequirePermiso(PERMISOS.EVENTO_CREAR)
   @HttpCode(201)
   @ApiOperation({
     summary: 'Crear un nuevo evento (genera validaciones automáticas)',
@@ -77,11 +85,12 @@ export class EventoController {
   @ApiResponse({ status: 201, description: 'Evento creado exitosamente' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiBody({ type: CreateEventoDto })
-  async create(@Body() dto: any, @CurrentUser() user: JwtPayload) {
+  async create(@Body() dto: CreateEventoDto, @CurrentUser() user: JwtPayload) {
     return this.eventoService.create(dto, user.sub);
   }
 
   @Post('eventos/completo')
+  @RequirePermiso(PERMISOS.EVENTO_CREAR)
   @HttpCode(201)
   @ApiOperation({
     summary: 'Crear uno o varios eventos con resolucion o agendamiento en lote',
@@ -99,6 +108,7 @@ export class EventoController {
   }
 
   @Post('eventos/reagendar')
+  @RequirePermiso(PERMISOS.EVENTO_CREAR)
   @HttpCode(201)
   @ApiOperation({
     summary: 'Reagendar el agendamiento de un evento',
@@ -116,6 +126,7 @@ export class EventoController {
   }
 
   @Put('eventos/:id')
+  @RequirePermiso(PERMISOS.EVENTO_EDITAR)
   @ApiOperation({
     summary: 'Editar datos generales del evento',
     description: 'Actualiza los datos generales de un evento existente',
@@ -125,14 +136,14 @@ export class EventoController {
   @ApiParam({ name: 'id', type: Number, description: 'ID del evento' })
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: any,
+    @Body() dto: CreateEventoDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.eventoService.update(id, dto, user.sub);
   }
 
   @Post('eventos/:id/finalizar')
+  @RequirePermiso(PERMISOS.EVENTO_VALIDAR)
   @ApiOperation({
     summary: 'Finalizar evento, proceso y agendamiento',
     description:
@@ -161,6 +172,7 @@ export class EventoController {
   }
 
   @Get('eventos/:id/validaciones')
+  @RequirePermiso(PERMISOS.EVENTO_LEER)
   @ApiOperation({
     summary: 'Ver validaciones del evento',
     description: 'Retorna las validaciones asociadas a un evento',
@@ -173,6 +185,7 @@ export class EventoController {
   }
 
   @Post('eventos/:id/validaciones/:validacionId')
+  @RequirePermiso(PERMISOS.EVENTO_VALIDAR)
   @ApiOperation({
     summary: 'Ejecutar validación (aprobar/rechazar)',
     description: 'Ejecuta una validación específica de un evento',
@@ -195,20 +208,19 @@ export class EventoController {
   async ejecutarValidacion(
     @Param('id', ParseIntPipe) id: number,
     @Param('validacionId', ParseIntPipe) validacionId: number,
-    @Body() dto: any,
+    @Body() dto: EjecutarValidacionDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    /* eslint-disable @typescript-eslint/no-unsafe-argument */
     return this.eventoService.ejecutarValidacion(
       id,
       validacionId,
       dto,
       user.sub,
     );
-    /* eslint-enable @typescript-eslint/no-unsafe-argument */
   }
 
   @Get('procesos')
+  @RequirePermiso(PERMISOS.PROCESO_LEER)
   @ApiOperation({
     summary: 'Listar procesos en terreno',
     description:
@@ -225,6 +237,7 @@ export class EventoController {
   }
 
   @Post('procesos')
+  @RequirePermiso(PERMISOS.PROCESO_CERRAR)
   @HttpCode(201)
   @ApiOperation({
     summary: 'Crear un proceso en terreno desde un agendamiento',
@@ -246,6 +259,7 @@ export class EventoController {
   }
 
   @Put('procesos/:agendamientoId')
+  @RequirePermiso(PERMISOS.PROCESO_CERRAR)
   @ApiOperation({
     summary: 'Editar datos del proceso en terreno',
     description:
@@ -267,6 +281,7 @@ export class EventoController {
   }
 
   @Post('procesos/:agendamientoId/cerrar-completo')
+  @RequirePermiso(PERMISOS.PROCESO_CERRAR)
   @ApiOperation({
     summary: 'Cerrar proceso completo (instalación/desinstalación)',
     description:
@@ -294,6 +309,7 @@ export class EventoController {
   }
 
   @Post('procesos/:agendamientoId/soporte-detalle')
+  @RequirePermiso(PERMISOS.PROCESO_CERRAR)
   @ApiOperation({
     summary: 'Agregar detalle de soporte técnico',
     description: 'Agrega un detalle de soporte técnico a un proceso',
@@ -310,12 +326,13 @@ export class EventoController {
   })
   async addSoporteDetalle(
     @Param('agendamientoId', ParseIntPipe) agendamientoId: number,
-    @Body() dto: any,
+    @Body() dto: CreateProcesoSoporteDetalleDto,
   ) {
     return this.eventoService.addSoporteDetalle(agendamientoId, dto);
   }
 
   @Get('procesos/:agendamientoId/dispositivos-referencia')
+  @RequirePermiso(PERMISOS.EVENTO_LEER)
   @ApiOperation({
     summary: 'Obtener dispositivos de referencia para soporte o desinstalación',
     description:
@@ -387,6 +404,7 @@ export class EventoController {
   }
 
   @Get('procesos/:agendamientoId/soporte-motivos')
+  @RequirePermiso(PERMISOS.EVENTO_LEER)
   @ApiOperation({
     summary: 'Listar motivos de un soporte',
     description: 'Retorna los motivos asociados a un proceso de soporte',
@@ -404,6 +422,7 @@ export class EventoController {
   }
 
   @Post('procesos/:agendamientoId/soporte-motivos')
+  @RequirePermiso(PERMISOS.EVENTO_EDITAR)
   @HttpCode(201)
   @ApiOperation({
     summary: 'Agregar motivo a un soporte',
@@ -425,6 +444,7 @@ export class EventoController {
   }
 
   @Put('procesos/:agendamientoId/soporte-motivos/:motivoId')
+  @RequirePermiso(PERMISOS.EVENTO_EDITAR)
   @ApiOperation({
     summary: 'Editar motivo de soporte',
     description: 'Actualiza un motivo de problema de un proceso de soporte',
@@ -450,6 +470,7 @@ export class EventoController {
   }
 
   @Delete('procesos/:agendamientoId/soporte-motivos/:motivoId')
+  @RequirePermiso(PERMISOS.EVENTO_EDITAR)
   @HttpCode(204)
   @ApiOperation({
     summary: 'Eliminar motivo de soporte',
@@ -471,6 +492,7 @@ export class EventoController {
   }
 
   @Put('resoluciones/:eventoId')
+  @RequirePermiso(PERMISOS.EVENTO_EDITAR)
   @ApiOperation({
     summary: 'Editar datos de resolución judicial',
     description:
@@ -491,6 +513,7 @@ export class EventoController {
   }
 
   @Put('cambios-domicilio/:eventoId')
+  @RequirePermiso(PERMISOS.EVENTO_EDITAR)
   @ApiOperation({
     summary: 'Editar datos de cambio de domicilio',
     description:
@@ -514,6 +537,7 @@ export class EventoController {
   }
 
   @Get('eventos/trazabilidad-instalacion/:eventoId')
+  @RequirePermiso(PERMISOS.EVENTO_LEER)
   @ApiOperation({
     summary: 'Trazabilidad de instalación para desinstalación',
     description:

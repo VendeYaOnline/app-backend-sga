@@ -18,12 +18,15 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { PersonaService } from '../services/persona.service';
 import { CreateVictimaDto } from '../dto/create-victima.dto';
 import { UpdateVictimaDto } from '../dto/update-victima.dto';
 import { CreateContactoDto } from '../dto/create-contacto.dto';
-import { PaginationDto } from '../../../common/dto/pagination.dto';
+import { FindVictimaDto } from '../dto/find-victima.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
@@ -36,6 +39,7 @@ export class VictimaController {
   constructor(private readonly personaService: PersonaService) {}
 
   @Get()
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Buscar víctimas con filtros',
     description:
@@ -66,11 +70,12 @@ export class VictimaController {
     description: 'Filtrar por RUN de la víctima',
   })
   @ApiResponse({ status: 200, description: 'Lista paginada de víctimas' })
-  async findAll(@Query() filters: PaginationDto) {
+  async findAll(@Query() filters: FindVictimaDto) {
     return this.personaService.findVictimas(filters);
   }
 
   @Get(':id')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Obtener detalle de una víctima',
     description:
@@ -85,6 +90,8 @@ export class VictimaController {
 
   @Post()
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.VICTIMA_CREAR)
+  @ApiBody({ type: CreateVictimaDto })
   @ApiOperation({
     summary: 'Registrar una nueva víctima',
     description:
@@ -97,6 +104,8 @@ export class VictimaController {
   }
 
   @Put(':id')
+  @RequirePermiso(PERMISOS.VICTIMA_EDITAR)
+  @ApiBody({ type: UpdateVictimaDto })
   @ApiOperation({
     summary: 'Actualizar datos de la víctima',
     description: 'Modifica los datos personales de una víctima existente',
@@ -115,6 +124,7 @@ export class VictimaController {
 
   @Delete(':id')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.VICTIMA_EDITAR)
   @ApiOperation({
     summary: 'Desactivar víctima (soft delete)',
     description:
@@ -131,6 +141,7 @@ export class VictimaController {
   }
 
   @Get(':id/contactos')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Listar contactos de la víctima',
     description:
@@ -145,6 +156,8 @@ export class VictimaController {
 
   @Post(':id/contactos')
   @HttpCode(201)
+  @RequirePermiso(PERMISOS.VICTIMA_EDITAR)
+  @ApiBody({ type: CreateContactoDto })
   @ApiOperation({
     summary: 'Agregar teléfono/contacto a la víctima',
     description:
@@ -163,6 +176,7 @@ export class VictimaController {
 
   @Delete(':id/contactos/:contactoId')
   @HttpCode(204)
+  @RequirePermiso(PERMISOS.VICTIMA_EDITAR)
   @ApiOperation({
     summary: 'Eliminar contacto de la víctima',
     description: 'Quita un número de teléfono o contacto de la víctima',

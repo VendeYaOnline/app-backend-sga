@@ -21,6 +21,8 @@ import {
 import { PjudService } from '../services/pjud.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { PjudAuthGuard } from '../../../common/guards/pjud-auth.guard';
+import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
+import { PERMISOS } from '../../../common/constants/permisos.constant';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { RecepcionIftDto } from '../dto/recepcion-ift.dto';
 import { RecepcionDecretoDto } from '../dto/recepcion-decreto.dto';
@@ -66,6 +68,7 @@ export class PjudController {
   @Get('consulta-ift/:crrId')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Consultar IFT por CRR ID',
     description: 'Consulta el historial de llamadas IFT por su CRR ID',
@@ -85,6 +88,7 @@ export class PjudController {
   @HttpCode(201)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Enviar factibilidad al PJUD',
     description:
@@ -103,9 +107,8 @@ export class PjudController {
   @ApiBody({ type: PjudEnvioDto })
   async enviarFactibilidad(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
-    @Body() dto: any,
+    @Body() dto: PjudEnvioDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.pjudService.enviarFactibilidad(solicitudId, dto);
   }
 
@@ -113,6 +116,7 @@ export class PjudController {
   @HttpCode(201)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Enviar incumplimiento al PJUD',
     description:
@@ -131,9 +135,8 @@ export class PjudController {
   @ApiBody({ type: PjudEnvioDto })
   async enviarIncumplimiento(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
-    @Body() dto: any,
+    @Body() dto: PjudEnvioDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.pjudService.enviarIncumplimiento(solicitudId, dto);
   }
 
@@ -141,6 +144,7 @@ export class PjudController {
   @HttpCode(201)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Enviar alarma CENCO al PJUD',
     description: 'Envía una alarma CENCO al Poder Judicial',
@@ -150,14 +154,14 @@ export class PjudController {
     description: 'Alarma CENCO enviada exitosamente',
   })
   @ApiBody({ type: PjudEnvioDto })
-  async enviarAlarmaCenco(@Body() dto: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  async enviarAlarmaCenco(@Body() dto: PjudEnvioDto) {
     return this.pjudService.enviarAlarmaCenco(dto);
   }
 
   @Get('llamadas')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Listar llamadas PJUD',
     description: 'Retorna lista paginada de llamadas a/desde PJUD',
@@ -176,6 +180,7 @@ export class PjudController {
   @HttpCode(200)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Reprocesar llamada PJUD',
     description: 'Reintenta el procesamiento de una llamada PJUD que falló',
@@ -194,6 +199,7 @@ export class PjudController {
   @Get('llamadas/pendientes')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Listar llamadas PJUD pendientes de procesar',
     description:
@@ -208,6 +214,7 @@ export class PjudController {
   @HttpCode(201)
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Simular recepción IFT desde PJUD (testing)',
     description:
