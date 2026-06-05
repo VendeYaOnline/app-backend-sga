@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, IsNull } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Usuario } from '../entities/usuario.entity';
 import { CatRol } from '../entities/cat-rol.entity';
@@ -43,7 +43,25 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const usuario = await this.usuarioService.findByEmail(dto.email);
+    const usuario = await this.usuarioRepo.findOne({
+      where: { email: dto.email, deletedAt: IsNull() },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        run: true,
+        nombres: true,
+        apellidoPaterno: true,
+        apellidoMaterno: true,
+        activo: true,
+        bloqueado: true,
+        bloqueadoAt: true,
+        intentosFallidos: true,
+        debeCambiarPass: true,
+        ultimoLogin: true,
+        passHash: true,
+      },
+    });
     if (!usuario) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
@@ -169,7 +187,13 @@ export class AuthService {
   }
 
   async setPassword(usuarioId: number, newPassword: string) {
-    const usuario = await this.usuarioService.findOne(usuarioId);
+    const usuario = await this.usuarioRepo.findOne({
+      where: { id: usuarioId, deletedAt: IsNull() },
+      select: { id: true, passHash: true, debeCambiarPass: true },
+    });
+    if (!usuario) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
     const salt = await bcrypt.genSalt(10);
     usuario.passHash = await bcrypt.hash(newPassword, salt);
     usuario.debeCambiarPass = false;

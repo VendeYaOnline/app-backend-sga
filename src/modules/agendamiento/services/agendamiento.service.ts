@@ -54,6 +54,8 @@ export class AgendamientoService {
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.evento', 'e')
       .leftJoinAndSelect('a.asignado', 'u')
+      .leftJoinAndSelect('u.usuarioRoles', 'ur')
+      .leftJoinAndSelect('ur.rol', 'rol')
       .leftJoinAndSelect('a.crs', 'c')
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')
@@ -100,7 +102,7 @@ export class AgendamientoService {
       where: { id, deletedAt: IsNull() },
       relations: {
         evento: true,
-        asignado: true,
+        asignado: { usuarioRoles: { rol: true } },
         crs: true,
         region: true,
         comuna: true,
@@ -373,6 +375,8 @@ export class AgendamientoService {
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.evento', 'e')
       .leftJoinAndSelect('a.asignado', 'u')
+      .leftJoinAndSelect('u.usuarioRoles', 'ur')
+      .leftJoinAndSelect('ur.rol', 'rol')
       .leftJoinAndSelect('a.crs', 'c')
       .leftJoinAndSelect('a.region', 'r')
       .leftJoinAndSelect('a.comuna', 'co')

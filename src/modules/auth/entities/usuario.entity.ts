@@ -6,11 +6,13 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { CatRegion } from '../../catalogo/entities/cat-region.entity';
 import { CatCrs } from '../../catalogo/entities/cat-crs.entity';
 import { CatTribunal } from '../../catalogo/entities/cat-tribunal.entity';
+import { UsuarioRol } from './usuario-rol.entity';
 
 @Entity('sga.USUARIO')
 export class Usuario {
@@ -65,7 +67,13 @@ export class Usuario {
   @Column({ name: 'tribunal_id', type: 'int', nullable: true })
   tribunalId: number | null;
 
-  @Column({ name: 'pass_hash', type: 'nvarchar', length: 255, nullable: true })
+  @Column({
+    name: 'pass_hash',
+    type: 'nvarchar',
+    length: 255,
+    nullable: true,
+    select: false,
+  })
   passHash: string | null;
 
   @Column({ name: 'debe_cambiar_pass', type: 'bit', default: 0 })
@@ -115,4 +123,7 @@ export class Usuario {
   @ManyToOne(() => CatTribunal)
   @JoinColumn({ name: 'tribunal_id', referencedColumnName: 'id' })
   tribunal: CatTribunal;
+
+  @OneToMany(() => UsuarioRol, (ur) => ur.usuario)
+  usuarioRoles: UsuarioRol[];
 }
