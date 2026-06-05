@@ -18,8 +18,8 @@ export class PjudLlamada {
   @Column({ name: 'direccion', type: 'nvarchar', length: 10 })
   direccion: string;
 
-  @Column({ name: 'crr_id_solicitud', type: 'bigint', nullable: true })
-  crrIdSolicitud: number | null;
+  @Column({ name: 'solicitud_pjud_id', type: 'bigint', nullable: true })
+  solicitudPjudId: number | null;
 
   @Column({ name: 'solicitud_id', type: 'int', nullable: true })
   solicitudId: number | null;

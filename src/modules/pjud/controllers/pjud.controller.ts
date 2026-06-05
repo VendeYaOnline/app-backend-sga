@@ -66,23 +66,23 @@ export class PjudController {
     return this.pjudService.recepcionDecreto(dto);
   }
 
-  @Get('consulta-ift/:crrId')
+  @Get('consulta-ift/:solicitudPjudId')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
-    summary: 'Consultar IFT por CRR ID',
-    description: 'Consulta el historial de llamadas IFT por su CRR ID',
+    summary: 'Consultar IFT por ID correlativo PJUD',
+    description: 'Consulta el historial de llamadas IFT por su ID correlativo PJUD',
   })
   @ApiResponse({ status: 200, description: 'Historial de llamadas IFT' })
   @ApiResponse({ status: 404, description: 'No se encontraron registros' })
   @ApiParam({
-    name: 'crrId',
+    name: 'solicitudPjudId',
     type: Number,
-    description: 'ID CRR de la solicitud',
+    description: 'ID correlativo maestro PJUD (solicitud_pjud_id)',
   })
-  async consultaIft(@Param('crrId', ParseIntPipe) crrId: number) {
-    return this.pjudService.consultaIft(crrId);
+  async consultaIft(@Param('solicitudPjudId', ParseIntPipe) solicitudPjudId: number) {
+    return this.pjudService.consultaIft(solicitudPjudId);
   }
 
   @Post('enviar-factibilidad/:solicitudId')

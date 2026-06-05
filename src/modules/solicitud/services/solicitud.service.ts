@@ -234,14 +234,31 @@ export class SolicitudService {
       );
     }
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    if (origenCreacion === 'INTERCONEXION_PJUD' && !dto.solicitudPjudId) {
+      throw new BadRequestException(
+        'solicitudPjudId es requerido para solicitudes de origen INTERCONEXION_PJUD',
+      );
+    }
 
-    try {
-      const manager = queryRunner.manager;
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-      let condenadoId = dto.condenadoId;
+      try {
+        const manager = queryRunner.manager;
+
+        if (dto.solicitudPjudId) {
+          const existente = await manager.findOne(Solicitud, {
+            where: { solicitudPjudId: dto.solicitudPjudId, deletedAt: IsNull() },
+          });
+          if (existente) {
+            throw new ConflictException(
+              `Ya existe una solicitud con solicitud_pjud_id ${dto.solicitudPjudId} (ID interno: ${existente.id})`,
+            );
+          }
+        }
+
+        let condenadoId = dto.condenadoId;
 
       if (dto.condenado) {
         if (dto.condenado.runCondenado) {
@@ -304,6 +321,11 @@ export class SolicitudService {
         observaciones: dto.observaciones,
         origenCreacion: origenCreacion || 'FORMULARIO_WEB',
         motivoOrigen: 'ORIGINAL',
+        solicitudPjudId: dto.solicitudPjudId ?? null,
+        causaPjudId: dto.causaPjudId ?? null,
+        tramitePjudId: dto.tramitePjudId ?? null,
+        nomenclaturaPjudId: dto.nomenclaturaPjudId ?? null,
+        usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId ?? null,
         createdBy: userId,
       });
       const saved = await manager.save(solicitud);

@@ -106,7 +106,7 @@ export class PjudService {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'RECEPCION_IFT',
       direccion: 'ENTRANTE',
-      crrIdSolicitud: dto.crrIdSolicitud,
+      solicitudPjudId: dto.solicitudPjudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
     });
@@ -127,7 +127,7 @@ export class PjudService {
       llamada.duracionMs = Date.now() - start;
 
       this.logger.log(
-        `IFT CRR ${dto.crrIdSolicitud} procesada → Solicitud ${solicitud.id}`,
+        `IFT PJUD ${dto.solicitudPjudId} procesada → Solicitud ${solicitud.id}`,
       );
     } catch (error) {
       llamada.errorDesc =
@@ -135,7 +135,7 @@ export class PjudService {
       llamada.duracionMs = Date.now() - start;
 
       this.logger.error(
-        `Error al procesar IFT CRR ${dto.crrIdSolicitud}: ${llamada.errorDesc}`,
+        `Error al procesar IFT PJUD ${dto.solicitudPjudId}: ${llamada.errorDesc}`,
         error instanceof Error ? error.stack : undefined,
       );
 
@@ -193,9 +193,9 @@ export class PjudService {
     return llamada;
   }
 
-  async consultaIft(crrId: number): Promise<PjudLlamada[]> {
+  async consultaIft(solicitudPjudId: number): Promise<PjudLlamada[]> {
     return this.pjudLlamadaRepo.find({
-      where: { crrIdSolicitud: crrId },
+      where: { solicitudPjudId },
       order: { fechaLlamada: 'DESC' },
     });
   }
@@ -338,6 +338,11 @@ export class PjudService {
       tipoDiaTerminoId: dto.tipoDiaTerminoId,
       conBeacon: dto.conBeacon,
       observaciones: dto.observaciones,
+      solicitudPjudId: dto.solicitudPjudId,
+      causaPjudId: dto.causaPjudId,
+      tramitePjudId: dto.tramitePjudId,
+      nomenclaturaPjudId: dto.nomenclaturaPjudId,
+      usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId,
       zonas: dto.zonas,
       delitoIds: dto.delitoIds,
       victimas: dto.victimas,

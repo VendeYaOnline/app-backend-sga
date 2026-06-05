@@ -189,6 +189,31 @@ export class CreateSolicitudDto {
   @IsInt({ each: true })
   delitoIds?: number[];
 
+  @ApiPropertyOptional({ description: 'ID correlativo maestro PJUD. Solo INTERCONEXION_PJUD.' })
+  @IsOptional()
+  @IsInt()
+  solicitudPjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID causa PJUD (crrCausa). Auditoría.' })
+  @IsOptional()
+  @IsInt()
+  causaPjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID trámite PJUD (crrTramite). Auditoría.' })
+  @IsOptional()
+  @IsInt()
+  tramitePjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID nomenclatura PJUD (crrNomenclatura). Auditoría.' })
+  @IsOptional()
+  @IsInt()
+  nomenclaturaPjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID usuario solicitante PJUD (juez). NO es FK a USUARIO.' })
+  @IsOptional()
+  @IsInt()
+  usuarioSolicitantePjudId?: number;
+
   @ApiPropertyOptional({ type: [CreateSolicitudVictimaDto] })
   @IsOptional()
   @IsArray()

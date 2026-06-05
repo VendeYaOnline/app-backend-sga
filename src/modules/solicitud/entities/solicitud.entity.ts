@@ -113,6 +113,21 @@ export class Solicitud {
   })
   observaciones: string | null;
 
+  @Column({ name: 'solicitud_pjud_id', type: 'bigint', nullable: true })
+  solicitudPjudId: number | null;
+
+  @Column({ name: 'causa_pjud_id', type: 'bigint', nullable: true })
+  causaPjudId: number | null;
+
+  @Column({ name: 'tramite_pjud_id', type: 'bigint', nullable: true })
+  tramitePjudId: number | null;
+
+  @Column({ name: 'nomenclatura_pjud_id', type: 'bigint', nullable: true })
+  nomenclaturaPjudId: number | null;
+
+  @Column({ name: 'usuario_solicitante_pjud_id', type: 'bigint', nullable: true })
+  usuarioSolicitantePjudId: number | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
   createdAt: Date;
 

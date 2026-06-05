@@ -75,9 +75,29 @@ export class RecepcionIftZonaDto {
 }
 
 export class RecepcionIftDto {
-  @ApiProperty({ description: 'ID CRR de la solicitud en PJUD' })
+  @ApiProperty({ description: 'ID correlativo maestro PJUD (crrIdSolicitud del contrato)' })
   @IsInt()
-  crrIdSolicitud: number;
+  solicitudPjudId: number;
+
+  @ApiPropertyOptional({ description: 'ID causa PJUD (crrCausa)' })
+  @IsOptional()
+  @IsInt()
+  causaPjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID trámite PJUD (crrTramite)' })
+  @IsOptional()
+  @IsInt()
+  tramitePjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID nomenclatura PJUD (crrNomenclatura)' })
+  @IsOptional()
+  @IsInt()
+  nomenclaturaPjudId?: number;
+
+  @ApiPropertyOptional({ description: 'ID usuario solicitante PJUD (juez)' })
+  @IsOptional()
+  @IsInt()
+  usuarioSolicitantePjudId?: number;
 
   @ApiProperty({ description: 'ID del tipo de causa (RUC_RIT o ROL)' })
   @IsInt()
