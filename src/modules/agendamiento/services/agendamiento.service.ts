@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +14,7 @@ import { Proceso } from '../../evento/entities/proceso.entity';
 import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
 import { UpdateProcesoAgendamientoDto } from '../dto/update-proceso-agendamiento.dto';
+import { UpdateAgendamientoDto } from '../dto/update-agendamiento.dto';
 import { ReagendarAgendamientoDto } from '../dto/reagendar-agendamiento.dto';
 
 @Injectable()
@@ -146,14 +148,18 @@ export class AgendamientoService {
 
   async update(
     id: number,
-
-    dto: any,
+    dto: UpdateAgendamientoDto,
     userId: number,
   ): Promise<Agendamiento> {
     const agendamiento = await this.findOne(id);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
+    if (agendamiento.tecnicoId !== null && dto.tecnicoId !== undefined) {
+      throw new ConflictException(
+        'No se puede modificar el técnico asignado porque este agendamiento ya fue tomado por otro usuario',
+      );
+    }
+
     const merged = { ...agendamiento, ...dto };
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     this.validarSujetoAgenda(merged);
     Object.assign(agendamiento, dto, { updatedBy: userId });
     return this.agendamientoRepo.save(agendamiento);

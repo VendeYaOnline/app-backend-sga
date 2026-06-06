@@ -1,9 +1,14 @@
+import { IsInt, IsObject, IsOptional } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PjudEnvioDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'ID de la solicitud asociada' })
+  @IsOptional()
+  @IsInt()
   solicitudId?: number;
 
-  @ApiPropertyOptional()
-  datos?: any;
+  @ApiPropertyOptional({ description: 'Payload adicional para enviar a PJUD' })
+  @IsOptional()
+  @IsObject()
+  datos?: Record<string, unknown>;
 }

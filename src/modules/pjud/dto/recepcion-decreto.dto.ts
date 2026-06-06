@@ -1,5 +1,6 @@
 import {
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsBoolean,
@@ -11,6 +12,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class RecepcionDecretoDto {
   @ApiProperty({ description: 'ID CRR del decreto en PJUD' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(50)
   crrIdPjud: string;
 

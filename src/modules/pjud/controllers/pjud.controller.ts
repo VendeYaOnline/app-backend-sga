@@ -9,6 +9,8 @@ import {
   HttpCode,
   UseGuards,
 } from '@nestjs/common';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { JwtPayload } from '../../../common/interfaces/jwt-payload.interface';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -35,14 +37,16 @@ export class PjudController {
   constructor(private readonly pjudService: PjudService) {}
 
   @Post('recepcion-ift')
-  @HttpCode(201)
+  @HttpCode(202)
   @UseGuards(PjudAuthGuard)
   @ApiOperation({
     summary: 'Recepcionar IFT desde PJUD',
     description:
-      'Recibe una solicitud IFT desde el Poder Judicial, la registra y crea la Solicitud en SGA',
+      'Encola la IFT para procesamiento asíncrono y responde 202 inmediatamente. ' +
+      'La Solicitud en SGA se crea en el siguiente ciclo del scheduler (cada 5 min). ' +
+      'Si el solicitudPjudId ya fue recibido antes, retorna el registro existente sin duplicar.',
   })
-  @ApiResponse({ status: 201, description: 'IFT procesada exitosamente' })
+  @ApiResponse({ status: 202, description: 'IFT recibida y encolada' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 401, description: 'API Key inválida' })
   @ApiBody({ type: RecepcionIftDto })
@@ -51,14 +55,16 @@ export class PjudController {
   }
 
   @Post('recepcion-decreto')
-  @HttpCode(201)
+  @HttpCode(202)
   @UseGuards(PjudAuthGuard)
   @ApiOperation({
     summary: 'Recepcionar decreto desde PJUD',
     description:
-      'Recibe un decreto judicial desde el Poder Judicial, lo registra y crea el Evento con Resolución en SGA',
+      'Encola el decreto para procesamiento asíncrono y responde 202 inmediatamente. ' +
+      'El Evento con Resolución en SGA se crea en el siguiente ciclo del scheduler. ' +
+      'Si el crrIdPjud ya fue recibido antes, retorna el registro existente sin duplicar.',
   })
-  @ApiResponse({ status: 201, description: 'Decreto procesado exitosamente' })
+  @ApiResponse({ status: 202, description: 'Decreto recibido y encolado' })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 401, description: 'API Key inválida' })
   @ApiBody({ type: RecepcionDecretoDto })
@@ -109,8 +115,9 @@ export class PjudController {
   async enviarFactibilidad(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
     @Body() dto: PjudEnvioDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.pjudService.enviarFactibilidad(solicitudId, dto);
+    return this.pjudService.enviarFactibilidad(solicitudId, dto, user.sub);
   }
 
   @Post('enviar-incumplimiento/:solicitudId')
@@ -137,8 +144,9 @@ export class PjudController {
   async enviarIncumplimiento(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
     @Body() dto: PjudEnvioDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.pjudService.enviarIncumplimiento(solicitudId, dto);
+    return this.pjudService.enviarIncumplimiento(solicitudId, dto, user.sub);
   }
 
   @Post('enviar-alarma-cenco')
@@ -155,8 +163,11 @@ export class PjudController {
     description: 'Alarma CENCO enviada exitosamente',
   })
   @ApiBody({ type: PjudEnvioDto })
-  async enviarAlarmaCenco(@Body() dto: PjudEnvioDto) {
-    return this.pjudService.enviarAlarmaCenco(dto);
+  async enviarAlarmaCenco(
+    @Body() dto: PjudEnvioDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.pjudService.enviarAlarmaCenco(dto, user.sub);
   }
 
   @Get('llamadas')

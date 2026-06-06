@@ -4,9 +4,8 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { PjudLlamada } from '../entities/pjud-llamada.entity';
@@ -40,6 +39,10 @@ export class PjudService {
     return parseInt(id, 10);
   }
 
+  // ---------------------------------------------------------------------------
+  // Consultas / admin
+  // ---------------------------------------------------------------------------
+
   async findAllLlamadas(
     filters: PaginationDto & {
       endpoint?: string;
@@ -47,13 +50,7 @@ export class PjudService {
       solicitudId?: number;
     },
   ) {
-    const {
-      page = 1,
-      limit = 20,
-      endpoint,
-      procesadoOk,
-      solicitudId,
-    } = filters;
+    const { page = 1, limit = 20, endpoint, procesadoOk, solicitudId } = filters;
 
     const qb = this.pjudLlamadaRepo
       .createQueryBuilder('pl')
@@ -69,18 +66,10 @@ export class PjudService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<PjudLlamada> {
     const llamada = await this.pjudLlamadaRepo.findOne({
       where: { id },
       relations: { solicitud: true },
@@ -92,105 +81,9 @@ export class PjudService {
 
   async findPendientes(): Promise<PjudLlamada[]> {
     return this.pjudLlamadaRepo.find({
-      where: {
-        procesadoOk: false,
-        direccion: 'ENTRANTE',
-      },
+      where: { procesadoOk: false, direccion: 'ENTRANTE' },
       order: { fechaLlamada: 'ASC' },
     });
-  }
-
-  async recepcionIft(dto: RecepcionIftDto): Promise<PjudLlamada> {
-    const start = Date.now();
-
-    const llamada = this.pjudLlamadaRepo.create({
-      endpoint: 'RECEPCION_IFT',
-      direccion: 'ENTRANTE',
-      solicitudPjudId: dto.solicitudPjudId,
-      requestBody: JSON.stringify(dto),
-      fechaLlamada: new Date(),
-    });
-
-    try {
-      const createDto = this.mapIftToCreateSolicitudDto(dto);
-      const userId = this.systemUserId;
-
-      const solicitud = await this.solicitudService.create(
-        createDto,
-        userId,
-        'INTERCONEXION_PJUD',
-      );
-
-      llamada.solicitudId = solicitud.id;
-      llamada.procesadoOk = true;
-      llamada.procesadoAt = new Date();
-      llamada.duracionMs = Date.now() - start;
-
-      this.logger.log(
-        `IFT PJUD ${dto.solicitudPjudId} procesada → Solicitud ${solicitud.id}`,
-      );
-    } catch (error) {
-      llamada.errorDesc =
-        error instanceof Error ? error.message : String(error);
-      llamada.duracionMs = Date.now() - start;
-
-      this.logger.error(
-        `Error al procesar IFT PJUD ${dto.solicitudPjudId}: ${llamada.errorDesc}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-
-      throw error;
-    } finally {
-      await this.pjudLlamadaRepo.save(llamada);
-    }
-
-    return llamada;
-  }
-
-  async recepcionDecreto(dto: RecepcionDecretoDto): Promise<PjudLlamada> {
-    const start = Date.now();
-
-    const llamada = this.pjudLlamadaRepo.create({
-      endpoint: 'RECEPCION_DECRETO',
-      direccion: 'ENTRANTE',
-      solicitudId: dto.solicitudId,
-      requestBody: JSON.stringify(dto),
-      fechaLlamada: new Date(),
-    });
-
-    try {
-      const createEventoDto = this.mapDecretoToCreateEventoCompletoDto(dto);
-      const userId = this.systemUserId;
-
-      const eventos = await this.eventoService.createCompleto(
-        [createEventoDto],
-        userId,
-      );
-
-      llamada.procesadoOk = true;
-      llamada.procesadoAt = new Date();
-      llamada.duracionMs = Date.now() - start;
-
-      const eventoIds = eventos.map((e) => e.id).join(', ');
-      this.logger.log(
-        `Decreto CRR ${dto.crrIdPjud} procesado → Evento(s) ${eventoIds}`,
-      );
-    } catch (error) {
-      llamada.errorDesc =
-        error instanceof Error ? error.message : String(error);
-      llamada.duracionMs = Date.now() - start;
-
-      this.logger.error(
-        `Error al procesar decreto CRR ${dto.crrIdPjud}: ${llamada.errorDesc}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-
-      throw error;
-    } finally {
-      await this.pjudLlamadaRepo.save(llamada);
-    }
-
-    return llamada;
   }
 
   async consultaIft(solicitudPjudId: number): Promise<PjudLlamada[]> {
@@ -200,44 +93,110 @@ export class PjudService {
     });
   }
 
-  async enviarFactibilidad(
-    solicitudId: number,
-    dto: PjudEnvioDto,
-  ): Promise<PjudLlamada> {
+  // ---------------------------------------------------------------------------
+  // Recepción entrante — solo encola, el scheduler procesa
+  // ---------------------------------------------------------------------------
+
+  async recepcionIft(dto: RecepcionIftDto): Promise<PjudLlamada> {
+    // Idempotencia: si ya existe un registro con el mismo solicitudPjudId, devolver sin duplicar
+    const existente = await this.pjudLlamadaRepo.findOne({
+      where: { solicitudPjudId: dto.solicitudPjudId, endpoint: 'RECEPCION_IFT' },
+    });
+    if (existente) {
+      this.logger.warn(
+        `IFT solicitudPjudId=${dto.solicitudPjudId} ya registrada (llamada ${existente.id}), ignorando duplicado`,
+      );
+      return existente;
+    }
+
+    const llamada = this.pjudLlamadaRepo.create({
+      endpoint: 'RECEPCION_IFT',
+      direccion: 'ENTRANTE',
+      solicitudPjudId: dto.solicitudPjudId,
+      requestBody: JSON.stringify(dto),
+      fechaLlamada: new Date(),
+      createdBy: this.systemUserId,
+    });
+
+    await this.pjudLlamadaRepo.save(llamada);
+    this.logger.log(
+      `IFT solicitudPjudId=${dto.solicitudPjudId} encolada como llamada ${llamada.id}`,
+    );
+    return llamada;
+  }
+
+  async recepcionDecreto(dto: RecepcionDecretoDto): Promise<PjudLlamada> {
+    // Idempotencia: crrIdPjud es el identificador único del decreto en PJUD
+    const existente = await this.pjudLlamadaRepo.findOne({
+      where: { folioExterno: dto.crrIdPjud, endpoint: 'RECEPCION_DECRETO' },
+    });
+    if (existente) {
+      this.logger.warn(
+        `Decreto crrIdPjud=${dto.crrIdPjud} ya registrado (llamada ${existente.id}), ignorando duplicado`,
+      );
+      return existente;
+    }
+
+    const llamada = this.pjudLlamadaRepo.create({
+      endpoint: 'RECEPCION_DECRETO',
+      direccion: 'ENTRANTE',
+      folioExterno: dto.crrIdPjud,
+      solicitudId: dto.solicitudId,
+      requestBody: JSON.stringify(dto),
+      fechaLlamada: new Date(),
+      createdBy: this.systemUserId,
+    });
+
+    await this.pjudLlamadaRepo.save(llamada);
+    this.logger.log(
+      `Decreto crrIdPjud=${dto.crrIdPjud} encolado como llamada ${llamada.id}`,
+    );
+    return llamada;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Envíos salientes
+  // ---------------------------------------------------------------------------
+
+  async enviarFactibilidad(solicitudId: number, dto: PjudEnvioDto, userId: number): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_FACTIBILIDAD',
       direccion: 'SALIENTE',
       solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
+      createdBy: userId,
     });
     return this.pjudLlamadaRepo.save(llamada);
   }
 
-  async enviarIncumplimiento(
-    solicitudId: number,
-    dto: PjudEnvioDto,
-  ): Promise<PjudLlamada> {
+  async enviarIncumplimiento(solicitudId: number, dto: PjudEnvioDto, userId: number): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_INCUMPLIMIENTO',
       direccion: 'SALIENTE',
       solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
+      createdBy: userId,
     });
     return this.pjudLlamadaRepo.save(llamada);
   }
 
-  async enviarAlarmaCenco(dto: PjudEnvioDto): Promise<PjudLlamada> {
+  async enviarAlarmaCenco(dto: PjudEnvioDto, userId: number): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_ALARMA_CENCO',
       direccion: 'SALIENTE',
       solicitudId: dto.solicitudId,
       requestBody: JSON.stringify(dto),
       fechaLlamada: new Date(),
+      createdBy: userId,
     });
     return this.pjudLlamadaRepo.save(llamada);
   }
+
+  // ---------------------------------------------------------------------------
+  // Reprocesamiento manual (admin)
+  // ---------------------------------------------------------------------------
 
   async reprocesar(id: number): Promise<PjudLlamada> {
     const llamada = await this.findOne(id);
@@ -248,19 +207,24 @@ export class PjudService {
       );
     }
 
-    llamada.procesadoOk = false;
-    llamada.procesadoAt = null;
+    // Resetea para que el scheduler la tome en el próximo ciclo
+    llamada.procesando = false;
+    llamada.intentos = 0;
+    llamada.proximoIntento = null;
     llamada.errorDesc = null;
-    llamada.intentos += 1;
     return this.pjudLlamadaRepo.save(llamada);
   }
+
+  // ---------------------------------------------------------------------------
+  // Cola de procesamiento — llamado por el scheduler
+  // ---------------------------------------------------------------------------
 
   async reprocesarPendientes(): Promise<{
     total: number;
     procesados: number;
     fallidos: number;
   }> {
-    const pendientes = await this.findPendientes();
+    const pendientes = await this.findPendientesParaProcesar(50);
     let procesados = 0;
     let fallidos = 0;
 
@@ -268,54 +232,92 @@ export class PjudService {
       const start = Date.now();
 
       try {
-        /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-        if (!llamada.requestBody) {
-          throw new Error('requestBody vacío, no se puede reprocesar');
-        }
-
-        const dto = JSON.parse(llamada.requestBody);
-
-        if (llamada.endpoint === 'RECEPCION_IFT') {
-          const createDto = this.mapIftToCreateSolicitudDto(dto);
-          const solicitud = await this.solicitudService.create(
-            createDto,
-            this.systemUserId,
-            'INTERCONEXION_PJUD',
-          );
-          llamada.solicitudId = solicitud.id;
-        } else if (llamada.endpoint === 'RECEPCION_DECRETO') {
-          const createEventoDto = this.mapDecretoToCreateEventoCompletoDto(dto);
-          await this.eventoService.createCompleto(
-            [createEventoDto],
-            this.systemUserId,
-          );
-        }
-
+        await this.procesarLlamada(llamada);
         llamada.procesadoOk = true;
         llamada.procesadoAt = new Date();
-        /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-        llamada.duracionMs = (llamada.duracionMs || 0) + (Date.now() - start);
-        llamada.errorDesc = null;
-        llamada.intentos += 1;
         procesados++;
-
-        this.logger.log(`Llamada ${llamada.id} reprocesada exitosamente`);
+        this.logger.log(`Llamada ${llamada.id} (${llamada.endpoint}) procesada OK`);
       } catch (error) {
-        llamada.errorDesc =
-          error instanceof Error ? error.message : String(error);
-        llamada.duracionMs = (llamada.duracionMs || 0) + (Date.now() - start);
         llamada.intentos += 1;
-        fallidos++;
+        llamada.errorDesc = error instanceof Error ? error.message : String(error);
 
+        if (llamada.intentos < llamada.maxIntentos) {
+          llamada.proximoIntento = this.calcularProximoIntento(llamada.intentos);
+        }
+
+        fallidos++;
         this.logger.error(
-          `Error al reprocesar llamada ${llamada.id}: ${llamada.errorDesc}`,
+          `Llamada ${llamada.id} falló (intento ${llamada.intentos}/${llamada.maxIntentos}): ${llamada.errorDesc}`,
         );
       } finally {
+        llamada.procesando = false;
+        llamada.duracionMs = (llamada.duracionMs ?? 0) + (Date.now() - start);
         await this.pjudLlamadaRepo.save(llamada);
       }
     }
 
     return { total: pendientes.length, procesados, fallidos };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Privados
+  // ---------------------------------------------------------------------------
+
+  private async findPendientesParaProcesar(limit: number): Promise<PjudLlamada[]> {
+    // UPDATE atómico: marca procesando=1 y retorna los IDs tomados.
+    // Evita que dos ejecuciones concurrentes del scheduler tomen el mismo lote.
+    const safeLimit = Math.min(Math.max(1, Math.floor(limit)), 100);
+
+    const result: Array<{ id: number }> = await this.dataSource.query(`
+      UPDATE TOP(${safeLimit}) sga.PJUD_LLAMADA
+      SET procesando = 1
+      OUTPUT INSERTED.id
+      WHERE procesado_ok  = 0
+        AND procesando    = 0
+        AND direccion     = 'ENTRANTE'
+        AND intentos      < max_intentos
+        AND (proximo_intento IS NULL OR proximo_intento <= GETDATE())
+    `);
+
+    if (!result.length) return [];
+
+    const ids = result.map((r) => r.id);
+    return this.pjudLlamadaRepo.findBy({ id: In(ids) });
+  }
+
+  private async procesarLlamada(llamada: PjudLlamada): Promise<void> {
+    if (!llamada.requestBody) {
+      throw new Error('requestBody vacío, no se puede procesar');
+    }
+
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+    const dto = JSON.parse(llamada.requestBody);
+
+    if (llamada.endpoint === 'RECEPCION_IFT') {
+      const createDto = this.mapIftToCreateSolicitudDto(dto as RecepcionIftDto);
+      const solicitud = await this.solicitudService.create(
+        createDto,
+        this.systemUserId,
+        'INTERCONEXION_PJUD',
+      );
+      llamada.solicitudId = solicitud.id;
+    } else if (llamada.endpoint === 'RECEPCION_DECRETO') {
+      const createEventoDto = this.mapDecretoToCreateEventoCompletoDto(
+        dto as RecepcionDecretoDto,
+      );
+      await this.eventoService.createCompleto([createEventoDto], this.systemUserId);
+    } else {
+      throw new Error(
+        `Endpoint '${llamada.endpoint}' no soporta procesamiento automático`,
+      );
+    }
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+  }
+
+  private calcularProximoIntento(intentos: number): Date {
+    // Backoff exponencial: intento 1 → 30s, 2 → 60s, 3 → 120s…
+    const segundos = Math.pow(2, intentos) * 30;
+    return new Date(Date.now() + segundos * 1000);
   }
 
   private mapIftToCreateSolicitudDto(dto: RecepcionIftDto): CreateSolicitudDto {

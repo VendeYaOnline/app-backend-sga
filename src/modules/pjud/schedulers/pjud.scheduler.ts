@@ -9,22 +9,18 @@ export class PjudScheduler {
   constructor(private readonly pjudService: PjudService) {}
 
   @Cron(CronExpression.EVERY_5_MINUTES)
-  async reprocesarLlamadasPendientes(): Promise<void> {
-    this.logger.log(
-      'Iniciando reprocesamiento programado de llamadas PJUD pendientes',
-    );
-
+  async procesarColaEntrante(): Promise<void> {
     try {
       const resultado = await this.pjudService.reprocesarPendientes();
 
       if (resultado.total > 0) {
         this.logger.log(
-          `Reprocesamiento completado: ${resultado.total} pendientes, ${resultado.procesados} procesados, ${resultado.fallidos} fallidos`,
+          `Cola PJUD: ${resultado.total} tomadas, ${resultado.procesados} OK, ${resultado.fallidos} fallidas`,
         );
       }
     } catch (error) {
       this.logger.error(
-        'Error en reprocesamiento programado de llamadas PJUD',
+        'Error en ciclo de procesamiento de cola PJUD',
         error instanceof Error ? error.stack : error,
       );
     }
