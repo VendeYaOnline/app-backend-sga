@@ -30,6 +30,7 @@ import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { RecepcionIftDto } from '../dto/recepcion-ift.dto';
 import { RecepcionDecretoDto } from '../dto/recepcion-decreto.dto';
 import { PjudEnvioDto } from '../dto/pjud-envio.dto';
+import { PjudFactibilidadEnvioDto } from '../dto/pjud-factibilidad-envio.dto';
 
 @ApiTags('PJUD')
 @Controller()
@@ -101,7 +102,16 @@ export class PjudController {
     description:
       'Busca automáticamente el informe de factibilidad y su PDF asociado, ' +
       'construye el payload con el código del tipo de factibilidad (y motivo si aplica), ' +
-      'y realiza la llamada HTTP sincrónica a PJUD. Registra el resultado en PJUD_LLAMADA.',
+      'y realiza la llamada HTTP sincrónica a PJUD. ' +
+      'El payload se arma en el backend a partir de los datos de la solicitud; ' +
+      'no requiere body en la petición. ' +
+      'El resultado de la llamada se registra en PJUD_LLAMADA.',
+  })
+  @ApiBody({
+    type: PjudFactibilidadEnvioDto,
+    description:
+      'Payload enviado a PJUD (construido automáticamente en el backend). ' +
+      'No es necesario enviarlo en la petición; se documenta aquí para referencia.',
   })
   @ApiResponse({ status: 201, description: 'Factibilidad enviada exitosamente a PJUD' })
   @ApiResponse({
