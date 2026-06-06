@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  HttpCode,
   Delete,
   Param,
   ParseIntPipe,
@@ -38,6 +39,7 @@ export class ArchivoController {
   constructor(private readonly archivoService: ArchivoService) {}
 
   @Post('upload')
+  @HttpCode(201)
   @RequirePermiso(PERMISOS.ARCHIVO_SUBIR)
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
