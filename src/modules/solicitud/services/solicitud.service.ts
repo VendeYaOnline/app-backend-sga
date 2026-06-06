@@ -321,11 +321,11 @@ export class SolicitudService {
         observaciones: dto.observaciones,
         origenCreacion: origenCreacion || 'FORMULARIO_WEB',
         motivoOrigen: 'ORIGINAL',
-        solicitudPjudId: dto.solicitudPjudId ?? null,
-        causaPjudId: dto.causaPjudId ?? null,
-        tramitePjudId: dto.tramitePjudId ?? null,
-        nomenclaturaPjudId: dto.nomenclaturaPjudId ?? null,
-        usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId ?? null,
+        solicitudPjudId: dto.solicitudPjudId ?? this.generarPjudId(),
+        causaPjudId: dto.causaPjudId ?? this.generarPjudId(),
+        tramitePjudId: dto.tramitePjudId ?? this.generarPjudId(),
+        nomenclaturaPjudId: dto.nomenclaturaPjudId ?? this.generarPjudId(),
+        usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId ?? this.generarPjudId(),
         createdBy: userId,
       });
       const saved = await manager.save(solicitud);
@@ -768,5 +768,9 @@ export class SolicitudService {
       emitidoPor: dto.emitidoPor,
     });
     return this.factibilidadRepo.save(factibilidad);
+  }
+
+  private generarPjudId(): number {
+    return Math.floor(100000 + Math.random() * 900000000);
   }
 }
