@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   BadGatewayException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
@@ -169,6 +170,16 @@ export class PjudService {
 
   async enviarFactibilidad(solicitudId: number, userId: number): Promise<PjudLlamada> {
     this.logger.log(`Enviando factibilidad solicitud ${solicitudId} a PJUD (usuario ${userId})`);
+
+    const envioPrevio = await this.pjudLlamadaRepo.findOne({
+      where: { solicitudId, endpoint: 'ENVIAR_FACTIBILIDAD', procesadoOk: true },
+    });
+    if (envioPrevio) {
+      throw new ConflictException(
+        `La factibilidad de la solicitud ${solicitudId} ya fue enviada a PJUD (llamada ${envioPrevio.id})`,
+      );
+    }
+
     const solicitud = await this.solicitudService.findOne(solicitudId);
     if (!solicitud.solicitudPjudId) {
       throw new BadRequestException('La solicitud no tiene ID PJUD asignado');

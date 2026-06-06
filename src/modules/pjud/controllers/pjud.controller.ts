@@ -119,6 +119,7 @@ export class PjudController {
     description: 'Sin factibilidad emitida, sin PDF subido, o sin ID PJUD en la solicitud',
   })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
+  @ApiResponse({ status: 409, description: 'La factibilidad ya fue enviada exitosamente a PJUD' })
   @ApiResponse({ status: 502, description: 'PJUD rechazó o no respondió a la solicitud' })
   @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud SGA' })
   async enviarFactibilidad(
