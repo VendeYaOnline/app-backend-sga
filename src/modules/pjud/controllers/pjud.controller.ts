@@ -97,27 +97,25 @@ export class PjudController {
   @UseGuards(JwtAuthGuard, PermisosGuard)
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
-    summary: 'Enviar factibilidad al PJUD',
+    summary: 'Enviar factibilidad técnica a PJUD',
     description:
-      'Envía el informe de factibilidad de una solicitud al Poder Judicial',
+      'Busca automáticamente el informe de factibilidad y su PDF asociado, ' +
+      'construye el payload con el código del tipo de factibilidad (y motivo si aplica), ' +
+      'y realiza la llamada HTTP sincrónica a PJUD. Registra el resultado en PJUD_LLAMADA.',
   })
+  @ApiResponse({ status: 201, description: 'Factibilidad enviada exitosamente a PJUD' })
   @ApiResponse({
-    status: 201,
-    description: 'Factibilidad enviada exitosamente',
+    status: 400,
+    description: 'Sin factibilidad emitida, sin PDF subido, o sin ID PJUD en la solicitud',
   })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
-  @ApiParam({
-    name: 'solicitudId',
-    type: Number,
-    description: 'ID de la solicitud',
-  })
-  @ApiBody({ type: PjudEnvioDto })
+  @ApiResponse({ status: 502, description: 'PJUD rechazó o no respondió a la solicitud' })
+  @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud SGA' })
   async enviarFactibilidad(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
-    @Body() dto: PjudEnvioDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.pjudService.enviarFactibilidad(solicitudId, dto, user.sub);
+    return this.pjudService.enviarFactibilidad(solicitudId, user.sub);
   }
 
   @Post('enviar-incumplimiento/:solicitudId')
