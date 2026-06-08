@@ -33,8 +33,26 @@ import { CreateZonaDto } from '../dto/create-solicitud.dto';
 import { UpdateZonaDto } from '../dto/update-zona.dto';
 import { CreateSolicitanteDto } from '../dto/create-solicitante.dto';
 import { UpdateSolicitanteDto } from '../dto/update-solicitante.dto';
+import { PjudLlamada } from '../../pjud/entities/pjud-llamada.entity';
 
 const ESTADO_INICIAL_CODIGO = 'RECEPCIONADA';
+
+// Respuesta de PJUD al registrar una IFT saliente (puede cambiar con docs finales).
+interface PjudRegistroIftResponse {
+  crrIdSolicitud: number;
+  fechaRespuesta: string;
+  recepcion: number;
+  folio: number;
+  mensaje: string;
+}
+
+// Resultado interno del paso de registro en PJUD.
+interface PjudRegistroResultado {
+  solicitudPjudId: number;
+  folioExterno: string;
+  requestBody: string;
+  responseBody: string;
+}
 
 @Injectable()
 export class SolicitudService {
@@ -234,13 +252,26 @@ export class SolicitudService {
       );
     }
 
-    if (origenCreacion === 'INTERCONEXION_PJUD' && !dto.solicitudPjudId) {
+    const origen = origenCreacion ?? 'FORMULARIO_WEB';
+
+    if (origen === 'INTERCONEXION_PJUD' && !dto.solicitudPjudId) {
       throw new BadRequestException(
         'solicitudPjudId es requerido para solicitudes de origen INTERCONEXION_PJUD',
       );
     }
 
-      const queryRunner = this.dataSource.createQueryRunner();
+    // Para FORMULARIO_WEB: registrar en PJUD de forma sincrónica antes de la transacción.
+    // Si falla → excepción aquí → la solicitud NO se crea en SGA.
+    // TODO: reemplazar simularRegistroEnPjud() por HTTP real cuando llegue la documentación PJUD.
+    let pjudRegistro: PjudRegistroResultado | null = null;
+    if (origen === 'FORMULARIO_WEB') {
+      pjudRegistro = this.simularRegistroEnPjud(dto);
+      this.logger.log(
+        `IFT web registrada en PJUD (simulado): solicitudPjudId=${pjudRegistro.solicitudPjudId}`,
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
@@ -319,16 +350,36 @@ export class SolicitudService {
         estadoActualId: estadoInicial.id,
         estadoAt: new Date(),
         observaciones: dto.observaciones,
-        origenCreacion: origenCreacion || 'FORMULARIO_WEB',
+        origenCreacion: origen,
         motivoOrigen: 'ORIGINAL',
-        solicitudPjudId: dto.solicitudPjudId ?? this.generarPjudId(),
-        causaPjudId: dto.causaPjudId ?? this.generarPjudId(),
-        tramitePjudId: dto.tramitePjudId ?? this.generarPjudId(),
-        nomenclaturaPjudId: dto.nomenclaturaPjudId ?? this.generarPjudId(),
-        usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId ?? this.generarPjudId(),
+        // FORMULARIO_WEB: solo solicitudPjudId viene del response PJUD; resto queda NULL.
+        // INTERCONEXION_PJUD: todos los IDs vienen en el DTO enviado por PJUD.
+        solicitudPjudId:          pjudRegistro?.solicitudPjudId ?? dto.solicitudPjudId ?? null,
+        causaPjudId:              dto.causaPjudId              ?? null,
+        tramitePjudId:            dto.tramitePjudId            ?? null,
+        nomenclaturaPjudId:       dto.nomenclaturaPjudId       ?? null,
+        usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId ?? null,
         createdBy: userId,
       });
       const saved = await manager.save(solicitud);
+
+      if (pjudRegistro) {
+        const llamada = manager.create(PjudLlamada, {
+          endpoint:        'REGISTRO_IFT_WEB',
+          direccion:       'SALIENTE',
+          solicitudPjudId: pjudRegistro.solicitudPjudId,
+          solicitudId:     saved.id,
+          folioExterno:    pjudRegistro.folioExterno,
+          requestBody:     pjudRegistro.requestBody,
+          responseBody:    pjudRegistro.responseBody,
+          httpStatus:      200,
+          fechaLlamada:    new Date(),
+          procesadoOk:     true,
+          procesadoAt:     new Date(),
+          createdBy:       userId,
+        });
+        await manager.save(llamada);
+      }
 
       if (dto.zonas?.length) {
         const zonas = dto.zonas.map((z) =>
@@ -770,7 +821,48 @@ export class SolicitudService {
     return this.factibilidadRepo.save(factibilidad);
   }
 
-  private generarPjudId(): number {
-    return Math.floor(100000 + Math.random() * 900000000);
+  // Simula la llamada saliente a PJUD para registrar una IFT de origen FORMULARIO_WEB.
+  // Retorna la misma estructura que devolvería el endpoint PJUD real.
+  // TODO: reemplazar el cuerpo por el HTTP real cuando llegue la documentación PJUD.
+  private simularRegistroEnPjud(dto: CreateSolicitudDto): PjudRegistroResultado {
+    const rand = () => Math.floor(100_000 + Math.random() * 900_000_000);
+
+    const requestBody = JSON.stringify({
+      tipoCausaId:      dto.tipoCausaId,
+      rucCausa:         dto.rucCausa,
+      ritCausa:         dto.ritCausa,
+      rolCausa:         dto.rolCausa,
+      tribunalId:       dto.tribunalId,
+      condenadoId:      dto.condenadoId,
+      crsId:            dto.crsId,
+      tipoLeyId:        dto.tipoLeyId,
+      tipoPenaId:       dto.tipoPenaId,
+      medidaControlId:  dto.medidaControlId,
+      tipoHorarioId:    dto.tipoHorarioId,
+      horaDesde:        dto.horaDesde,
+      horaHasta:        dto.horaHasta,
+      tipoDiaInicioId:  dto.tipoDiaInicioId,
+      tipoDiaTerminoId: dto.tipoDiaTerminoId,
+      conBeacon:        dto.conBeacon ?? true,
+      observaciones:    dto.observaciones,
+    });
+
+    const crrIdSolicitud = rand();
+    const folio = rand();
+
+    const pjudResponse: PjudRegistroIftResponse = {
+      crrIdSolicitud,
+      fechaRespuesta: new Date().toISOString(),
+      recepcion: 1,
+      folio,
+      mensaje: 'IFT Recibido Correctamente',
+    };
+
+    return {
+      solicitudPjudId: crrIdSolicitud,
+      folioExterno:    String(folio),
+      requestBody,
+      responseBody:    JSON.stringify(pjudResponse),
+    };
   }
 }
