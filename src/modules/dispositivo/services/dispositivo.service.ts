@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ProcesoDispositivo } from '../entities/proceso-dispositivo.entity';
-import { VwDispositivosActivos } from '../entities/vw-dispositivos-activos.entity';
 import { Proceso } from '../../evento/entities/proceso.entity';
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
@@ -18,8 +17,6 @@ export class DispositivoService {
     private readonly dataSource: DataSource,
     @InjectRepository(ProcesoDispositivo)
     private readonly procesoDispositivoRepo: Repository<ProcesoDispositivo>,
-    @InjectRepository(VwDispositivosActivos)
-    private readonly vwDispositivosActivosRepo: Repository<VwDispositivosActivos>,
     @InjectRepository(Agendamiento)
     private readonly agendamientoRepo: Repository<Agendamiento>,
     @InjectRepository(Proceso)
@@ -43,9 +40,28 @@ export class DispositivoService {
 
     try {
       const manager = queryRunner.manager;
+
+      const agendamiento = await manager.findOne(Agendamiento, {
+        where: { id: agendamientoId },
+        relations: { evento: true },
+      });
+      if (!agendamiento) {
+        throw new NotFoundException(
+          `Agendamiento con ID ${agendamientoId} no encontrado`,
+        );
+      }
+
+      const contexto = {
+        solicitudId: agendamiento.evento.solicitudId,
+        paraQuien: agendamiento.paraQuien,
+        condenadoId: agendamiento.condenadoId,
+        victimaId: agendamiento.victimaId,
+      };
+
       const dispositivos = dtos.map((dto) =>
         manager.create(ProcesoDispositivo, {
           agendamientoId,
+          ...contexto,
           ...dto,
           fechaRegistro: new Date(),
         }),
@@ -90,9 +106,27 @@ export class DispositivoService {
         );
       }
 
+      const agendamiento = await manager.findOne(Agendamiento, {
+        where: { id: agendamientoId },
+        relations: { evento: true },
+      });
+      if (!agendamiento) {
+        throw new NotFoundException(
+          `Agendamiento con ID ${agendamientoId} no encontrado`,
+        );
+      }
+
+      const contexto = {
+        solicitudId: agendamiento.evento.solicitudId,
+        paraQuien: agendamiento.paraQuien,
+        condenadoId: agendamiento.condenadoId,
+        victimaId: agendamiento.victimaId,
+      };
+
       const dispositivos = dto.dispositivos.map((dispDto) =>
         manager.create(ProcesoDispositivo, {
           agendamientoId,
+          ...contexto,
           ...dispDto,
           fechaRegistro: new Date(),
         }),
@@ -108,22 +142,10 @@ export class DispositivoService {
       }
 
       if (dto.agendamiento && Object.keys(dto.agendamiento).length > 0) {
-        const agendaId = proceso.agendamientoId;
-
-        const agendamiento = await manager.findOne(Agendamiento, {
-          where: { id: agendaId },
-        });
-
-        if (!agendamiento) {
-          throw new NotFoundException(
-            `Agendamiento con ID ${agendaId} no encontrado`,
-          );
-        }
-
         Object.assign(agendamiento, dto.agendamiento);
         await manager.save(agendamiento);
         this.logger.log(
-          `Agendamiento ${agendaId} actualizado durante instalación del proceso ${agendamientoId}`,
+          `Agendamiento ${agendamientoId} actualizado durante instalación`,
         );
       }
 
@@ -135,9 +157,7 @@ export class DispositivoService {
         fechaAccion: new Date(),
         detalles: JSON.stringify({
           cantidadDispositivos: saved.length,
-          actualizoProceso: !!(
-            dto.proceso && Object.keys(dto.proceso).length > 0
-          ),
+          actualizoProceso: !!(dto.proceso && Object.keys(dto.proceso).length > 0),
           actualizoAgendamiento: !!(
             dto.agendamiento && Object.keys(dto.agendamiento).length > 0
           ),
@@ -183,21 +203,33 @@ export class DispositivoService {
         );
       }
 
+      const agendamiento = await manager.findOne(Agendamiento, {
+        where: { id: agendamientoId },
+        relations: { evento: true },
+      });
+      if (!agendamiento) {
+        throw new NotFoundException(
+          `Agendamiento con ID ${agendamientoId} no encontrado`,
+        );
+      }
+
+      const contexto = {
+        solicitudId: agendamiento.evento.solicitudId,
+        paraQuien: agendamiento.paraQuien,
+        condenadoId: agendamiento.condenadoId,
+        victimaId: agendamiento.victimaId,
+      };
+
       const existentesCount = await manager.count(ProcesoDispositivo, {
         where: { agendamientoId },
       });
 
       await manager.delete(ProcesoDispositivo, { agendamientoId });
 
-      if (!dtos || dtos.length === 0) {
-        this.logger.log(
-          `Todos los dispositivos del proceso ${agendamientoId} fueron eliminados por usuario ${userId}`,
-        );
-      }
-
       const dispositivos = dtos.map((dto) =>
         manager.create(ProcesoDispositivo, {
           agendamientoId,
+          ...contexto,
           ...dto,
           fechaRegistro: new Date(),
         }),
@@ -236,9 +268,54 @@ export class DispositivoService {
     }
   }
 
-  async findDispositivosActivos(solicitudId: number, paraQuien: string) {
-    return this.vwDispositivosActivosRepo.find({
-      where: { solicitudId, paraQuien },
-    });
+  async findDispositivosVigentes(
+    solicitudId: number,
+    paraQuien: string,
+  ): Promise<ProcesoDispositivo[]> {
+    // Retorna el registro cuya fecha_registro es la máxima por serial
+    // excluyendo el rol REVISADO, y solo si ese último rol es INSTALADO
+    // o REEMPLAZADO_ENTRANTE (dispositivo actualmente en poder del sujeto).
+    // Se usa TOP 1 ... ORDER BY id DESC en vez de MAX(fecha_registro) porque:
+    // - id es IDENTITY, siempre creciente, sin problemas de precisión de datetime.
+    // - Dos registros guardados en la misma transacción pueden tener el mismo
+    //   fecha_registro (misma llamada a new Date()), lo que rompía el MAX.
+    return this.procesoDispositivoRepo
+      .createQueryBuilder('pd')
+      .innerJoinAndSelect('pd.rolDispositivo', 'rd')
+      .where('pd.solicitud_id = :sol', { sol: solicitudId })
+      .andWhere('pd.para_quien = :pq', { pq: paraQuien })
+      .andWhere("rd.codigo IN ('INSTALADO', 'REEMPLAZADO_ENTRANTE')")
+      .andWhere(`pd.id = (
+        SELECT TOP 1 pd2.id
+        FROM sga.PROCESO_DISPOSITIVO pd2
+        INNER JOIN sga.CAT_ROL_DISPOSITIVO rd2 ON rd2.id = pd2.rol_dispositivo_id
+        WHERE pd2.solicitud_id = pd.solicitud_id
+          AND pd2.para_quien = pd.para_quien
+          AND pd2.numero_serie = pd.numero_serie
+          AND rd2.codigo != 'REVISADO'
+        ORDER BY pd2.id DESC
+      )`)
+      .getMany();
+  }
+
+  async contarSoportesPorSerial(
+    numeroSerie: string,
+    solicitudId: number,
+  ): Promise<number> {
+    const result = await this.procesoDispositivoRepo
+      .createQueryBuilder('pd')
+      .innerJoin('pd.rolDispositivo', 'rd')
+      .select('COUNT(DISTINCT pd.agendamiento_id)', 'total')
+      .where('pd.numero_serie = :serie', { serie: numeroSerie })
+      .andWhere('pd.solicitud_id = :sol', { sol: solicitudId })
+      .andWhere("rd.codigo IN ('REVISADO', 'REEMPLAZADO_SALIENTE')")
+      .andWhere(`EXISTS (
+        SELECT 1 FROM sga.PROCESO p
+        INNER JOIN sga.EVENTO e ON e.id = p.evento_id
+        INNER JOIN sga.CAT_TIPO_EVENTO te ON te.id = e.tipo_evento_id
+        WHERE p.agendamiento_id = pd.agendamiento_id AND te.codigo = 'SOPORTE'
+      )`)
+      .getRawOne<{ total: string }>();
+    return parseInt(result?.total ?? '0', 10);
   }
 }

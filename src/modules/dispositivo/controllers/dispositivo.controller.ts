@@ -5,6 +5,7 @@ import {
   Put,
   Body,
   Param,
+  Query,
   ParseIntPipe,
   HttpCode,
   UseGuards,
@@ -15,6 +16,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 import { DispositivoService } from '../services/dispositivo.service';
@@ -33,6 +35,46 @@ import { RegistrarInstalacionDto } from '../dto/registrar-instalacion.dto';
 @Controller()
 export class DispositivoController {
   constructor(private readonly dispositivoService: DispositivoService) {}
+
+  @Get('solicitudes/:solicitudId/dispositivos-vigentes')
+  @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
+  @ApiOperation({
+    summary: 'Dispositivos vigentes de una solicitud',
+    description:
+      'Retorna los dispositivos actualmente instalados para un sujeto (CONDENADO o VICTIMA) en una solicitud. Útil para previsualizar qué hay instalado antes de registrar un soporte o desinstalación.',
+  })
+  @ApiResponse({ status: 200, description: 'Dispositivos vigentes' })
+  @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud' })
+  @ApiQuery({
+    name: 'paraQuien',
+    enum: ['CONDENADO', 'VICTIMA'],
+    required: false,
+    description: 'Sujeto del proceso. Por defecto CONDENADO.',
+  })
+  async findDispositivosVigentes(
+    @Param('solicitudId', ParseIntPipe) solicitudId: number,
+    @Query('paraQuien') paraQuien: string = 'CONDENADO',
+  ) {
+    return this.dispositivoService.findDispositivosVigentes(solicitudId, paraQuien);
+  }
+
+  @Get('solicitudes/:solicitudId/soportes-serial')
+  @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
+  @ApiOperation({
+    summary: 'Contar soportes de un dispositivo',
+    description:
+      'Retorna cuántos soportes lleva un serial en una solicitud. Útil para mostrar al técnico si el siguiente soporte debe ser un cambio físico (al llegar a 3).',
+  })
+  @ApiResponse({ status: 200, description: 'Cantidad de soportes del serial' })
+  @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud' })
+  @ApiQuery({ name: 'numeroSerie', required: true, description: 'Número de serie del dispositivo' })
+  async contarSoportesPorSerial(
+    @Param('solicitudId', ParseIntPipe) solicitudId: number,
+    @Query('numeroSerie') numeroSerie: string,
+  ) {
+    const total = await this.dispositivoService.contarSoportesPorSerial(numeroSerie, solicitudId);
+    return { numeroSerie, solicitudId, soportes: total, requiereCambioFisico: total >= 3 };
+  }
 
   @Get('procesos/:agendamientoId/dispositivos')
   @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)

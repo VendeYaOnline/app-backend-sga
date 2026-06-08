@@ -22,6 +22,7 @@ import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entit
 import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
+import { CatRolDispositivo } from '../../catalogo/entities/cat-rol-dispositivo.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
@@ -737,6 +738,7 @@ export class EventoService {
 
       const agendamiento = await manager.findOne(Agendamiento, {
         where: { id: dto.agendamientoId, deletedAt: IsNull() },
+        relations: { evento: true },
       });
       if (!agendamiento) {
         throw new NotFoundException(
@@ -751,6 +753,52 @@ export class EventoService {
         throw new ConflictException(
           `Ya existe un proceso para el agendamiento ${dto.agendamientoId}. Use PUT /procesos/${dto.agendamientoId} para actualizarlo.`,
         );
+      }
+
+      // Validación: máx 3 soportes por serial antes de exigir cambio físico
+      if (dispositivos && dispositivos.length > 0) {
+        const tipoEvento = await manager.findOne(CatTipoEvento, {
+          where: { id: agendamiento.evento.tipoEventoId },
+        });
+
+        if (tipoEvento?.codigo === 'SOPORTE') {
+          const rolIds = [...new Set(dispositivos.map((d) => d.rolDispositivoId))];
+          const rolRevisado = await manager.findOne(CatRolDispositivo, {
+            where: { id: In(rolIds), codigo: 'REVISADO' } as any,
+          });
+
+          if (rolRevisado) {
+            const solicitudId = agendamiento.evento.solicitudId;
+            const seriesRevisadas = dispositivos
+              .filter((d) => d.rolDispositivoId === rolRevisado.id)
+              .map((d) => d.numeroSerie)
+              .filter((s): s is string => !!s);
+
+            for (const serie of seriesRevisadas) {
+              const conteo = await manager
+                .createQueryBuilder(ProcesoDispositivo, 'pd')
+                .innerJoin('pd.rolDispositivo', 'rd')
+                .select('COUNT(DISTINCT pd.agendamiento_id)', 'total')
+                .where('pd.numero_serie = :serie', { serie })
+                .andWhere('pd.solicitud_id = :sol', { sol: solicitudId })
+                .andWhere("rd.codigo IN ('REVISADO', 'REEMPLAZADO_SALIENTE')")
+                .andWhere(`EXISTS (
+                  SELECT 1 FROM sga.PROCESO p
+                  INNER JOIN sga.EVENTO e ON e.id = p.evento_id
+                  INNER JOIN sga.CAT_TIPO_EVENTO te ON te.id = e.tipo_evento_id
+                  WHERE p.agendamiento_id = pd.agendamiento_id AND te.codigo = 'SOPORTE'
+                )`)
+                .getRawOne<{ total: string }>();
+
+              const count = parseInt(conteo?.total ?? '0', 10);
+              if (count >= 3) {
+                throw new UnprocessableEntityException(
+                  `El dispositivo ${serie} ya tiene ${count} soportes registrados. Debe realizarse un cambio físico (REEMPLAZADO_SALIENTE + REEMPLAZADO_ENTRANTE).`,
+                );
+              }
+            }
+          }
+        }
       }
 
       const {
@@ -773,11 +821,19 @@ export class EventoService {
         });
       }
 
+      const contextoDispositivo = {
+        solicitudId: agendamiento.evento.solicitudId,
+        paraQuien: agendamiento.paraQuien,
+        condenadoId: agendamiento.condenadoId,
+        victimaId: agendamiento.victimaId,
+      };
+
       let dispositivosGuardados: ProcesoDispositivo[] = [];
       if (dispositivos && dispositivos.length > 0) {
         const entities = dispositivos.map((dispDto) =>
           manager.create(ProcesoDispositivo, {
             agendamientoId,
+            ...contextoDispositivo,
             ...dispDto,
             fechaRegistro: new Date(),
           }),
@@ -872,6 +928,12 @@ export class EventoService {
       });
       if (!proceso) throw new NotFoundException('Proceso no encontrado');
 
+      const agendamiento = await manager.findOne(Agendamiento, {
+        where: { id: agendamientoId },
+        relations: { evento: true },
+      });
+      if (!agendamiento) throw new NotFoundException('Agendamiento no encontrado');
+
       if (dto.horaLlegada !== undefined) proceso.horaLlegada = dto.horaLlegada;
       if (dto.horaSalida !== undefined) proceso.horaSalida = dto.horaSalida;
 
@@ -893,9 +955,17 @@ export class EventoService {
       if (dto.dispositivos !== undefined && dto.dispositivos.length > 0) {
         await manager.delete(ProcesoDispositivo, { agendamientoId });
 
+        const contexto = {
+          solicitudId: agendamiento.evento.solicitudId,
+          paraQuien: agendamiento.paraQuien,
+          condenadoId: agendamiento.condenadoId,
+          victimaId: agendamiento.victimaId,
+        };
+
         const nuevos = dto.dispositivos.map((d) =>
           manager.create(ProcesoDispositivo, {
             agendamientoId,
+            ...contexto,
             ...d,
             fechaRegistro: new Date(),
           }),

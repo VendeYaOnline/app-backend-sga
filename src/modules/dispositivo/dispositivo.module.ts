@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DispositivoController } from './controllers/dispositivo.controller';
 import { DispositivoService } from './services/dispositivo.service';
 import { ProcesoDispositivo } from './entities/proceso-dispositivo.entity';
-import { VwDispositivosActivos } from './entities/vw-dispositivos-activos.entity';
 import { Agendamiento } from '../agendamiento/entities/agendamiento.entity';
 import { Proceso } from '../evento/entities/proceso.entity';
 import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
@@ -12,7 +11,6 @@ import { AccionUsuario } from '../carga-laboral/entities/accion-usuario.entity';
   imports: [
     TypeOrmModule.forFeature([
       ProcesoDispositivo,
-      VwDispositivosActivos,
       Agendamiento,
       Proceso,
       AccionUsuario,
