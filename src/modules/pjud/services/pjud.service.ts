@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  BadGatewayException,
   ConflictException,
   Logger,
 } from '@nestjs/common';
@@ -10,10 +9,6 @@ import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { AxiosError } from 'axios';
-import { firstValueFrom } from 'rxjs';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { PjudLlamada } from '../entities/pjud-llamada.entity';
 import { SolicitudService } from '../../solicitud/services/solicitud.service';
@@ -190,67 +185,39 @@ export class PjudService {
       throw new NotFoundException('No existe informe de factibilidad emitido para esta solicitud');
     }
 
-    const refs = await this.archivoService.findByEntidad('SOLICITUD_FACTIBILIDAD', factibilidad.id);
-    if (!refs.length) {
-      throw new BadRequestException(
-        'No se encontró el PDF de factibilidad. Debe subirse antes de enviar a PJUD.',
-      );
-    }
-
-    const storageRoot = process.env.STORAGE_ROOT || 'C:/sga-storage';
-    const rutaAbs = path.join(storageRoot, refs[0].archivo.rutaRelativa);
-    const pdfBuffer = await fs.readFile(rutaAbs);
-    const pdfBase64 = pdfBuffer.toString('base64');
-
     const fechaRespuesta = new Date().toISOString().replace('T', ' ').substring(0, 19);
     const payload = {
       crrIdSolicitud: solicitud.solicitudPjudId,
       fechaRespuesta,
       tipoFactibilidad: factibilidad.tipoFactibilidad.codigo,
       ...(factibilidad.motivoNoFactible && { tipoMotivo: factibilidad.motivoNoFactible.codigo }),
-      docFactibilidad: pdfBase64,
+      // TODO: adjuntar PDF real en base64 cuando se implemente el HTTP real.
+      // docFactibilidad: pdfBase64,
     };
 
+    const start = Date.now();
+
+    // TODO: reemplazar por HTTP real cuando llegue documentación PJUD.
+    // Cuando se implemente: leer el PDF con archivoService, construir base64,
+    // y hacer POST a PJUD_BASE_URL + PJUD_FACTIBILIDAD_PATH con el payload completo.
+    const { httpStatus, responseBody } = this.simularEnvioFactibilidad(payload);
+
     const llamada = this.pjudLlamadaRepo.create({
-      endpoint: 'ENVIAR_FACTIBILIDAD',
-      direccion: 'SALIENTE',
+      endpoint:     'ENVIAR_FACTIBILIDAD',
+      direccion:    'SALIENTE',
       solicitudId,
-      requestBody: JSON.stringify({ ...payload, docFactibilidad: '[base64 omitido]' }),
+      requestBody:  JSON.stringify(payload),
+      responseBody,
+      httpStatus,
       fechaLlamada: new Date(),
-      createdBy: userId,
+      procesadoOk:  true,
+      procesadoAt:  new Date(),
+      duracionMs:   Date.now() - start,
+      createdBy:    userId,
     });
     await this.pjudLlamadaRepo.save(llamada);
 
-    const baseUrl = this.configService.getOrThrow<string>('PJUD_BASE_URL');
-    const factPath = this.configService.get<string>('PJUD_FACTIBILIDAD_PATH', '/factibilidad');
-    const start = Date.now();
-
-    try {
-      const res = await firstValueFrom(this.httpService.post(`${baseUrl}${factPath}`, payload));
-      llamada.httpStatus = res.status;
-      llamada.responseBody = JSON.stringify(res.data);
-      llamada.procesadoOk = true;
-      llamada.procesadoAt = new Date();
-      this.logger.log(`Factibilidad solicitud ${solicitudId} enviada a PJUD OK (${res.status})`);
-    } catch (error) {
-      const axiosError = error as AxiosError;
-      llamada.httpStatus = axiosError.response?.status ?? null;
-      llamada.responseBody = JSON.stringify(axiosError.response?.data ?? null);
-      llamada.errorDesc = axiosError.message;
-      llamada.procesadoOk = false;
-      this.logger.error(
-        `Error al enviar factibilidad solicitud ${solicitudId} a PJUD`,
-        axiosError.stack,
-      );
-    } finally {
-      llamada.duracionMs = Date.now() - start;
-      await this.pjudLlamadaRepo.save(llamada);
-    }
-
-    if (!llamada.procesadoOk) {
-      throw new BadGatewayException(`PJUD rechazó la solicitud: ${llamada.errorDesc}`);
-    }
-
+    this.logger.log(`Factibilidad solicitud ${solicitudId} enviada a PJUD (simulado)`);
     return llamada;
   }
 
@@ -433,6 +400,19 @@ export class PjudService {
       delitoIds: dto.delitoIds,
       victimas: dto.victimas,
     };
+  }
+
+  // TODO: reemplazar por HTTP real cuando llegue documentación PJUD.
+  // Cuando se implemente: recibir el pdfBase64 como parámetro, hacer POST a
+  // PJUD_BASE_URL + PJUD_FACTIBILIDAD_PATH y retornar { httpStatus, responseBody }.
+  private simularEnvioFactibilidad(payload: object): { httpStatus: number; responseBody: string } {
+    const responseBody = JSON.stringify({
+      crrIdSolicitud: (payload as any).crrIdSolicitud,
+      fechaRespuesta: new Date().toISOString(),
+      recepcion: 1,
+      mensaje: 'Factibilidad Recibida Correctamente',
+    });
+    return { httpStatus: 200, responseBody };
   }
 
   private mapDecretoToCreateEventoCompletoDto(dto: RecepcionDecretoDto) {
