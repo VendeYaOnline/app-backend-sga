@@ -122,13 +122,19 @@ export class ArchivoService {
     stream.pipe(res);
   }
 
-  async findByEntidad(entidad: string, entidadId: number) {
-    const refs = await this.archivoRefRepo.find({
+  async findOneByEntidad(entidad: string, entidadId: number): Promise<ArchivoReferencia> {
+    const ref = await this.archivoRefRepo.findOne({
       where: { entidad, entidadId, deletedAt: IsNull() },
       relations: { archivo: true },
       order: { createdAt: 'DESC' },
     });
-    return refs;
+    if (!ref) {
+      throw new NotFoundException(
+        `No se encontró archivo para ${entidad} con ID ${entidadId}`,
+      );
+    }
+    this.logger.log(`Archivo encontrado para ${entidad}/${entidadId}: uuid=${ref.archivo.uuid}`);
+    return ref;
   }
 
   async softDeleteReferencia(id: number, userId: number): Promise<void> {

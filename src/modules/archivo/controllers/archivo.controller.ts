@@ -93,10 +93,11 @@ export class ArchivoController {
   @Get('entidad/:entidad/:entidadId')
   @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
-    summary: 'Listar archivos por entidad',
-    description: 'Retorna los archivos asociados a una entidad específica',
+    summary: 'Obtener archivo por entidad',
+    description: 'Retorna la referencia de archivo más reciente asociada a una entidad',
   })
-  @ApiResponse({ status: 200, description: 'Lista de referencias de archivos' })
+  @ApiResponse({ status: 200, description: 'Referencia de archivo encontrada' })
+  @ApiResponse({ status: 404, description: 'No se encontró archivo para la entidad' })
   @ApiParam({
     name: 'entidad',
     type: String,
@@ -107,11 +108,11 @@ export class ArchivoController {
     type: Number,
     description: 'ID de la entidad',
   })
-  async findByEntidad(
+  async findOneByEntidad(
     @Param('entidad') entidad: string,
     @Param('entidadId', ParseIntPipe) entidadId: number,
   ) {
-    return this.archivoService.findByEntidad(entidad, entidadId);
+    return this.archivoService.findOneByEntidad(entidad, entidadId);
   }
 
   @Delete('referencias/:id')
