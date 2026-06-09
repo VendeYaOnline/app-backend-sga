@@ -549,7 +549,7 @@ export class EventoService {
     const evento = manager.create(Evento, {
       tipoEventoId: dto.tipoEventoId,
       solicitudId: dto.solicitudId,
-      estadoEvento: 'APROBADO',
+      estadoEvento: 'PENDIENTE',
       origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
       fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
       asignadoA: dto.asignadoA,
