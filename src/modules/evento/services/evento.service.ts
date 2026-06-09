@@ -745,6 +745,11 @@ export class EventoService {
           `Agendamiento con ID ${dto.agendamientoId} no encontrado`,
         );
       }
+      if (!agendamiento.evento?.solicitudId) {
+        throw new UnprocessableEntityException(
+          `El agendamiento ${dto.agendamientoId} no tiene un evento con solicitud válida. Verifique la integridad del dato en EVENTO.solicitud_id.`,
+        );
+      }
 
       const existente = await manager.findOne(Proceso, {
         where: { agendamientoId: dto.agendamientoId },
@@ -934,6 +939,11 @@ export class EventoService {
         relations: { evento: true },
       });
       if (!agendamiento) throw new NotFoundException('Agendamiento no encontrado');
+      if (!agendamiento.evento?.solicitudId) {
+        throw new UnprocessableEntityException(
+          `El agendamiento ${agendamientoId} no tiene un evento con solicitud válida. Verifique la integridad del dato en EVENTO.solicitud_id.`,
+        );
+      }
 
       if (dto.horaLlegada !== undefined) proceso.horaLlegada = dto.horaLlegada;
       if (dto.horaSalida !== undefined) proceso.horaSalida = dto.horaSalida;

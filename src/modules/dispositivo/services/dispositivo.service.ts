@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException, Logger } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ProcesoDispositivo } from '../entities/proceso-dispositivo.entity';
@@ -48,6 +48,11 @@ export class DispositivoService {
       if (!agendamiento) {
         throw new NotFoundException(
           `Agendamiento con ID ${agendamientoId} no encontrado`,
+        );
+      }
+      if (!agendamiento.evento?.solicitudId) {
+        throw new UnprocessableEntityException(
+          `El agendamiento ${agendamientoId} no tiene un evento con solicitud válida. Verifique la integridad del dato en EVENTO.solicitud_id.`,
         );
       }
 
@@ -113,6 +118,11 @@ export class DispositivoService {
       if (!agendamiento) {
         throw new NotFoundException(
           `Agendamiento con ID ${agendamientoId} no encontrado`,
+        );
+      }
+      if (!agendamiento.evento?.solicitudId) {
+        throw new UnprocessableEntityException(
+          `El agendamiento ${agendamientoId} no tiene un evento con solicitud válida. Verifique la integridad del dato en EVENTO.solicitud_id.`,
         );
       }
 
