@@ -6,11 +6,13 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   ManyToOne,
+  OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
+import { ResolucionCambioDomicilio } from './resolucion-cambio-domicilio.entity';
 
 @Entity('sga.EVENTO')
 export class Evento {
@@ -77,4 +79,9 @@ export class Evento {
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'asignado_a', referencedColumnName: 'id' })
   asignado: Usuario;
+
+  @OneToOne(() => ResolucionCambioDomicilio, (rcd) => rcd.evento, {
+    nullable: true,
+  })
+  resolucionCambioDomicilio: ResolucionCambioDomicilio | null;
 }

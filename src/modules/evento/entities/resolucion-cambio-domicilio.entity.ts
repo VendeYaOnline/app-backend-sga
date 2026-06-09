@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
 import { Evento } from './evento.entity';
 import { CatMotivoNoFactible } from '../../catalogo/entities/cat-motivo-no-factible.entity';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
@@ -36,7 +36,7 @@ export class ResolucionCambioDomicilio {
   @Column({ name: 'solicitud_generada_id', type: 'int', nullable: true })
   solicitudGeneradaId: number | null;
 
-  @ManyToOne(() => Evento)
+  @OneToOne(() => Evento, (e) => e.resolucionCambioDomicilio)
   @JoinColumn({ name: 'evento_id', referencedColumnName: 'id' })
   evento: Evento;
 

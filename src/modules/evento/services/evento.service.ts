@@ -23,10 +23,18 @@ import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
 import { CatTipoEvento } from '../../catalogo/entities/cat-tipo-evento.entity';
 import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento-validacion.entity';
 import { CatRolDispositivo } from '../../catalogo/entities/cat-rol-dispositivo.entity';
+import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
+import { Solicitud } from '../../solicitud/entities/solicitud.entity';
+import { SolicitudZona } from '../../solicitud/entities/solicitud-zona.entity';
+import { SolicitudDelito } from '../../solicitud/entities/solicitud-delito.entity';
+import { SolicitudVictima } from '../../solicitud/entities/solicitud-victima.entity';
+import { SolicitudEstadoHist } from '../../solicitud/entities/solicitud-estado-hist.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
+import { CreateCambioDomicilioDto } from '../dto/create-cambio-domicilio.dto';
+import { GestionarCambioDomicilioDto } from '../dto/gestionar-cambio-domicilio.dto';
 
 @Injectable()
 export class EventoService {
@@ -1247,6 +1255,243 @@ export class EventoService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.resolucionCdRepo.create({ eventoId, ...dto });
     return this.resolucionCdRepo.save(nuevo);
+  }
+
+  async createCambioDomicilio(
+    dto: CreateCambioDomicilioDto,
+    userId: number,
+  ): Promise<Evento> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const tipoEvento = await this.tipoEventoRepo.findOne({
+        where: { codigo: 'CAMBIO_DOMICILIO' },
+      });
+      if (!tipoEvento) {
+        throw new BadRequestException(
+          'Tipo de evento CAMBIO_DOMICILIO no encontrado en catálogo',
+        );
+      }
+
+      const evento = manager.create(Evento, {
+        tipoEventoId: tipoEvento.id,
+        solicitudId: dto.solicitudId,
+        estadoEvento: 'PENDIENTE',
+        origenCreacion: 'FORMULARIO_WEB',
+        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
+        observaciones: dto.observaciones ?? null,
+        createdBy: userId,
+      });
+      const savedEvento = await manager.save(evento);
+
+      const rcd = manager.create(ResolucionCambioDomicilio, {
+        eventoId: savedEvento.id,
+        subtipoCambio: dto.subtipoCambio ?? null,
+        factibilidadCd: dto.factibilidadCd ?? null,
+        motivoNoFactibleId: dto.motivoNoFactibleId ?? null,
+        revalidar: dto.revalidar ?? false,
+        visto: false,
+        solicitudGeneradaId: null,
+      });
+      await manager.save(rcd);
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'CREAR_EVENTO',
+        entidad: 'EVENTO',
+        entidadId: savedEvento.id,
+        solicitudId: dto.solicitudId,
+        fechaAccion: new Date(),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Evento CAMBIO_DOMICILIO ${savedEvento.id} creado por usuario ${userId}`,
+      );
+      return this.findOne(savedEvento.id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async gestionarCambioDomicilio(
+    eventoId: number,
+    dto: GestionarCambioDomicilioDto,
+    userId: number,
+  ) {
+    const evento = await this.eventoRepo.findOne({
+      where: { id: eventoId, deletedAt: IsNull() },
+      relations: { tipoEvento: true, resolucionCambioDomicilio: true },
+    });
+    if (!evento) {
+      throw new NotFoundException(`Evento con ID ${eventoId} no encontrado`);
+    }
+    if (evento.tipoEvento?.codigo !== 'CAMBIO_DOMICILIO') {
+      throw new BadRequestException(
+        `El evento ${eventoId} no es de tipo CAMBIO_DOMICILIO`,
+      );
+    }
+    if (evento.estadoEvento !== 'PENDIENTE') {
+      throw new ConflictException(
+        `El evento ${eventoId} ya fue gestionado (estado: ${evento.estadoEvento})`,
+      );
+    }
+    if (!evento.resolucionCambioDomicilio) {
+      throw new ConflictException(
+        `El evento ${eventoId} no tiene registro de resolución de cambio de domicilio`,
+      );
+    }
+    if (evento.resolucionCambioDomicilio.solicitudGeneradaId !== null) {
+      throw new ConflictException(
+        `El evento ${eventoId} ya tiene una solicitud generada (ID: ${evento.resolucionCambioDomicilio.solicitudGeneradaId})`,
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      const solicitudOriginal = await manager.findOne(Solicitud, {
+        where: { id: evento.solicitudId },
+      });
+      if (!solicitudOriginal) {
+        throw new NotFoundException(
+          `Solicitud original con ID ${evento.solicitudId} no encontrada`,
+        );
+      }
+
+      const estadoRecepcionada = await manager.findOne(CatEstadoSolicitud, {
+        where: { codigo: 'RECEPCIONADA' },
+      });
+      if (!estadoRecepcionada) {
+        throw new BadRequestException(
+          'Estado RECEPCIONADA no encontrado en catálogo',
+        );
+      }
+
+      const solicitudCopia = manager.create(Solicitud, {
+        tipoCausaId: solicitudOriginal.tipoCausaId,
+        rucCausa: solicitudOriginal.rucCausa,
+        ritCausa: solicitudOriginal.ritCausa,
+        rolCausa: solicitudOriginal.rolCausa,
+        tribunalId: solicitudOriginal.tribunalId,
+        condenadoId: solicitudOriginal.condenadoId,
+        crsId: solicitudOriginal.crsId,
+        tipoLeyId: solicitudOriginal.tipoLeyId,
+        tipoPenaId: solicitudOriginal.tipoPenaId,
+        medidaControlId: solicitudOriginal.medidaControlId,
+        tipoHorarioId: solicitudOriginal.tipoHorarioId,
+        horaDesde: solicitudOriginal.horaDesde,
+        horaHasta: solicitudOriginal.horaHasta,
+        tipoDiaInicioId: solicitudOriginal.tipoDiaInicioId,
+        tipoDiaTerminoId: solicitudOriginal.tipoDiaTerminoId,
+        conBeacon: solicitudOriginal.conBeacon,
+        motivoOrigen: 'CAMBIO_DOMICILIO',
+        solicitudPadreId: solicitudOriginal.id,
+        estadoActualId: estadoRecepcionada.id,
+        estadoAt: new Date(),
+        origenCreacion: 'FORMULARIO_WEB',
+        solicitudPjudId: null,
+        causaPjudId: null,
+        tramitePjudId: null,
+        nomenclaturaPjudId: null,
+        usuarioSolicitantePjudId: null,
+        createdBy: userId,
+      });
+      const savedCopia = await manager.save(solicitudCopia);
+
+      if (dto.zonas.length) {
+        const zonas = dto.zonas.map((z) =>
+          manager.create(SolicitudZona, {
+            solicitudId: savedCopia.id,
+            ...z,
+            createdBy: userId,
+          }),
+        );
+        await manager.save(zonas);
+      }
+
+      const delitosOriginales = await manager.find(SolicitudDelito, {
+        where: { solicitudId: solicitudOriginal.id },
+      });
+      if (delitosOriginales.length) {
+        const delitos = delitosOriginales.map((d) =>
+          manager.create(SolicitudDelito, {
+            solicitudId: savedCopia.id,
+            delitoId: d.delitoId,
+          }),
+        );
+        await manager.save(delitos);
+      }
+
+      const victimasOriginales = await manager.find(SolicitudVictima, {
+        where: { solicitudId: solicitudOriginal.id },
+      });
+      if (victimasOriginales.length) {
+        const victimas = victimasOriginales.map((v) =>
+          manager.create(SolicitudVictima, {
+            solicitudId: savedCopia.id,
+            victimaId: v.victimaId,
+            radioProhibicionMetros: v.radioProhibicionMetros,
+          }),
+        );
+        await manager.save(victimas);
+      }
+
+      const historial = manager.create(SolicitudEstadoHist, {
+        solicitudId: savedCopia.id,
+        estadoNuevoId: estadoRecepcionada.id,
+        estadoAnteriorId: null,
+        fechaCambio: new Date(),
+        usuarioId: userId,
+        motivoCambio: 'Solicitud creada por cambio de domicilio',
+        eventoId: eventoId,
+      });
+      await manager.save(historial);
+
+      await manager.update(ResolucionCambioDomicilio, eventoId, {
+        solicitudGeneradaId: savedCopia.id,
+      });
+
+      await manager.update(Evento, eventoId, {
+        estadoEvento: 'COMPLETADO',
+        updatedBy: userId,
+      });
+
+      const accion = manager.create(AccionUsuario, {
+        usuarioId: userId,
+        tipoAccion: 'GESTIONAR_CAMBIO_DOMICILIO',
+        entidad: 'EVENTO',
+        entidadId: eventoId,
+        solicitudId: solicitudOriginal.id,
+        fechaAccion: new Date(),
+      });
+      await manager.save(accion);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Cambio de domicilio gestionado: evento ${eventoId}, solicitud copia ${savedCopia.id}, usuario ${userId}`,
+      );
+
+      const eventoActualizado = await this.findOne(eventoId);
+      return { evento: eventoActualizado, solicitudGenerada: savedCopia };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async addSoporteDetalle(agendamientoId: number, dto: any) {
