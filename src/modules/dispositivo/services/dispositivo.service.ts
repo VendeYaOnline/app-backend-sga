@@ -318,4 +318,38 @@ export class DispositivoService {
       .getRawOne<{ total: string }>();
     return parseInt(result?.total ?? '0', 10);
   }
+
+  async findTodosSeriesConSoportes(solicitudId: number): Promise<
+    Array<{ numeroSerie: string; soportes: number; requiereCambioFisico: boolean }>
+  > {
+    this.logger.log(`Consultando soportes por serial para solicitud ${solicitudId}`);
+    const rows = await this.procesoDispositivoRepo
+      .createQueryBuilder('pd')
+      .select('pd.numero_serie', 'numeroSerie')
+      .addSelect(
+        `(
+          SELECT COUNT(DISTINCT pd2.agendamiento_id)
+          FROM sga.PROCESO_DISPOSITIVO pd2
+          INNER JOIN sga.CAT_ROL_DISPOSITIVO rd2 ON rd2.id = pd2.rol_dispositivo_id
+          WHERE pd2.numero_serie = pd.numero_serie
+            AND pd2.solicitud_id = pd.solicitud_id
+            AND rd2.codigo IN ('REVISADO', 'REEMPLAZADO_SALIENTE')
+            AND EXISTS (
+              SELECT 1 FROM sga.PROCESO p
+              INNER JOIN sga.EVENTO e ON e.id = p.evento_id
+              INNER JOIN sga.CAT_TIPO_EVENTO te ON te.id = e.tipo_evento_id
+              WHERE p.agendamiento_id = pd2.agendamiento_id AND te.codigo = 'SOPORTE'
+            )
+        )`,
+        'soportes',
+      )
+      .where('pd.solicitud_id = :sol', { sol: solicitudId })
+      .groupBy('pd.numero_serie, pd.solicitud_id')
+      .getRawMany<{ numeroSerie: string; soportes: string }>();
+
+    return rows.map((r) => {
+      const soportes = parseInt(r.soportes ?? '0', 10);
+      return { numeroSerie: r.numeroSerie, soportes, requiereCambioFisico: soportes >= 3 };
+    });
+  }
 }

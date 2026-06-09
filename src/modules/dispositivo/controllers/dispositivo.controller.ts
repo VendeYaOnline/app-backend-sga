@@ -61,19 +61,30 @@ export class DispositivoController {
   @Get('solicitudes/:solicitudId/soportes-serial')
   @RequirePermiso(PERMISOS.DISPOSITIVO_GESTIONAR)
   @ApiOperation({
-    summary: 'Contar soportes de un dispositivo',
+    summary: 'Soportes por serial de una solicitud',
     description:
-      'Retorna cuántos soportes lleva un serial en una solicitud. Útil para mostrar al técnico si el siguiente soporte debe ser un cambio físico (al llegar a 3).',
+      'Retorna todos los dispositivos (seriales) asociados a la solicitud, indicando cuántos soportes lleva cada uno y si requiere cambio físico (≥ 3 soportes).',
   })
-  @ApiResponse({ status: 200, description: 'Cantidad de soportes del serial' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de seriales con su conteo de soportes',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          numeroSerie: { type: 'string' },
+          soportes: { type: 'number' },
+          requiereCambioFisico: { type: 'boolean' },
+        },
+      },
+    },
+  })
   @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud' })
-  @ApiQuery({ name: 'numeroSerie', required: true, description: 'Número de serie del dispositivo' })
-  async contarSoportesPorSerial(
+  async findTodosSeriesConSoportes(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
-    @Query('numeroSerie') numeroSerie: string,
   ) {
-    const total = await this.dispositivoService.contarSoportesPorSerial(numeroSerie, solicitudId);
-    return { numeroSerie, solicitudId, soportes: total, requiereCambioFisico: total >= 3 };
+    return this.dispositivoService.findTodosSeriesConSoportes(solicitudId);
   }
 
   @Get('procesos/:agendamientoId/dispositivos')

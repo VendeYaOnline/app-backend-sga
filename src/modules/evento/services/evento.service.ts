@@ -755,6 +755,14 @@ export class EventoService {
         );
       }
 
+      const {
+        agendamientoId,
+        dispositivos,
+        soporteDetalle,
+        motivos,
+        ...restDto
+      } = dto;
+
       // Validación: máx 3 soportes por serial antes de exigir cambio físico
       if (dispositivos && dispositivos.length > 0) {
         const tipoEvento = await manager.findOne(CatTipoEvento, {
@@ -801,13 +809,6 @@ export class EventoService {
         }
       }
 
-      const {
-        agendamientoId,
-        dispositivos,
-        soporteDetalle,
-        motivos,
-        ...restDto
-      } = dto;
       const nuevo = manager.create(Proceso, {
         agendamientoId,
         eventoId: agendamiento.eventoId,
