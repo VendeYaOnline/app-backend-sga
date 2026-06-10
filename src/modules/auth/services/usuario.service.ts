@@ -1,6 +1,5 @@
 import {
   Injectable,
-  BadRequestException,
   ConflictException,
   NotFoundException,
   Logger,
@@ -192,12 +191,12 @@ export class UsuarioService {
   async create(dto: CreateUsuarioDto, userId: number): Promise<Usuario> {
     const existingUsername = await this.findByUsername(dto.username);
     if (existingUsername) {
-      throw new BadRequestException(`El username "${dto.username}" ya existe`);
+      throw new ConflictException(`El username "${dto.username}" ya existe`);
     }
 
     const existingEmail = await this.findByEmail(dto.email);
     if (existingEmail) {
-      throw new BadRequestException(`El email "${dto.email}" ya existe`);
+      throw new ConflictException(`El email "${dto.email}" ya existe`);
     }
 
     const existingRun = await this.findByRun(dto.run);
@@ -269,15 +268,13 @@ export class UsuarioService {
     if (dto.username && dto.username !== usuario.username) {
       const existing = await this.findByUsername(dto.username);
       if (existing)
-        throw new BadRequestException(
-          `El username "${dto.username}" ya existe`,
-        );
+        throw new ConflictException(`El username "${dto.username}" ya existe`);
     }
 
     if (dto.email && dto.email !== usuario.email) {
       const existing = await this.findByEmail(dto.email);
       if (existing)
-        throw new BadRequestException(`El email "${dto.email}" ya existe`);
+        throw new ConflictException(`El email "${dto.email}" ya existe`);
     }
 
     if (dto.run && dto.run !== usuario.run) {
@@ -309,11 +306,11 @@ export class UsuarioService {
       where: { usuarioId, rolId },
     });
     if (existing) {
-      throw new BadRequestException('El usuario ya tiene este rol asignado');
+      throw new ConflictException('El usuario ya tiene este rol asignado');
     }
     const rol = await this.rolRepo.findOne({ where: { id: rolId } });
     if (!rol)
-      throw new BadRequestException(`Rol con ID ${rolId} no encontrado`);
+      throw new NotFoundException(`Rol con ID ${rolId} no encontrado`);
 
     const usuarioRol = this.usuarioRolRepo.create({
       usuarioId,
@@ -329,7 +326,7 @@ export class UsuarioService {
       where: { usuarioId, rolId },
     });
     if (!usuarioRol) {
-      throw new BadRequestException('El usuario no tiene este rol asignado');
+      throw new NotFoundException('El usuario no tiene este rol asignado');
     }
     await this.usuarioRolRepo.remove(usuarioRol);
     this.logger.log(`Rol removido: Usuario ID ${usuarioId}, Rol ID ${rolId}`);

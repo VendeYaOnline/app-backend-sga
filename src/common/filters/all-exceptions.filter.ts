@@ -131,10 +131,27 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private extractConstraintName(message: string): string {
-    const match = message.match(
-      /(?:constraint|restricci[oó]n|UNIQUE KEY|unique index|índice único)\s+"?(\w+)"?/i,
-    );
-    return match?.[1] ?? 'DESCONOCIDA';
+    // English SQL Server: "UNIQUE KEY constraint 'UQ_NAME'" or "PRIMARY KEY constraint 'PK_NAME'"
+    const matchEn = message.match(/\bconstraint\s+'(\w+)'/i);
+    if (matchEn) return matchEn[1];
+
+    // English with double quotes: constraint "NAME"
+    const matchEnDq = message.match(/\bconstraint\s+"(\w+)"/i);
+    if (matchEnDq) return matchEnDq[1];
+
+    // Spanish SQL Server: "restricción UNIQUE KEY 'UQ_NAME'"
+    const matchEs = message.match(/UNIQUE KEY\s+'(\w+)'/i);
+    if (matchEs) return matchEs[1];
+
+    // Spanish generic: "restricción 'NAME'"
+    const matchEsGen = message.match(/restricci[oó]n\s+(?:de\s+)?'(\w+)'/i);
+    if (matchEsGen) return matchEsGen[1];
+
+    // Fallback: any constraint-like name in single quotes (UQ_, PK_, FK_, etc.)
+    const matchGeneric = message.match(/'((?:UQ|PK|FK|CK|IX)_\w+)'/i);
+    if (matchGeneric) return matchGeneric[1];
+
+    return 'DESCONOCIDA';
   }
 
   private extractTableName(message: string): string {
