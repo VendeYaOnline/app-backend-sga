@@ -27,6 +27,12 @@ export class FindSolicitudDto extends PaginationDto {
   @IsOptional()
   @IsIn(['ASC', 'DESC'])
   sortOrder?: 'ASC' | 'DESC';
+  @ApiPropertyOptional({ description: 'Filtrar por ID de solicitud' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  id?: number;
+
   @ApiPropertyOptional({ description: 'Filtrar por ID de estado actual' })
   @IsOptional()
   @Type(() => Number)
@@ -65,6 +71,11 @@ export class FindSolicitudDto extends PaginationDto {
   @IsOptional()
   @IsString()
   origenCreacion?: string;
+
+  @ApiPropertyOptional({ description: 'Buscar por nombres del condenado (búsqueda parcial)' })
+  @IsOptional()
+  @IsString()
+  nombresCondenado?: string;
 
   @ApiPropertyOptional({ description: 'Buscar por RUN del condenado' })
   @IsOptional()

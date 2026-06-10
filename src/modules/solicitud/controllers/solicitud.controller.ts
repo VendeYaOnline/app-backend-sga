@@ -52,7 +52,7 @@ export class SolicitudController {
   @ApiOperation({
     summary: 'Listar solicitudes IFT con filtros',
     description:
-      'Retorna lista paginada de solicitudes con filtros por estado, RUC, RIT, condenado, CRS, usuario asignado y fechas',
+      'Retorna lista paginada de solicitudes con filtros por ID, estado, RUC, RIT, condenado, nombres del condenado, CRS, usuario asignado y fechas',
   })
   @ApiQuery({
     name: 'page',
@@ -65,6 +65,12 @@ export class SolicitudController {
     required: false,
     type: Number,
     description: 'Registros por página (default: 20, max: 100)',
+  })
+  @ApiQuery({
+    name: 'id',
+    required: false,
+    type: Number,
+    description: 'Filtrar por ID de la solicitud',
   })
   @ApiQuery({
     name: 'estadoId',
@@ -107,6 +113,12 @@ export class SolicitudController {
     required: false,
     type: String,
     description: 'Filtrar por origen de creación de la solicitud',
+  })
+  @ApiQuery({
+    name: 'nombresCondenado',
+    required: false,
+    type: String,
+    description: 'Filtrar por nombres del condenado (búsqueda parcial)',
   })
   @ApiQuery({
     name: 'runCondenado',

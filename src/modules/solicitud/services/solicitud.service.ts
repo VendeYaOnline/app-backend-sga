@@ -102,6 +102,8 @@ export class SolicitudService {
       .leftJoinAndSelect('sv.victima', 'v')
       .where('s.deletedAt IS NULL');
 
+    if (where.id)
+      qb.andWhere('s.id = :id', { id: where.id });
     if (where.estadoId)
       qb.andWhere('s.estadoActualId = :estadoId', {
         estadoId: where.estadoId,
@@ -122,6 +124,10 @@ export class SolicitudService {
     if (where.runCondenado)
       qb.andWhere('c.runCondenado LIKE :rut', {
         rut: `%${where.runCondenado}%`,
+      });
+    if (where.nombresCondenado)
+      qb.andWhere('c.nombres LIKE :nombres', {
+        nombres: `%${where.nombresCondenado}%`,
       });
     if (where.fechaDesde)
       qb.andWhere('s.createdAt >= :desde', { desde: where.fechaDesde });
