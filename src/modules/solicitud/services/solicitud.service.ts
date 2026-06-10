@@ -34,6 +34,12 @@ import { UpdateZonaDto } from '../dto/update-zona.dto';
 import { CreateSolicitanteDto } from '../dto/create-solicitante.dto';
 import { UpdateSolicitanteDto } from '../dto/update-solicitante.dto';
 import { PjudLlamada } from '../../pjud/entities/pjud-llamada.entity';
+import { Evento } from '../../evento/entities/evento.entity';
+import { Agendamiento } from '../../agendamiento/entities/agendamiento.entity';
+import { Proceso } from '../../evento/entities/proceso.entity';
+import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
+import { ProcesoSoporteDetalle } from '../../evento/entities/proceso-soporte-detalle.entity';
+import { ProcesoSoporteMotivo } from '../../evento/entities/proceso-soporte-motivo.entity';
 
 const ESTADO_INICIAL_CODIGO = 'RECEPCIONADA';
 
@@ -239,6 +245,118 @@ export class SolicitudService {
         emitidoPorUsuario: true,
       },
     });
+  }
+
+  async findResumen(id: number) {
+    const solicitud = await this.findOne(id);
+
+    const eventoRepo       = this.dataSource.getRepository(Evento);
+    const agendamientoRepo = this.dataSource.getRepository(Agendamiento);
+    const procesoRepo      = this.dataSource.getRepository(Proceso);
+    const pdRepo           = this.dataSource.getRepository(ProcesoDispositivo);
+    const sdRepo           = this.dataSource.getRepository(ProcesoSoporteDetalle);
+    const smRepo           = this.dataSource.getRepository(ProcesoSoporteMotivo);
+
+    const eventos = await eventoRepo.find({
+      where: { solicitudId: id, deletedAt: IsNull() },
+      relations: { tipoEvento: true, asignado: true },
+      order: { fechaEvento: 'ASC' },
+    });
+
+    if (!eventos.length) {
+      return { solicitud, instalaciones: [], soportes: [], desinstalaciones: [] };
+    }
+
+    const eventoIds = eventos.map((e) => e.id);
+
+    const agendamientos = await agendamientoRepo.find({
+      where: { eventoId: In(eventoIds), deletedAt: IsNull() },
+      relations: { condenado: true, victima: true, tecnico: true, region: true, comuna: true },
+      order: { fechaAgendada: 'ASC' },
+    });
+
+    if (!agendamientos.length) {
+      return {
+        solicitud,
+        instalaciones: eventos
+          .filter((e) => e.tipoEvento?.codigo === 'INSTALACION')
+          .map((e) => ({ evento: e, agendamientos: [] })),
+        soportes: eventos
+          .filter((e) => e.tipoEvento?.codigo === 'SOPORTE')
+          .map((e) => ({ evento: e, agendamientos: [] })),
+        desinstalaciones: eventos
+          .filter((e) => e.tipoEvento?.codigo === 'DESINSTALACION')
+          .map((e) => ({ evento: e, agendamientos: [] })),
+      };
+    }
+
+    const agendamientoIds = agendamientos.map((a) => a.id);
+
+    const [procesos, dispositivos, soporteDetalles, soporteMotivos] = await Promise.all([
+      procesoRepo.find({
+        where: { agendamientoId: In(agendamientoIds) },
+        relations: {
+          region: true,
+          comuna: true,
+          tipoLugar: true,
+          motivoNoRealizado: true,
+          cerradoPor: true,
+        },
+      }),
+      pdRepo.find({
+        where: { agendamientoId: In(agendamientoIds) },
+        relations: { rolDispositivo: true },
+      }),
+      sdRepo.find({ where: { agendamientoId: In(agendamientoIds) } }),
+      smRepo.find({
+        where: { agendamientoId: In(agendamientoIds) },
+        relations: { tipoProblema: true },
+      }),
+    ]);
+
+    const procesoMap      = new Map(procesos.map((p) => [p.agendamientoId, p]));
+    const soporteDetalleMap = new Map(soporteDetalles.map((sd) => [sd.agendamientoId, sd]));
+    const dispositivosMap  = new Map<number, ProcesoDispositivo[]>();
+    const soporteMotivosMap = new Map<number, ProcesoSoporteMotivo[]>();
+
+    for (const d of dispositivos) {
+      const arr = dispositivosMap.get(d.agendamientoId) ?? [];
+      arr.push(d);
+      dispositivosMap.set(d.agendamientoId, arr);
+    }
+    for (const m of soporteMotivos) {
+      const arr = soporteMotivosMap.get(m.agendamientoId) ?? [];
+      arr.push(m);
+      soporteMotivosMap.set(m.agendamientoId, arr);
+    }
+
+    const agendamientosByEventoId = new Map<number, Record<string, unknown>[]>();
+    for (const ag of agendamientos) {
+      const detail: Record<string, unknown> = {
+        agendamiento: ag,
+        proceso: procesoMap.get(ag.id) ?? null,
+        dispositivos: dispositivosMap.get(ag.id) ?? [],
+        soporteDetalle: soporteDetalleMap.get(ag.id) ?? null,
+        soporteMotivos: soporteMotivosMap.get(ag.id) ?? [],
+      };
+      const arr = agendamientosByEventoId.get(ag.eventoId) ?? [];
+      arr.push(detail);
+      agendamientosByEventoId.set(ag.eventoId, arr);
+    }
+
+    const instalaciones: object[] = [];
+    const soportes: object[] = [];
+    const desinstalaciones: object[] = [];
+
+    for (const evento of eventos) {
+      const item = { evento, agendamientos: agendamientosByEventoId.get(evento.id) ?? [] };
+      const codigo = evento.tipoEvento?.codigo;
+      if (codigo === 'INSTALACION') instalaciones.push(item);
+      else if (codigo === 'SOPORTE') soportes.push(item);
+      else if (codigo === 'DESINSTALACION') desinstalaciones.push(item);
+    }
+
+    return { solicitud, instalaciones, soportes, desinstalaciones };
   }
 
   async create(

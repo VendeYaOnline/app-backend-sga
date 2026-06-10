@@ -158,6 +158,23 @@ export class SolicitudController {
     return this.solicitudService.findOne(id);
   }
 
+  @Get(':id/resumen')
+  @RequirePermiso(PERMISOS.SOLICITUD_LEER)
+  @ApiOperation({
+    summary: 'Resumen completo de una solicitud',
+    description:
+      'Retorna la solicitud con todas sus instalaciones, soportes y desinstalaciones agrupados por tipo, incluyendo agendamientos, procesos y dispositivos asociados',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'ID de la solicitud' })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumen con instalaciones, soportes y desinstalaciones',
+  })
+  @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
+  async findResumen(@Param('id', ParseIntPipe) id: number) {
+    return this.solicitudService.findResumen(id);
+  }
+
   @Post()
   @HttpCode(201)
   @RequirePermiso(PERMISOS.SOLICITUD_CREAR)
