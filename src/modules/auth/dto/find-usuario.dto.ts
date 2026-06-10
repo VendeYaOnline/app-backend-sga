@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -20,5 +20,6 @@ export class FindUsuarioDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Filtrar por rol' })
   @IsOptional()
   @Type(() => Number)
+  @IsInt()
   rolId?: number;
 }

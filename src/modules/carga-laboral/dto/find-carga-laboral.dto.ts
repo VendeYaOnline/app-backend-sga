@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
@@ -6,12 +6,12 @@ import { PaginationDto } from '../../../common/dto/pagination.dto';
 export class FindCargaLaboralDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Fecha de inicio (YYYY-MM-DD)' })
   @IsOptional()
-  @IsString()
+  @IsDateString()
   fechaDesde?: string;
 
   @ApiPropertyOptional({ description: 'Fecha de termino (YYYY-MM-DD)' })
   @IsOptional()
-  @IsString()
+  @IsDateString()
   fechaHasta?: string;
 
   @ApiPropertyOptional({ description: 'Filtrar por usuario' })

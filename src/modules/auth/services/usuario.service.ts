@@ -114,7 +114,7 @@ export class UsuarioService {
       relations: { region: true, crs: true, tribunal: true },
     });
     if (!usuario) {
-      throw new BadRequestException(`Usuario con ID ${id} no encontrado`);
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
     return usuario;
   }
@@ -144,7 +144,7 @@ export class UsuarioService {
       },
     });
     if (!usuario) {
-      throw new BadRequestException(`Usuario con ID ${id} no encontrado`);
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
     return usuario;
   }

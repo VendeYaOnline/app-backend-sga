@@ -94,10 +94,14 @@ export class ArchivoController {
   @RequirePermiso(PERMISOS.SOLICITUD_LEER)
   @ApiOperation({
     summary: 'Obtener archivo por entidad',
-    description: 'Retorna la referencia de archivo más reciente asociada a una entidad',
+    description:
+      'Retorna la referencia de archivo más reciente asociada a una entidad',
   })
   @ApiResponse({ status: 200, description: 'Referencia de archivo encontrada' })
-  @ApiResponse({ status: 404, description: 'No se encontró archivo para la entidad' })
+  @ApiResponse({
+    status: 404,
+    description: 'No se encontró archivo para la entidad',
+  })
   @ApiParam({
     name: 'entidad',
     type: String,
@@ -116,6 +120,7 @@ export class ArchivoController {
   }
 
   @Delete('referencias/:id')
+  @HttpCode(204)
   @RequirePermiso(PERMISOS.ARCHIVO_ELIMINAR)
   @ApiOperation({
     summary: 'Eliminar referencia de archivo (soft delete)',

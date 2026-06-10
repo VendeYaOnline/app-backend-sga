@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CatRol } from '../entities/cat-rol.entity';
 import { CatPermiso } from '../entities/cat-permiso.entity';
 import { RolPermiso } from '../entities/rol-permiso.entity';
@@ -13,6 +14,7 @@ export class RolService {
   private readonly logger = new Logger(RolService.name);
 
   constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
     @InjectRepository(CatRol)
     private readonly rolRepo: Repository<CatRol>,
     @InjectRepository(CatPermiso)
@@ -51,13 +53,31 @@ export class RolService {
   }
 
   async assignPermisos(id: number, dto: AssignPermisosDto) {
-    await this.rolPermisoRepo.delete({ rolId: id });
-    const rolPermisos = dto.permisoIds.map((permisoId) =>
-      this.rolPermisoRepo.create({ rolId: id, permisoId }),
-    );
-    const saved = await this.rolPermisoRepo.save(rolPermisos);
-    this.logger.log(`${dto.permisoIds.length} permisos asignados al rol ${id}`);
-    return saved;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const manager = queryRunner.manager;
+
+      await manager.delete(RolPermiso, { rolId: id });
+
+      const rolPermisos = dto.permisoIds.map((permisoId) =>
+        manager.create(RolPermiso, { rolId: id, permisoId }),
+      );
+      const saved = await manager.save(rolPermisos);
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `${dto.permisoIds.length} permisos asignados al rol ${id}`,
+      );
+      return saved;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async findAllPermisos() {

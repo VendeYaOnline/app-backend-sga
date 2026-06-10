@@ -32,6 +32,10 @@ import { SolicitudEstadoHist } from '../../solicitud/entities/solicitud-estado-h
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
+import { UpdateProcesoDto } from '../dto/update-proceso.dto';
+import { UpdateResolucionDto } from '../dto/update-resolucion.dto';
+import { UpdateCambioDomicilioDto } from '../dto/update-cambio-domicilio.dto';
+import { CreateProcesoSoporteDetalleDto } from '../dto/create-proceso.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 import { CreateCambioDomicilioDto } from '../dto/create-cambio-domicilio.dto';
 import { GestionarCambioDomicilioDto } from '../dto/gestionar-cambio-domicilio.dto';
@@ -206,8 +210,7 @@ export class EventoService {
     });
   }
 
-  async create(dto: any, userId: number): Promise<Evento> {
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+  async create(dto: CreateEventoDto, userId: number): Promise<Evento> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -216,27 +219,25 @@ export class EventoService {
       const manager = queryRunner.manager;
 
       const tipoEvento = await this.tipoEventoRepo.findOne({
-        where: { id: dto.tipoEventoId as number },
+        where: { id: dto.tipoEventoId },
       });
       if (!tipoEvento)
         throw new BadRequestException('Tipo de evento no encontrado');
 
       const evento = manager.create(Evento, {
-        tipoEventoId: dto.tipoEventoId as number,
-        solicitudId: dto.solicitudId as number,
+        tipoEventoId: dto.tipoEventoId,
+        solicitudId: dto.solicitudId,
         estadoEvento: 'PENDIENTE',
-        origenCreacion: (dto.origenCreacion as string) || 'FORMULARIO_WEB',
-        fechaEvento: dto.fechaEvento
-          ? new Date(dto.fechaEvento as string)
-          : new Date(),
-        asignadoA: dto.asignadoA as number | undefined,
-        observaciones: dto.observaciones as string | undefined,
+        origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
+        fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
+        asignadoA: dto.asignadoA,
+        observaciones: dto.observaciones,
         createdBy: userId,
       });
       const saved = await manager.save(evento);
 
       const validacionesConfig = await this.tipoEventoValidacionRepo.find({
-        where: { tipoEventoId: dto.tipoEventoId as number, activo: true },
+        where: { tipoEventoId: dto.tipoEventoId, activo: true },
         order: { orden: 'ASC' },
       });
 
@@ -252,8 +253,15 @@ export class EventoService {
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Evento ${saved.id} (tipo ${dto.tipoEventoId as number}) creado por usuario ${userId}`,
+        `Evento ${saved.id} (tipo ${dto.tipoEventoId}) creado por usuario ${userId}`,
       );
+
+      this.eventEmitter.emit('evento.creado', {
+        eventoId: saved.id,
+        solicitudId: saved.solicitudId,
+        tipoEventoId: dto.tipoEventoId,
+        usuarioId: userId,
+      });
 
       return this.findOne(saved.id);
     } catch (error) {
@@ -262,7 +270,6 @@ export class EventoService {
     } finally {
       await queryRunner.release();
     }
-    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
   }
 
   async createCompleto(
@@ -688,10 +695,18 @@ export class EventoService {
     this.logger.log(
       `Validación ${validacionId} del evento ${eventoId}: ${dto.estado}`,
     );
+
+    this.eventEmitter.emit('evento.validacion-ejecutada', {
+      eventoId,
+      validacionId,
+      estado: dto.estado,
+      usuarioId: userId,
+    });
+
     return validacion;
   }
 
-  async updateProceso(agendamientoId: number, dto: any) {
+  async updateProceso(agendamientoId: number, dto: UpdateProcesoDto) {
     const existente = await this.procesoRepo.findOne({
       where: { agendamientoId },
     });
@@ -699,7 +714,6 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.procesoRepo.save(existente);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.procesoRepo.create({ agendamientoId, ...dto });
     return this.procesoRepo.save(nuevo);
   }
@@ -783,9 +797,11 @@ export class EventoService {
         });
 
         if (tipoEvento?.codigo === 'SOPORTE') {
-          const rolIds = [...new Set(dispositivos.map((d) => d.rolDispositivoId))];
+          const rolIds = [
+            ...new Set(dispositivos.map((d) => d.rolDispositivoId)),
+          ];
           const rolRevisado = await manager.findOne(CatRolDispositivo, {
-            where: { id: In(rolIds), codigo: 'REVISADO' } as any,
+            where: { id: In(rolIds), codigo: 'REVISADO' },
           });
 
           if (rolRevisado) {
@@ -803,12 +819,14 @@ export class EventoService {
                 .where('pd.numero_serie = :serie', { serie })
                 .andWhere('pd.solicitud_id = :sol', { sol: solicitudId })
                 .andWhere("rd.codigo IN ('REVISADO', 'REEMPLAZADO_SALIENTE')")
-                .andWhere(`EXISTS (
+                .andWhere(
+                  `EXISTS (
                   SELECT 1 FROM sga.PROCESO p
                   INNER JOIN sga.EVENTO e ON e.id = p.evento_id
                   INNER JOIN sga.CAT_TIPO_EVENTO te ON te.id = e.tipo_evento_id
                   WHERE p.agendamiento_id = pd.agendamiento_id AND te.codigo = 'SOPORTE'
-                )`)
+                )`,
+                )
                 .getRawOne<{ total: string }>();
 
               const count = parseInt(conteo?.total ?? '0', 10);
@@ -946,7 +964,8 @@ export class EventoService {
         where: { id: agendamientoId },
         relations: { evento: true },
       });
-      if (!agendamiento) throw new NotFoundException('Agendamiento no encontrado');
+      if (!agendamiento)
+        throw new NotFoundException('Agendamiento no encontrado');
       if (!agendamiento.evento?.solicitudId) {
         throw new UnprocessableEntityException(
           `El agendamiento ${agendamientoId} no tiene un evento con solicitud válida. Verifique la integridad del dato en EVENTO.solicitud_id.`,
@@ -1012,6 +1031,12 @@ export class EventoService {
       this.logger.log(
         `Proceso ${agendamientoId} cerrado por usuario ${userId}`,
       );
+
+      this.eventEmitter.emit('proceso.cerrado', {
+        agendamientoId,
+        realizado: dto.realizado,
+        usuarioId: userId,
+      });
 
       return manager.findOne(Proceso, { where: { agendamientoId } });
     } catch (error) {
@@ -1125,6 +1150,12 @@ export class EventoService {
         `Evento ${eventoId} finalizado por usuario ${userId}: ${resumen.join(', ')}`,
       );
 
+      this.eventEmitter.emit('evento.finalizado', {
+        eventoId,
+        estadoEvento: dto.estadoEvento,
+        usuarioId: userId,
+      });
+
       return this.findOne(eventoId);
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -1231,7 +1262,7 @@ export class EventoService {
     }
   }
 
-  async updateResolucion(eventoId: number, dto: any) {
+  async updateResolucion(eventoId: number, dto: UpdateResolucionDto) {
     const existente = await this.resolucionRepo.findOne({
       where: { eventoId },
     });
@@ -1239,12 +1270,11 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.resolucionRepo.save(existente);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nueva = this.resolucionRepo.create({ eventoId, ...dto });
     return this.resolucionRepo.save(nueva);
   }
 
-  async updateCambioDomicilio(eventoId: number, dto: any) {
+  async updateCambioDomicilio(eventoId: number, dto: UpdateCambioDomicilioDto) {
     const existente = await this.resolucionCdRepo.findOne({
       where: { eventoId },
     });
@@ -1252,7 +1282,6 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.resolucionCdRepo.save(existente);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.resolucionCdRepo.create({ eventoId, ...dto });
     return this.resolucionCdRepo.save(nuevo);
   }
@@ -1494,7 +1523,10 @@ export class EventoService {
     }
   }
 
-  async addSoporteDetalle(agendamientoId: number, dto: any) {
+  async addSoporteDetalle(
+    agendamientoId: number,
+    dto: CreateProcesoSoporteDetalleDto,
+  ) {
     const existente = await this.soporteDetalleRepo.findOne({
       where: { agendamientoId },
     });
@@ -1502,7 +1534,6 @@ export class EventoService {
       Object.assign(existente, dto);
       return this.soporteDetalleRepo.save(existente);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const nuevo = this.soporteDetalleRepo.create({ agendamientoId, ...dto });
     return this.soporteDetalleRepo.save(nuevo);
   }

@@ -10,7 +10,6 @@ import {
   ParseIntPipe,
   HttpCode,
   UseGuards,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -27,7 +26,7 @@ import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
 import { TransicionEstadoDto } from '../dto/transicion-estado.dto';
 import { CreateFactibilidadDto } from '../dto/create-factibilidad.dto';
-import { CreateSolicitudVictimaDto } from '../dto/create-solicitud-victima.dto';
+import { AddVictimaDto } from '../dto/add-victima.dto';
 import { CreateSolicitudDelitoSimpleDto } from '../dto/create-solicitud-delito-simple.dto';
 import { CreateZonaDto } from '../dto/create-solicitud.dto';
 import { UpdateZonaDto } from '../dto/update-zona.dto';
@@ -503,7 +502,7 @@ export class SolicitudController {
   @Post(':id/victimas')
   @HttpCode(201)
   @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
-  @ApiBody({ type: CreateSolicitudVictimaDto })
+  @ApiBody({ type: AddVictimaDto })
   @ApiOperation({
     summary: 'Vincular víctima con radio de prohibición',
     description:
@@ -515,11 +514,8 @@ export class SolicitudController {
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async addVictima(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: CreateSolicitudVictimaDto,
+    @Body() dto: AddVictimaDto,
   ) {
-    if (!dto.victimaId) {
-      throw new BadRequestException('victimaId es requerido');
-    }
     return this.solicitudService.addVictima(
       id,
       dto.victimaId,

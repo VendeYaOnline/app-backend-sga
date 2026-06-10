@@ -4,6 +4,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
@@ -23,6 +24,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @ApiBody({ type: LoginDto })
   @ApiOperation({
     summary: 'Iniciar sesión en el sistema',
     description:
@@ -36,6 +38,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(200)
+  @ApiBody({ type: ForgotPasswordDto })
   @ApiOperation({
     summary: 'Solicitar recuperación de contraseña',
     description: 'Envía instrucciones de recuperación al email registrado',
@@ -47,6 +50,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(200)
+  @ApiBody({ type: ResetPasswordDto })
   @ApiOperation({
     summary: 'Ejecutar cambio de contraseña con token',
     description: 'Restablece la contraseña usando el token enviado por email',
@@ -58,6 +62,7 @@ export class AuthController {
 
   @Post('setup')
   @HttpCode(201)
+  @ApiBody({ type: SetupDto })
   @ApiOperation({
     summary: 'Inicializar el sistema (primer administrador)',
     description:

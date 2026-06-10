@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
+  IsNumber,
   IsArray,
   MaxLength,
   Min,
@@ -57,10 +58,12 @@ export class RecepcionIftZonaDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsNumber()
   latitud?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsNumber()
   longitud?: number;
 
   @ApiPropertyOptional()
@@ -75,7 +78,9 @@ export class RecepcionIftZonaDto {
 }
 
 export class RecepcionIftDto {
-  @ApiProperty({ description: 'ID correlativo maestro PJUD (crrIdSolicitud del contrato)' })
+  @ApiProperty({
+    description: 'ID correlativo maestro PJUD (crrIdSolicitud del contrato)',
+  })
   @IsInt()
   solicitudPjudId: number;
 
@@ -89,7 +94,9 @@ export class RecepcionIftDto {
   @IsInt()
   tramitePjudId?: number;
 
-  @ApiPropertyOptional({ description: 'ID nomenclatura PJUD (crrNomenclatura)' })
+  @ApiPropertyOptional({
+    description: 'ID nomenclatura PJUD (crrNomenclatura)',
+  })
   @IsOptional()
   @IsInt()
   nomenclaturaPjudId?: number;

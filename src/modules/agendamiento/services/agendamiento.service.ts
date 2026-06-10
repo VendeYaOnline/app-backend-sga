@@ -16,6 +16,7 @@ import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entit
 import { UpdateProcesoAgendamientoDto } from '../dto/update-proceso-agendamiento.dto';
 import { UpdateAgendamientoDto } from '../dto/update-agendamiento.dto';
 import { ReagendarAgendamientoDto } from '../dto/reagendar-agendamiento.dto';
+import { CreateAgendamientoDto } from '../dto/create-agendamiento.dto';
 
 @Injectable()
 export class AgendamientoService {
@@ -129,18 +130,18 @@ export class AgendamientoService {
     return agendamiento;
   }
 
-  async create(dto: any, userId: number): Promise<Agendamiento> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  async create(
+    dto: CreateAgendamientoDto,
+    userId: number,
+  ): Promise<Agendamiento> {
     this.validarSujetoAgenda(dto);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const estadoAgenda = (dto.estadoAgenda as string) || 'EN_PROCESO';
     const agendamiento = this.agendamientoRepo.create({
       ...dto,
       createdBy: userId,
-      estadoAgenda,
+      estadoAgenda: 'EN_PROCESO',
       estaAbierto: true,
-    } as Partial<Agendamiento>);
+    });
     const saved = await this.agendamientoRepo.save(agendamiento);
     this.logger.log(`Agendamiento ${saved.id} creado por usuario ${userId}`);
     return this.findOne(saved.id);
