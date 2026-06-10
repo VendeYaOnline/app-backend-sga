@@ -131,12 +131,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private extractConstraintName(message: string): string {
-    const match = message.match(/constraint\s+"?(\w+)"?/i);
+    const match = message.match(
+      /(?:constraint|restricci[oó]n|UNIQUE KEY|unique index|índice único)\s+"?(\w+)"?/i,
+    );
     return match?.[1] ?? 'DESCONOCIDA';
   }
 
   private extractTableName(message: string): string {
-    const match = message.match(/object\s+'?([\w.]+)'?/i);
+    const match = message.match(/(?:object|objeto)\s+'?([\w.]+)'?/i);
     return match?.[1] ?? 'tabla';
   }
 
@@ -149,11 +151,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     );
     if (match2) return match2[1];
 
+    const match3 = message.match(
+      /el valor de clave duplicada es\s*\(([^)]+)\)/i,
+    );
+    if (match3) return match3[1].trim();
+
     return null;
   }
 
   private extractColumnFromNullError(message: string): string | null {
-    const match = message.match(/column\s+'([^']+)'/i);
+    const match = message.match(/(?:column|columna)\s+'([^']+)'/i);
     return match?.[1] ?? null;
   }
 

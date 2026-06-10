@@ -29,6 +29,7 @@ import { SolicitudZona } from '../../solicitud/entities/solicitud-zona.entity';
 import { SolicitudDelito } from '../../solicitud/entities/solicitud-delito.entity';
 import { SolicitudVictima } from '../../solicitud/entities/solicitud-victima.entity';
 import { SolicitudEstadoHist } from '../../solicitud/entities/solicitud-estado-hist.entity';
+import { SolicitudFactibilidad } from '../../solicitud/entities/solicitud-factibilidad.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
@@ -223,6 +224,17 @@ export class EventoService {
       });
       if (!tipoEvento)
         throw new BadRequestException('Tipo de evento no encontrado');
+
+      if (tipoEvento.codigo === 'DECRETO_MONITOREO_INICIAL') {
+        const factibilidad = await manager.findOne(SolicitudFactibilidad, {
+          where: { solicitudId: dto.solicitudId },
+        });
+        if (!factibilidad) {
+          throw new UnprocessableEntityException(
+            'La solicitud no tiene un informe de factibilidad emitido. Debe emitir factibilidad antes de crear un evento de decreto de monitoreo.',
+          );
+        }
+      }
 
       const evento = manager.create(Evento, {
         tipoEventoId: dto.tipoEventoId,
@@ -528,6 +540,17 @@ export class EventoService {
     }
 
     const { codigo } = tipoEvento;
+
+    if (codigo === 'DECRETO_MONITOREO_INICIAL') {
+      const factibilidad = await manager.findOne(SolicitudFactibilidad, {
+        where: { solicitudId: dto.solicitudId },
+      });
+      if (!factibilidad) {
+        throw new UnprocessableEntityException(
+          'La solicitud no tiene un informe de factibilidad emitido. Debe emitir factibilidad antes de crear un evento de decreto de monitoreo.',
+        );
+      }
+    }
 
     const esResolucion = [
       'DECRETO_MONITOREO_INICIAL',
