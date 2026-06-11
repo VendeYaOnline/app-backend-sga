@@ -42,6 +42,7 @@ import { ProcesoSoporteDetalle } from '../../evento/entities/proceso-soporte-det
 import { ProcesoSoporteMotivo } from '../../evento/entities/proceso-soporte-motivo.entity';
 
 const ESTADO_INICIAL_CODIGO = 'RECEPCIONADA';
+const ESTADO_EDITABLE_CODIGO = 'DEVUELTA_SOLICITANTE';
 
 // Respuesta de PJUD al registrar una IFT saliente (puede cambiar con docs finales).
 interface PjudRegistroIftResponse {
@@ -615,12 +616,12 @@ export class SolicitudService {
       if (!solicitud)
         throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
 
-      const estadoInicial = await this.estadoSolicitudRepo.findOne({
-        where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
+      const estadoEditable = await this.estadoSolicitudRepo.findOne({
+        where: { codigo: ESTADO_EDITABLE_CODIGO, activo: true },
       });
-      if (!estadoInicial || solicitud.estadoActualId !== estadoInicial.id) {
+      if (!estadoEditable || solicitud.estadoActualId !== estadoEditable.id) {
         throw new UnprocessableEntityException(
-          `Solo se puede editar una solicitud en estado ${ESTADO_INICIAL_CODIGO}`,
+          `Solo se puede editar una solicitud en estado ${ESTADO_EDITABLE_CODIGO}`,
         );
       }
 
