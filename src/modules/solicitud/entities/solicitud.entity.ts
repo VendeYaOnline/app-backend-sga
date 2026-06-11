@@ -21,6 +21,7 @@ import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { Usuario } from '../../auth/entities/usuario.entity';
 import { SolicitudVictima } from './solicitud-victima.entity';
+import { SolicitudDelito } from './solicitud-delito.entity';
 
 @Entity('sga.SOLICITUD')
 export class Solicitud {
@@ -200,4 +201,7 @@ export class Solicitud {
 
   @OneToMany(() => SolicitudVictima, (sv) => sv.solicitud)
   solicitudVictimas: SolicitudVictima[];
+
+  @OneToMany(() => SolicitudDelito, (sd) => sd.solicitud)
+  solicitudDelitos: SolicitudDelito[];
 }
