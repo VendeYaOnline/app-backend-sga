@@ -1,5 +1,6 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Put,
@@ -82,16 +83,24 @@ export class UsuarioController {
   }
 
   @Get(':id')
-  @RequirePermiso(PERMISOS.USUARIO_LEER)
   @ApiOperation({
     summary: 'Obtener detalle de un usuario',
     description:
-      'Retorna los datos completos de un usuario incluyendo sus roles',
+      'Retorna los datos completos de un usuario incluyendo sus roles. ' +
+      'Un usuario puede leer su propio perfil sin permiso adicional. ' +
+      'Para leer el perfil de otro usuario se requiere USUARIO_LEER.',
   })
   @ApiParam({ name: 'id', description: 'ID del usuario', type: Number })
   @ApiResponse({ status: 200, description: 'Detalle del usuario' })
+  @ApiResponse({ status: 403, description: 'Sin permiso para ver este usuario' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (id !== user.sub && !user.permisos.includes(PERMISOS.USUARIO_LEER)) {
+      throw new ForbiddenException('No tiene permisos para ver este usuario');
+    }
     return this.usuarioService.findOnePublic(id);
   }
 
