@@ -19,8 +19,8 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
-import { FindCargaLaboralDto } from '../dto/find-carga-laboral.dto';
-import { FindPorRolDto } from '../dto/find-por-rol.dto';
+import { FindCargaLaboralFechasDto } from '../dto/find-carga-laboral-fechas.dto';
+import { FindUsuariosRolDto } from '../dto/find-usuarios-rol.dto';
 
 @ApiTags('Carga Laboral')
 @ApiBearerAuth()
@@ -29,82 +29,101 @@ import { FindPorRolDto } from '../dto/find-por-rol.dto';
 export class CargaLaboralController {
   constructor(private readonly cargaLaboralService: CargaLaboralService) {}
 
-  @Get('resumen')
+  @Get('usuarios')
   @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
   @ApiOperation({
-    summary: 'Resumen de carga laboral',
-    description: 'Retorna un resumen agrupado de acciones por tipo',
+    summary: 'Usuarios por rol',
+    description: 'Retorna los usuarios activos que pertenecen al rol indicado, con sus datos de perfil y roles asignados.',
   })
-  @ApiResponse({ status: 200, description: 'Resumen de carga laboral' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Fecha de inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Fecha de término (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'usuarioId', required: false, type: Number, description: 'Filtrar por usuario' })
-  async findResumen(@Query() filters: FindCargaLaboralDto) {
-    return this.cargaLaboralService.findResumen(filters);
+  @ApiQuery({ name: 'rol', required: true, enum: ['DMT', 'EMPRESA', 'COORDINADOR', 'TECNICO'], description: 'Código del rol' })
+  @ApiResponse({ status: 200, description: 'Lista de usuarios con el rol solicitado' })
+  @ApiResponse({ status: 400, description: 'Rol inválido' })
+  async findUsuariosPorRol(@Query() filters: FindUsuariosRolDto) {
+    return this.cargaLaboralService.findUsuariosPorRol(filters);
   }
 
-  @Get('detalle')
+  @Get('dmt/:usuarioId')
   @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
   @ApiOperation({
-    summary: 'Detalle de carga laboral',
-    description: 'Retorna el detalle paginado de acciones con filtros',
-  })
-  @ApiResponse({ status: 200, description: 'Detalle de carga laboral' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Fecha de inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Fecha de término (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'usuarioId', required: false, type: Number, description: 'Filtrar por usuario' })
-  @ApiQuery({ name: 'tipoAccion', required: false, type: String, description: 'Filtrar por tipo de acción' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  async findDetalle(@Query() filters: FindCargaLaboralDto) {
-    return this.cargaLaboralService.findDetalle(filters);
-  }
-
-  @Get('exportar')
-  @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
-  @ApiOperation({
-    summary: 'Exportar carga laboral',
-    description: 'Exporta en formato plano los datos de carga laboral según filtros',
-  })
-  @ApiResponse({ status: 200, description: 'Datos exportados' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Fecha de inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Fecha de término (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'usuarioId', required: false, type: Number, description: 'Filtrar por usuario' })
-  async exportar(@Query() filters: FindCargaLaboralDto) {
-    return this.cargaLaboralService.exportar(filters);
-  }
-
-  @Get('por-rol')
-  @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
-  @ApiOperation({
-    summary: 'Carga laboral agrupada por rol',
+    summary: 'Carga laboral — rol DMT',
     description:
-      'Retorna todos los roles con sus usuarios y métricas de carga laboral. ' +
-      'Filtrando por rolId se obtiene el drill-down de un rol específico.',
+      'Retorna las métricas de carga laboral de un usuario con rol DMT: ' +
+      'solicitudes asignadas, recepcionadas (RECEPCIONADA → REVISION_DMT), ' +
+      'derivadas a empresa (REVISION_DMT → ENVIAR_EMPRESA) y ' +
+      'devueltas al solicitante (REVISION_DMT → DEVUELTA_SOLICITANTE).',
   })
-  @ApiResponse({ status: 200, description: 'Carga laboral por rol' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Fecha de inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Fecha de término (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'rolId', required: false, type: Number, description: 'Filtrar por un rol específico' })
-  async findPorRol(@Query() filters: FindPorRolDto) {
-    return this.cargaLaboralService.findPorRol(filters);
+  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario DMT' })
+  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
+  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario DMT' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  async findDmt(
+    @Param('usuarioId', ParseIntPipe) usuarioId: number,
+    @Query() filters: FindCargaLaboralFechasDto,
+  ) {
+    return this.cargaLaboralService.findDmt(usuarioId, filters);
   }
 
-  @Get('usuario/:usuarioId')
+  @Get('empresa/:usuarioId')
   @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
   @ApiOperation({
-    summary: 'Carga laboral de un usuario',
-    description: 'Retorna el detalle de carga laboral de un usuario específico, incluyendo sus roles, acciones por tipo y últimas 10 acciones',
+    summary: 'Carga laboral — rol Empresa',
+    description:
+      'Retorna las métricas de carga laboral de un usuario con rol Empresa: ' +
+      'solicitudes gestionadas (ENVIAR_EMPRESA → INFORME_GENERADO) y ' +
+      'conteo de respuestas de factibilidad emitidas (FACTIBLE, NO_FACTIBLE, NO_RECOMENDABLE).',
   })
-  @ApiResponse({ status: 200, description: 'Carga laboral del usuario' })
+  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Empresa' })
+  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
+  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario Empresa' })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
-  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Fecha de inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Fecha de término (YYYY-MM-DD)' })
-  async findUsuario(
+  async findEmpresa(
     @Param('usuarioId', ParseIntPipe) usuarioId: number,
-    @Query() filters: FindCargaLaboralDto,
+    @Query() filters: FindCargaLaboralFechasDto,
   ) {
-    return this.cargaLaboralService.findUsuario(usuarioId, filters);
+    return this.cargaLaboralService.findEmpresa(usuarioId, filters);
+  }
+
+  @Get('coordinador/:usuarioId')
+  @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
+  @ApiOperation({
+    summary: 'Carga laboral — rol Coordinador',
+    description:
+      'Retorna las métricas de carga laboral de un usuario con rol Coordinador: ' +
+      'agendamientos creados por tipo (INSTALACION, SOPORTE, DESINSTALACION), ' +
+      'reprogramados (numero_intento > 1), abiertos/cerrados y por estado (EN_PROCESO, COMPLETADO, NO_REALIZADO).',
+  })
+  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Coordinador' })
+  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
+  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario Coordinador' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  async findCoordinador(
+    @Param('usuarioId', ParseIntPipe) usuarioId: number,
+    @Query() filters: FindCargaLaboralFechasDto,
+  ) {
+    return this.cargaLaboralService.findCoordinador(usuarioId, filters);
+  }
+
+  @Get('tecnico/:usuarioId')
+  @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
+  @ApiOperation({
+    summary: 'Carga laboral — rol Técnico',
+    description:
+      'Retorna las métricas de carga laboral de un usuario con rol Técnico: ' +
+      'agendamientos tomados (tecnico_id) por tipo (INSTALACION, SOPORTE, DESINSTALACION), ' +
+      'y de esos cuántos fueron ejecutados (tienen PROCESO), realizados y no realizados.',
+  })
+  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Técnico' })
+  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
+  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario Técnico' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  async findTecnico(
+    @Param('usuarioId', ParseIntPipe) usuarioId: number,
+    @Query() filters: FindCargaLaboralFechasDto,
+  ) {
+    return this.cargaLaboralService.findTecnico(usuarioId, filters);
   }
 }
