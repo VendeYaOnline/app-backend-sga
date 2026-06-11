@@ -602,19 +602,121 @@ export class SolicitudService {
     dto: UpdateSolicitudDto,
     userId: number,
   ): Promise<Solicitud> {
-    const solicitud = await this.findOne(id);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    const estadoInicial = await this.estadoSolicitudRepo.findOne({
-      where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
-    });
+    try {
+      const manager = queryRunner.manager;
 
-    if (!estadoInicial || solicitud.estadoActualId !== estadoInicial.id) {
-      throw new UnprocessableEntityException(
-        `Solo se puede editar una solicitud en estado ${ESTADO_INICIAL_CODIGO}`,
-      );
+      const solicitud = await manager.findOne(Solicitud, {
+        where: { id, deletedAt: IsNull() },
+      });
+      if (!solicitud)
+        throw new NotFoundException(`Solicitud con ID ${id} no encontrada`);
+
+      const estadoInicial = await this.estadoSolicitudRepo.findOne({
+        where: { codigo: ESTADO_INICIAL_CODIGO, activo: true },
+      });
+      if (!estadoInicial || solicitud.estadoActualId !== estadoInicial.id) {
+        throw new UnprocessableEntityException(
+          `Solo se puede editar una solicitud en estado ${ESTADO_INICIAL_CODIGO}`,
+        );
+      }
+
+      if (dto.condenado !== undefined) {
+        const condenado = await manager.findOne(Condenado, {
+          where: { id: solicitud.condenadoId, deletedAt: IsNull() },
+        });
+        if (!condenado)
+          throw new NotFoundException(
+            `Condenado con ID ${solicitud.condenadoId} no encontrado`,
+          );
+        Object.assign(condenado, dto.condenado, { updatedBy: userId });
+        await manager.save(condenado);
+      }
+
+      const { delitoIds, zonas, victimas, condenado: _c, ...scalarFields } = dto;
+      Object.assign(solicitud, scalarFields, { updatedBy: userId });
+      await manager.save(solicitud);
+
+      if (delitoIds !== undefined) {
+        await manager.delete(SolicitudDelito, { solicitudId: id });
+        if (delitoIds.length > 0) {
+          const nuevosDelitos = delitoIds.map((delitoId) =>
+            manager.create(SolicitudDelito, { solicitudId: id, delitoId }),
+          );
+          await manager.save(nuevosDelitos);
+        }
+      }
+
+      if (zonas !== undefined) {
+        const zonasExistentes = await manager.find(SolicitudZona, {
+          where: { solicitudId: id, deletedAt: IsNull() },
+        });
+        for (const zona of zonasExistentes) {
+          zona.deletedAt = new Date();
+          zona.deletedBy = userId;
+        }
+        if (zonasExistentes.length > 0) await manager.save(zonasExistentes);
+        if (zonas.length > 0) {
+          const nuevasZonas = zonas.map((z) =>
+            manager.create(SolicitudZona, {
+              solicitudId: id,
+              ...z,
+              createdBy: userId,
+            }),
+          );
+          await manager.save(nuevasZonas);
+        }
+      }
+
+      if (victimas !== undefined) {
+        await manager.delete(SolicitudVictima, { solicitudId: id });
+        for (const v of victimas) {
+          let victimaId = v.victimaId;
+          if (!victimaId) {
+            if (!v.nombres || !v.apellidoPaterno) {
+              throw new BadRequestException(
+                'Cada víctima debe tener victimaId o al menos nombres y apellidoPaterno para crearla',
+              );
+            }
+            const nuevaVictima = manager.create(Victima, {
+              esExtranjero: v.esExtranjero ?? false,
+              tipoIdentificacionId: v.tipoIdentificacionId,
+              runVictima: v.runVictima,
+              pasaporteVictima: v.pasaporteVictima,
+              nombres: v.nombres,
+              apellidoPaterno: v.apellidoPaterno,
+              apellidoMaterno: v.apellidoMaterno,
+              sexoId: v.sexoId,
+              emailVictima: v.emailVictima,
+              datoReservado: v.datoReservado ?? false,
+              consentimiento: v.consentimiento,
+              createdBy: userId,
+            });
+            const savedVictima = await manager.save(nuevaVictima);
+            victimaId = savedVictima.id;
+          }
+          const vinculo = manager.create(SolicitudVictima, {
+            solicitudId: id,
+            victimaId,
+            radioProhibicionMetros: v.radioProhibicionMetros,
+          });
+          await manager.save(vinculo);
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      this.logger.log(`Solicitud ${id} actualizada por usuario ${userId}`);
+
+      return this.findOne(id);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    Object.assign(solicitud, dto, { updatedBy: userId });
-    return this.solicitudRepo.save(solicitud);
   }
 
   async cambiarEstado(

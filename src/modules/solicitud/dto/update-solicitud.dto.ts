@@ -1,72 +1,18 @@
-import {
-  IsString,
-  IsOptional,
-  IsInt,
-  IsBoolean,
-  MaxLength,
-} from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { OmitType, PartialType, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateSolicitudDto } from './create-solicitud.dto';
+import { UpdateCondenadoDto } from '../../persona/dto/update-condenado.dto';
 
-export class UpdateSolicitudDto {
-  @ApiPropertyOptional()
+export class UpdateSolicitudDto extends PartialType(
+  OmitType(CreateSolicitudDto, ['condenado', 'condenadoId'] as const),
+) {
+  @ApiPropertyOptional({
+    description: 'Datos del condenado a actualizar. Aplica sobre el condenado actualmente vinculado.',
+    type: UpdateCondenadoDto,
+  })
   @IsOptional()
-  @IsInt()
-  tipoCausaId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  rucCausa?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  ritCausa?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  tribunalId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  crsId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  tipoLeyId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  tipoPenaId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsInt()
-  medidaControlId?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  horaDesde?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  horaHasta?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  conBeacon?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  observaciones?: string;
+  @ValidateNested()
+  @Type(() => UpdateCondenadoDto)
+  condenado?: UpdateCondenadoDto;
 }
