@@ -204,7 +204,7 @@ export class SolicitudController {
     @Body() dto: CreateSolicitudDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.solicitudService.create(dto, user.sub);
+    return this.solicitudService.create(dto, user.sub, undefined, user.roles);
   }
 
   @Put(':id')

@@ -25,6 +25,7 @@ import { CatTipoFactibilidad } from '../../catalogo/entities/cat-tipo-factibilid
 import { CatRol } from '../../auth/entities/cat-rol.entity';
 import { Condenado } from '../../persona/entities/condenado.entity';
 import { Victima } from '../../persona/entities/victima.entity';
+import { Usuario } from '../../auth/entities/usuario.entity';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
 import { FindSolicitudDto } from '../dto/find-solicitud.dto';
@@ -373,6 +374,7 @@ export class SolicitudService {
     dto: CreateSolicitudDto,
     userId: number,
     origenCreacion?: string,
+    userRoles: string[] = [],
   ): Promise<Solicitud> {
     if (!dto.condenadoId && !dto.condenado) {
       throw new BadRequestException(
@@ -490,6 +492,25 @@ export class SolicitudService {
         createdBy: userId,
       });
       const saved = await manager.save(solicitud);
+
+      const usuario = await manager.findOne(Usuario, {
+        where: { id: userId, deletedAt: IsNull() },
+      });
+      if (!usuario)
+        throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
+
+      const solicitante = manager.create(SolicitudSolicitante, {
+        solicitudId: saved.id,
+        rolSolicitante: userRoles[0] ?? 'USUARIO',
+        nombres: usuario.nombres,
+        apellidoPaterno: usuario.apellidoPaterno,
+        apellidoMaterno: usuario.apellidoMaterno,
+        runSolicitante: usuario.run,
+        emailSolicitante: usuario.email,
+        telefono: usuario.telefonoMovil,
+        esPrincipal: true,
+      });
+      await manager.save(solicitante);
 
       if (pjudRegistro) {
         const llamada = manager.create(PjudLlamada, {
