@@ -567,7 +567,7 @@ export class AgendamientoService {
       await queryRunner.manager.save(agendamiento);
 
       await queryRunner.manager.update(Evento, agendamiento.eventoId, {
-        estadoEvento: 'APROBADO',
+        estadoEvento: 'COMPLETADO',
         updatedBy: userId,
       });
 
@@ -578,7 +578,7 @@ export class AgendamientoService {
       >(
         `SELECT
            COUNT(*) AS total,
-           SUM(CASE WHEN e.estado_evento = 'APROBADO' THEN 1 ELSE 0 END) AS aprobadas
+           SUM(CASE WHEN e.estado_evento = 'COMPLETADO' THEN 1 ELSE 0 END) AS aprobadas
          FROM sga.EVENTO e
          INNER JOIN sga.CAT_TIPO_EVENTO tet ON tet.id = e.tipo_evento_id
          WHERE e.solicitud_id = @0
@@ -602,18 +602,18 @@ export class AgendamientoService {
 
         if (decretoRow) {
           await queryRunner.manager.update(Evento, decretoRow.id, {
-            estadoEvento: 'APROBADO',
+            estadoEvento: 'COMPLETADO',
             updatedBy: userId,
           });
           this.logger.log(
-            `Evento Decreto Monitoreo ${decretoRow.id} → APROBADO (todas las instalaciones completadas para solicitud ${solicitudId})`,
+            `Evento Decreto Monitoreo ${decretoRow.id} → COMPLETADO (todas las instalaciones completadas para solicitud ${solicitudId})`,
           );
         }
       }
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Agendamiento ${id} cerrado y evento ${agendamiento.eventoId} → APROBADO por usuario ${userId}`,
+        `Agendamiento ${id} cerrado y evento ${agendamiento.eventoId} → COMPLETADO por usuario ${userId}`,
       );
     } catch (error) {
       await queryRunner.rollbackTransaction();
