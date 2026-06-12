@@ -91,14 +91,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
       case 547: {
         const isCheckConstraint = /CHECK constraint/i.test(errMessage);
-        const message = isCheckConstraint
-          ? `Datos inválidos: la combinación de campos no cumple la restricción "${constraintName}"`
-          : 'El registro referenciado no existe o no puede ser modificado porque está en uso';
+        if (isCheckConstraint) {
+          return response.status(HttpStatus.BAD_REQUEST).json({
+            statusCode: HttpStatus.BAD_REQUEST,
+            error: 'Bad Request',
+            message: `Datos inválidos: la combinación de campos no cumple la restricción "${constraintName}"`,
+            errors: [{ constraint: constraintName, table: tableName }],
+          });
+        }
+
+        const isDeleteConflict = /\b(DELETE|REFERENCE)\b/i.test(errMessage);
+        const field = this.mapFkConstraintToField(constraintName);
+        const message = isDeleteConflict
+          ? `No se puede eliminar el registro porque está referenciado en "${field}"`
+          : `El valor enviado para "${field}" no existe`;
         return response.status(HttpStatus.BAD_REQUEST).json({
           statusCode: HttpStatus.BAD_REQUEST,
           error: 'Bad Request',
           message,
-          errors: [{ constraint: constraintName, table: tableName }],
+          errors: [{ field, constraint: constraintName, table: tableName }],
         });
       }
 
@@ -179,6 +190,43 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private extractColumnFromNullError(message: string): string | null {
     const match = message.match(/(?:column|columna)\s+'([^']+)'/i);
     return match?.[1] ?? null;
+  }
+
+  private mapFkConstraintToField(constraint: string): string {
+    const mapping: Record<string, string> = {
+      // AGENDAMIENTO
+      FK_AGENDA_CRS: 'crsId',
+      FK_AGENDA_CONDENADO: 'condenadoId',
+      FK_AGENDA_VICTIMA: 'victimaId',
+      FK_AGENDA_ASIGNADO: 'asignadoA',
+      FK_AGENDA_TECNICO: 'tecnicoId',
+      FK_AGENDA_REGION: 'regionId',
+      FK_AGENDA_COMUNA: 'comunaId',
+      FK_AGENDA_TIPO_LUGAR: 'tipoLugarId',
+      FK_AGENDA_EVENTO: 'eventoId',
+      FK_AGENDA_MOTIVO: 'motivoNoRealizadoId',
+      // EVENTO
+      FK_EVENTO_SOLICITUD: 'solicitudId',
+      FK_EVENTO_TIPO: 'tipoEventoId',
+      FK_EVENTO_ASIGNADO: 'asignadoA',
+      // RESOLUCION
+      FK_RESOLUCION_TRIBUNAL: 'tribunalId',
+      FK_RESOLUCION_CRS: 'crsId',
+      FK_RESOLUCION_TIPO_LEY: 'tipoLeyId',
+      FK_RESOLUCION_TIPO_CAUSA: 'tipoCausaId',
+      FK_RESOLUCION_TIPO_PENA: 'tipoPenaId',
+      // SOLICITUD
+      FK_SOLICITUD_CONDENADO: 'condenadoId',
+      FK_SOLICITUD_TRIBUNAL: 'tribunalId',
+      FK_SOLICITUD_CRS: 'crsId',
+      FK_SOLICITUD_ASIGNADO: 'asignadaA',
+    };
+
+    const upper = constraint.toUpperCase();
+    for (const [key, value] of Object.entries(mapping)) {
+      if (upper.includes(key.toUpperCase())) return value;
+    }
+    return constraint;
   }
 
   private mapConstraintToField(constraint: string): string {

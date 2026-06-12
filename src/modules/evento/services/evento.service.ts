@@ -25,6 +25,7 @@ import { CatTipoEventoValidacion } from '../../catalogo/entities/cat-tipo-evento
 import { CatRolDispositivo } from '../../catalogo/entities/cat-rol-dispositivo.entity';
 import { CatEstadoSolicitud } from '../../catalogo/entities/cat-estado-solicitud.entity';
 import { Solicitud } from '../../solicitud/entities/solicitud.entity';
+import { Condenado } from '../../persona/entities/condenado.entity';
 import { SolicitudZona } from '../../solicitud/entities/solicitud-zona.entity';
 import { SolicitudDelito } from '../../solicitud/entities/solicitud-delito.entity';
 import { SolicitudVictima } from '../../solicitud/entities/solicitud-victima.entity';
@@ -597,6 +598,29 @@ export class EventoService {
       this.logger.log(
         `Resolución creada para evento ${saved.id} (tipo: ${codigo})`,
       );
+
+      if (codigo === 'DECRETO_MONITOREO_INICIAL' && dto.resolucion.crsId) {
+        const solicitud = await manager.findOne(Solicitud, {
+          where: { id: dto.solicitudId, deletedAt: IsNull() },
+          select: { id: true, condenadoId: true },
+        });
+
+        await manager.update(Solicitud, dto.solicitudId, {
+          crsId: dto.resolucion.crsId,
+          updatedBy: userId,
+        });
+
+        if (solicitud?.condenadoId) {
+          await manager.update(Condenado, solicitud.condenadoId, {
+            crsId: dto.resolucion.crsId,
+            updatedBy: userId,
+          });
+        }
+
+        this.logger.log(
+          `Solicitud ${dto.solicitudId} y Condenado ${solicitud?.condenadoId ?? 'N/A'} actualizados con crsId ${dto.resolucion.crsId}`,
+        );
+      }
     }
 
     if (dto.agendamiento) {
