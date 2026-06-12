@@ -553,6 +553,96 @@ export class EventoService {
       }
     }
 
+    if (codigo === 'PRORROGA_EXTENSION') {
+      if (!dto.resolucion?.plazoMonitoreoDias) {
+        throw new BadRequestException(
+          'Debe proporcionar plazoMonitoreoDias en la resolución de la prórroga',
+        );
+      }
+
+      const tipoDecretoEntry =
+        [...tipoMap.values()].find(
+          (t) => t.codigo === 'DECRETO_MONITOREO_INICIAL',
+        ) ??
+        (await manager.findOne(CatTipoEvento, {
+          where: { codigo: 'DECRETO_MONITOREO_INICIAL' },
+        }));
+      if (!tipoDecretoEntry) {
+        throw new BadRequestException(
+          'Tipo de evento DECRETO_MONITOREO_INICIAL no encontrado en catálogo',
+        );
+      }
+
+      const decretoEvento = await manager.findOne(Evento, {
+        where: {
+          solicitudId: dto.solicitudId,
+          tipoEventoId: tipoDecretoEntry.id,
+          deletedAt: IsNull(),
+        },
+      });
+      if (!decretoEvento) {
+        throw new UnprocessableEntityException(
+          `La solicitud ${dto.solicitudId} no tiene un Decreto de Monitoreo Inicial registrado. Debe crearlo antes de registrar una prórroga.`,
+        );
+      }
+      if (decretoEvento.estadoEvento !== 'COMPLETADO') {
+        throw new UnprocessableEntityException(
+          `El Decreto de Monitoreo Inicial de la solicitud ${dto.solicitudId} debe estar en estado COMPLETADO para poder registrar una prórroga (estado actual: ${decretoEvento.estadoEvento}).`,
+        );
+      }
+
+      let baseResolucion: Resolucion | null = null;
+
+      const latestProrroga = await manager.findOne(Evento, {
+        where: {
+          solicitudId: dto.solicitudId,
+          tipoEventoId: tipoEvento.id,
+          deletedAt: IsNull(),
+        },
+        order: { createdAt: 'DESC' },
+      });
+      if (latestProrroga) {
+        baseResolucion = await manager.findOne(Resolucion, {
+          where: { eventoId: latestProrroga.id },
+        });
+      }
+      if (!baseResolucion) {
+        baseResolucion = await manager.findOne(Resolucion, {
+          where: { eventoId: decretoEvento.id },
+        });
+      }
+
+      if (!baseResolucion) {
+        throw new UnprocessableEntityException(
+          `La resolución base de la solicitud ${dto.solicitudId} no tiene datos registrados. Complete la resolución del decreto antes de crear una prórroga.`,
+        );
+      }
+      if (!baseResolucion.fechaTerminoNueva) {
+        throw new UnprocessableEntityException(
+          `La resolución base de la solicitud ${dto.solicitudId} no tiene fecha de término (fechaTerminoNueva) registrada.`,
+        );
+      }
+
+      const newDays = dto.resolucion.plazoMonitoreoDias;
+      const fechaTerminoAnterior = baseResolucion.fechaTerminoNueva;
+      const baseDate = new Date(`${fechaTerminoAnterior}T12:00:00`);
+      baseDate.setDate(baseDate.getDate() + newDays);
+      const fechaTerminoNueva = [
+        baseDate.getFullYear(),
+        String(baseDate.getMonth() + 1).padStart(2, '0'),
+        String(baseDate.getDate()).padStart(2, '0'),
+      ].join('-');
+      const plazoAcumulado = (baseResolucion.plazoMonitoreoDias ?? 0) + newDays;
+
+      dto.resolucion.fechaTerminoAnterior = fechaTerminoAnterior;
+      dto.resolucion.fechaTerminoNueva = fechaTerminoNueva;
+      dto.resolucion.plazoMonitoreoDias = plazoAcumulado;
+
+      this.logger.log(
+        `Prórroga solicitud ${dto.solicitudId}: anterior=${fechaTerminoAnterior}, nueva=${fechaTerminoNueva}, plazo acumulado=${plazoAcumulado} días`,
+      );
+    }
+
     const esResolucion = [
       'DECRETO_MONITOREO_INICIAL',
       'PRORROGA_EXTENSION',
