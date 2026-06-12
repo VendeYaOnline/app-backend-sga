@@ -49,7 +49,7 @@ export class CargaLaboralController {
     description:
       'Retorna las métricas de carga laboral de un usuario con rol DMT: ' +
       'solicitudes asignadas, recepcionadas (RECEPCIONADA → REVISION_DMT), ' +
-      'derivadas a empresa (REVISION_DMT → ENVIAR_EMPRESA) y ' +
+      'derivadas a empresa (REVISION_DMT → REVISION_EMPRESA) y ' +
       'devueltas al solicitante (REVISION_DMT → DEVUELTA_SOLICITANTE).',
   })
   @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario DMT' })
@@ -70,7 +70,7 @@ export class CargaLaboralController {
     summary: 'Carga laboral — rol Empresa',
     description:
       'Retorna las métricas de carga laboral de un usuario con rol Empresa: ' +
-      'solicitudes gestionadas (ENVIAR_EMPRESA → INFORME_GENERADO) y ' +
+      'solicitudes gestionadas (REVISION_EMPRESA → INFORME_GENERADO) y ' +
       'conteo de respuestas de factibilidad emitidas (FACTIBLE, NO_FACTIBLE, NO_RECOMENDABLE).',
   })
   @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Empresa' })

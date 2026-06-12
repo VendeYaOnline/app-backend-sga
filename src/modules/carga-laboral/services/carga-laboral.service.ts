@@ -66,7 +66,7 @@ export class CargaLaboralService {
 
     const derivadasEmpresa = await sehBase.clone()
       .andWhere('ant.codigo = :ant', { ant: 'REVISION_DMT' })
-      .andWhere('nue.codigo = :nue', { nue: 'ENVIAR_EMPRESA' })
+      .andWhere('nue.codigo = :nue', { nue: 'REVISION_EMPRESA' })
       .getCount();
 
     const devueltas = await sehBase.clone()
@@ -88,13 +88,13 @@ export class CargaLaboralService {
       throw new NotFoundException(`Usuario con ID ${usuarioId} no encontrado`);
     }
 
-    // Registros SEH: ENVIAR_EMPRESA → INFORME_GENERADO por este usuario
+    // Registros SEH: REVISION_EMPRESA → INFORME_GENERADO por este usuario
     const sehQb = this.sehRepo
       .createQueryBuilder('seh')
       .innerJoin('seh.estadoAnterior', 'ant')
       .innerJoin('seh.estadoNuevo', 'nue')
       .where('seh.usuarioId = :uid', { uid: usuarioId })
-      .andWhere('ant.codigo = :ant', { ant: 'ENVIAR_EMPRESA' })
+      .andWhere('ant.codigo = :ant', { ant: 'REVISION_EMPRESA' })
       .andWhere('nue.codigo = :nue', { nue: 'INFORME_GENERADO' });
 
     if (fechaDesde) sehQb.andWhere('seh.fechaCambio >= :desde', { desde: fechaDesde });
