@@ -103,9 +103,16 @@ export class AgendamientoController {
     name: 'crsId',
     required: false,
     type: Number,
-    description: 'Filtrar por CRS ID',
+    description:
+      'Filtrar por CRS ID. Si el usuario tiene un CRS asignado, este filtro se ignora y siempre se aplica el CRS del usuario.',
   })
-  async findAll(@Query() filters: FindAgendamientoDto) {
+  async findAll(
+    @Query() filters: FindAgendamientoDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (user.crsId != null) {
+      filters.crsId = user.crsId;
+    }
     return this.agendamientoService.findAll(filters);
   }
 

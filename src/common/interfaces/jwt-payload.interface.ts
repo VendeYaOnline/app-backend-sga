@@ -4,4 +4,5 @@ export interface JwtPayload {
   email: string;
   roles: string[];
   permisos: string[];
+  crsId: number | null;
 }

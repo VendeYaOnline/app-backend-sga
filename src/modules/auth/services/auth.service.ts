@@ -102,6 +102,7 @@ export class AuthService {
       email: usuario.email,
       roles: roles.map((r) => r.codigo),
       permisos,
+      crsId: usuario.crsId,
     };
 
     const accessToken = this.jwtService.sign(payload);
