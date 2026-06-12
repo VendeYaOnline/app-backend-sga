@@ -94,8 +94,20 @@ export class AgendamientoService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
+    const solicitudIds = [
+      ...new Set(
+        data.map((a) => a.evento?.solicitudId).filter((id): id is number => id != null),
+      ),
+    ];
+    const resolucionMap = await this.getResolucionMonitoreo(solicitudIds);
+
+    const enrichedData = data.map((a) => ({
+      ...a,
+      resolucionMonitoreo: resolucionMap.get(a.evento?.solicitudId) ?? null,
+    }));
+
     return {
-      data,
+      data: enrichedData,
       meta: {
         total,
         page,
@@ -106,6 +118,18 @@ export class AgendamientoService {
   }
 
   async findOne(id: number) {
+    const agendamiento = await this.findOneEntity(id);
+    const resolucionMap = await this.getResolucionMonitoreo([
+      agendamiento.evento.solicitudId,
+    ]);
+    return {
+      ...agendamiento,
+      resolucionMonitoreo:
+        resolucionMap.get(agendamiento.evento.solicitudId) ?? null,
+    };
+  }
+
+  private async findOneEntity(id: number): Promise<Agendamiento> {
     const agendamiento = await this.agendamientoRepo.findOne({
       where: { id, deletedAt: IsNull() },
       relations: {
@@ -130,10 +154,7 @@ export class AgendamientoService {
     return agendamiento;
   }
 
-  async create(
-    dto: CreateAgendamientoDto,
-    userId: number,
-  ): Promise<Agendamiento> {
+  async create(dto: CreateAgendamientoDto, userId: number) {
     this.validarSujetoAgenda(dto);
 
     const agendamiento = this.agendamientoRepo.create({
@@ -152,7 +173,7 @@ export class AgendamientoService {
     dto: UpdateAgendamientoDto,
     userId: number,
   ): Promise<Agendamiento> {
-    const agendamiento = await this.findOne(id);
+    const agendamiento = await this.findOneEntity(id);
 
     if (agendamiento.tecnicoId !== null && dto.tecnicoId !== undefined) {
       throw new ConflictException(
@@ -212,7 +233,7 @@ export class AgendamientoService {
     },
     userId: number,
   ): Promise<Agendamiento> {
-    const agendamiento = await this.findOne(id);
+    const agendamiento = await this.findOneEntity(id);
     agendamiento.estadoAgenda = dto.estadoAgenda;
     agendamiento.updatedBy = userId;
     if (dto.regionId !== undefined) agendamiento.regionId = dto.regionId;
@@ -226,8 +247,8 @@ export class AgendamientoService {
     id: number,
     dto: UpdateProcesoAgendamientoDto,
     userId: number,
-  ): Promise<Agendamiento> {
-    await this.findOne(id);
+  ) {
+    await this.findOneEntity(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -307,8 +328,8 @@ export class AgendamientoService {
     id: number,
     dto: ReagendarAgendamientoDto,
     userId: number,
-  ): Promise<Agendamiento> {
-    const actual = await this.findOne(id);
+  ) {
+    const actual = await this.findOneEntity(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -421,6 +442,100 @@ export class AgendamientoService {
     return qb.getMany();
   }
 
+  private async getResolucionMonitoreo(solicitudIds: number[]): Promise<
+    Map<
+      number,
+      {
+        fechaTerminoNueva: string | null;
+        fechaTerminoAnterior: string | null;
+        plazoMonitoreoDias: number | null;
+        esProrroga: boolean;
+      } | null
+    >
+  > {
+    const map = new Map<
+      number,
+      {
+        fechaTerminoNueva: string | null;
+        fechaTerminoAnterior: string | null;
+        plazoMonitoreoDias: number | null;
+        esProrroga: boolean;
+      } | null
+    >();
+
+    if (solicitudIds.length === 0) return map;
+
+    const placeholders = solicitudIds.map((_, i) => `@${i}`).join(', ');
+    const sql = `
+      WITH ResolucionRanked AS (
+        SELECT
+          e.solicitud_id AS solicitudId,
+          r.fecha_termino_nueva AS fechaTerminoNueva,
+          r.fecha_termino_anterior AS fechaTerminoAnterior,
+          r.plazo_monitoreo_dias AS plazoMonitoreoDias,
+          tet.codigo AS tipoCodigo,
+          ROW_NUMBER() OVER (
+            PARTITION BY e.solicitud_id, tet.codigo
+            ORDER BY e.created_at DESC
+          ) AS rn
+        FROM sga.EVENTO e
+        INNER JOIN sga.RESOLUCION r ON r.evento_id = e.id
+        INNER JOIN sga.CAT_TIPO_EVENTO tet ON tet.id = e.tipo_evento_id
+        WHERE e.deleted_at IS NULL
+          AND tet.codigo IN ('DECRETO_MONITOREO_INICIAL', 'PRORROGA_EXTENSION')
+          AND e.solicitud_id IN (${placeholders})
+      )
+      SELECT * FROM ResolucionRanked WHERE rn = 1
+    `;
+
+    let rows: any[];
+    try {
+      rows = await this.dataSource.query(sql, solicitudIds);
+    } catch (error) {
+      this.logger.error(
+        'Error al obtener resolución de monitoreo',
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
+
+    const byId = new Map<number, { prorroga?: any; decreto?: any }>();
+    for (const row of rows) {
+      const solId = Number(row.solicitudId);
+      if (!byId.has(solId)) byId.set(solId, {});
+      const entry = byId.get(solId)!;
+      if (row.tipoCodigo === 'PRORROGA_EXTENSION') {
+        entry.prorroga = row;
+      } else {
+        entry.decreto = row;
+      }
+    }
+
+    for (const solId of solicitudIds) {
+      const entry = byId.get(solId);
+      if (!entry) {
+        map.set(solId, null);
+        continue;
+      }
+      const winner = entry.prorroga ?? entry.decreto;
+      if (!winner) {
+        map.set(solId, null);
+        continue;
+      }
+      map.set(solId, {
+        fechaTerminoNueva: winner.fechaTerminoNueva ?? null,
+        fechaTerminoAnterior: winner.fechaTerminoAnterior ?? null,
+        plazoMonitoreoDias:
+          winner.plazoMonitoreoDias != null
+            ? Number(winner.plazoMonitoreoDias)
+            : null,
+        esProrroga: !!entry.prorroga,
+      });
+    }
+
+    return map;
+  }
+
   async findTecnicosDisponibles(fecha: string) {
     const qb = this.agendamientoRepo
       .createQueryBuilder('a')
@@ -439,7 +554,7 @@ export class AgendamientoService {
   }
 
   async cerrar(id: number): Promise<Agendamiento> {
-    const agendamiento = await this.findOne(id);
+    const agendamiento = await this.findOneEntity(id);
 
     agendamiento.estaAbierto = false;
     await this.agendamientoRepo.save(agendamiento);
