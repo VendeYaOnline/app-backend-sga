@@ -162,21 +162,26 @@ export class SolicitudService {
 
     const solicitudIds = data.map((s) => s.id);
 
-    const latestHist = await this.estadoHistRepo
+    const allHist = await this.estadoHistRepo
       .createQueryBuilder('seh')
-      .innerJoinAndSelect('seh.estadoNuevo', 'estado')
+      .innerJoinAndSelect('seh.estadoNuevo', 'estadoNuevo')
+      .leftJoinAndSelect('seh.estadoAnterior', 'estadoAnterior')
       .leftJoinAndSelect('seh.usuario', 'u')
       .where('seh.solicitudId IN (:...ids)', { ids: solicitudIds })
-      .andWhere(
-        'seh.id = (SELECT TOP 1 seh2.id FROM sga.SOLICITUD_ESTADO_HIST seh2 WHERE seh2.solicitud_id = seh.solicitud_id ORDER BY seh2.fecha_cambio DESC)',
-      )
+      .orderBy('seh.solicitudId', 'ASC')
+      .addOrderBy('seh.fechaCambio', 'ASC')
       .getMany();
 
-    const histMap = new Map(latestHist.map((h) => [h.solicitudId, h]));
+    const histMap = new Map<number, SolicitudEstadoHist[]>();
+    for (const h of allHist) {
+      const arr = histMap.get(h.solicitudId) ?? [];
+      arr.push(h);
+      histMap.set(h.solicitudId, arr);
+    }
 
     const enrichedData = data.map((s) => ({
       ...s,
-      ultimoHistorialEstado: histMap.get(s.id) ?? null,
+      historialEstados: histMap.get(s.id) ?? [],
     }));
 
     return {
