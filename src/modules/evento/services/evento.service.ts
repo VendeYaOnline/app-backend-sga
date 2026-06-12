@@ -366,7 +366,7 @@ export class EventoService {
           where: {
             solicitudId: In(solicitudIdsAprobado),
             tipoEventoId: In(tiposAprobadoUnicoIds),
-            estadoEvento: 'APROBADO',
+            estadoEvento: 'COMPLETADO',
             deletedAt: IsNull(),
           },
         });
@@ -375,7 +375,7 @@ export class EventoService {
           const primero = aprobadosExistentes[0];
           const tipo = tipoMap.get(primero.tipoEventoId)!;
           throw new ConflictException(
-            `La solicitud ${primero.solicitudId} ya tiene un evento de tipo "${tipo.descripcionEvento}" en estado APROBADO (ID: ${primero.id})`,
+            `La solicitud ${primero.solicitudId} ya tiene un evento de tipo "${tipo.descripcionEvento}" en estado COMPLETADO (ID: ${primero.id})`,
           );
         }
       }
@@ -416,7 +416,7 @@ export class EventoService {
             where: {
               solicitudId: In(solicitudesAValidar),
               tipoEventoId: In(tipoIdsConsulta),
-              estadoEvento: 'APROBADO',
+              estadoEvento: 'COMPLETADO',
               deletedAt: IsNull(),
             },
           });
@@ -435,7 +435,7 @@ export class EventoService {
           for (const dto of dtosDesinstalacion) {
             if (!solicitudesConInstalacion.has(dto.solicitudId)) {
               throw new ConflictException(
-                `No se puede crear un evento de desinstalación para la solicitud ${dto.solicitudId} porque no existe un evento de instalación previo en estado APROBADO`,
+                `No se puede crear un evento de desinstalación para la solicitud ${dto.solicitudId} porque no existe un evento de instalación previo en estado COMPLETADO`,
               );
             }
           }
@@ -443,7 +443,7 @@ export class EventoService {
           for (const dto of dtosSoporte) {
             if (!solicitudesConInstalacion.has(dto.solicitudId)) {
               throw new ConflictException(
-                `No se puede crear un evento de soporte para la solicitud ${dto.solicitudId} porque no existe un evento de instalación previo en estado APROBADO`,
+                `No se puede crear un evento de soporte para la solicitud ${dto.solicitudId} porque no existe un evento de instalación previo en estado COMPLETADO`,
               );
             }
             if (solicitudesConDesinstalacion.has(dto.solicitudId)) {
