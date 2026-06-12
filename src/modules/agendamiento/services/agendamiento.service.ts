@@ -10,6 +10,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
 import { FindAgendamientoDto } from '../dto/find-agendamiento.dto';
 import { Agendamiento } from '../entities/agendamiento.entity';
+import { Evento } from '../../evento/entities/evento.entity';
 import { Proceso } from '../../evento/entities/proceso.entity';
 import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
 import { AccionUsuario } from '../../carga-laboral/entities/accion-usuario.entity';
@@ -556,11 +557,32 @@ export class AgendamientoService {
   async cerrar(id: number): Promise<Agendamiento> {
     const agendamiento = await this.findOneEntity(id);
 
-    agendamiento.estaAbierto = false;
-    await this.agendamientoRepo.save(agendamiento);
-    this.logger.log(
-      `Agendamiento ${id}: estaAbierto = false (cerrado manualmente)`,
-    );
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      agendamiento.estaAbierto = false;
+      await queryRunner.manager.save(agendamiento);
+
+      await queryRunner.manager.update(Evento, agendamiento.eventoId, {
+        estadoEvento: 'APROBADO',
+      });
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Agendamiento ${id} cerrado y evento ${agendamiento.eventoId} → APROBADO`,
+      );
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(
+        `Error al cerrar agendamiento ${id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
 
     return agendamiento;
   }
