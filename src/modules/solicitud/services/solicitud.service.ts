@@ -140,6 +140,27 @@ export class SolicitudService {
         hasta: `${where.fechaHasta} 23:59:59`,
       });
 
+    if (where.sinDecretoMonitoreo === 'true') {
+      qb.andWhere(`NOT EXISTS (
+        SELECT 1 FROM sga.EVENTO ev
+        INNER JOIN sga.CAT_TIPO_EVENTO tet ON tet.id = ev.tipo_evento_id
+        WHERE ev.solicitud_id = s.id
+          AND ev.deleted_at IS NULL
+          AND tet.codigo = 'DECRETO_MONITOREO_INICIAL'
+      )`);
+    }
+
+    if (where.decretoMonitoreoCompletado === 'true') {
+      qb.andWhere(`EXISTS (
+        SELECT 1 FROM sga.EVENTO ev
+        INNER JOIN sga.CAT_TIPO_EVENTO tet ON tet.id = ev.tipo_evento_id
+        WHERE ev.solicitud_id = s.id
+          AND ev.deleted_at IS NULL
+          AND tet.codigo = 'DECRETO_MONITOREO_INICIAL'
+          AND ev.estado_evento = 'COMPLETADO'
+      )`);
+    }
+
     const allowedSortColumns = [
       'createdAt',
       'updatedAt',

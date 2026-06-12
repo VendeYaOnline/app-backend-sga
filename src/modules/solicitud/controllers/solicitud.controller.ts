@@ -150,6 +150,18 @@ export class SolicitudController {
     type: String,
     description: 'Dirección del ordenamiento (ASC o DESC, default: DESC)',
   })
+  @ApiQuery({
+    name: 'sinDecretoMonitoreo',
+    required: false,
+    enum: ['true', 'false'],
+    description: 'true = solo solicitudes SIN evento Decreta Monitoreo',
+  })
+  @ApiQuery({
+    name: 'decretoMonitoreoCompletado',
+    required: false,
+    enum: ['true', 'false'],
+    description: 'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
+  })
   @ApiResponse({ status: 200, description: 'Lista paginada de solicitudes' })
   async findAll(@Query() filters: FindSolicitudDto) {
     return this.solicitudService.findAll(filters);

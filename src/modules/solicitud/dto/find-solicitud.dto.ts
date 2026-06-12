@@ -91,4 +91,18 @@ export class FindSolicitudDto extends PaginationDto {
   @IsOptional()
   @IsDateString()
   fechaHasta?: string;
+
+  @ApiPropertyOptional({
+    description: 'true = solo solicitudes SIN evento Decreta Monitoreo',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  sinDecretoMonitoreo?: string;
+
+  @ApiPropertyOptional({
+    description: 'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  decretoMonitoreoCompletado?: string;
 }
