@@ -554,7 +554,7 @@ export class AgendamientoService {
     return { ocupados, idsOcupados };
   }
 
-  async cerrar(id: number): Promise<Agendamiento> {
+  async cerrar(id: number, userId: number): Promise<Agendamiento> {
     const agendamiento = await this.findOneEntity(id);
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -563,15 +563,57 @@ export class AgendamientoService {
 
     try {
       agendamiento.estaAbierto = false;
+      agendamiento.updatedBy = userId;
       await queryRunner.manager.save(agendamiento);
 
       await queryRunner.manager.update(Evento, agendamiento.eventoId, {
         estadoEvento: 'APROBADO',
+        updatedBy: userId,
       });
+
+      // Verificar si todos los eventos INSTALACION de la solicitud ya están APROBADOS
+      const solicitudId = agendamiento.evento.solicitudId;
+      const [stats] = await queryRunner.manager.query<
+        { total: string; aprobadas: string }[]
+      >(
+        `SELECT
+           COUNT(*) AS total,
+           SUM(CASE WHEN e.estado_evento = 'APROBADO' THEN 1 ELSE 0 END) AS aprobadas
+         FROM sga.EVENTO e
+         INNER JOIN sga.CAT_TIPO_EVENTO tet ON tet.id = e.tipo_evento_id
+         WHERE e.solicitud_id = @0
+           AND e.deleted_at IS NULL
+           AND tet.codigo = 'INSTALACION'`,
+        [solicitudId],
+      );
+
+      if (
+        Number(stats.total) > 0 &&
+        Number(stats.total) === Number(stats.aprobadas)
+      ) {
+        const [decretoRow] = await queryRunner.manager.query<{ id: number }[]>(
+          `SELECT e.id FROM sga.EVENTO e
+           INNER JOIN sga.CAT_TIPO_EVENTO tet ON tet.id = e.tipo_evento_id
+           WHERE e.solicitud_id = @0
+             AND e.deleted_at IS NULL
+             AND tet.codigo = 'DECRETO_MONITOREO_INICIAL'`,
+          [solicitudId],
+        );
+
+        if (decretoRow) {
+          await queryRunner.manager.update(Evento, decretoRow.id, {
+            estadoEvento: 'APROBADO',
+            updatedBy: userId,
+          });
+          this.logger.log(
+            `Evento Decreto Monitoreo ${decretoRow.id} → APROBADO (todas las instalaciones completadas para solicitud ${solicitudId})`,
+          );
+        }
+      }
 
       await queryRunner.commitTransaction();
       this.logger.log(
-        `Agendamiento ${id} cerrado y evento ${agendamiento.eventoId} → APROBADO`,
+        `Agendamiento ${id} cerrado y evento ${agendamiento.eventoId} → APROBADO por usuario ${userId}`,
       );
     } catch (error) {
       await queryRunner.rollbackTransaction();

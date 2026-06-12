@@ -263,8 +263,11 @@ export class AgendamientoController {
   })
   @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
   @ApiParam({ name: 'id', type: Number, description: 'ID del agendamiento' })
-  async cerrar(@Param('id', ParseIntPipe) id: number) {
-    return this.agendamientoService.cerrar(id);
+  async cerrar(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.agendamientoService.cerrar(id, user.sub);
   }
 
   @Post(':id/reagendar')
