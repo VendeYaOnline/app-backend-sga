@@ -96,6 +96,7 @@ export class EventoService {
       .leftJoinAndSelect('e.solicitud', 's')
       .leftJoinAndSelect('s.condenado', 'c')
       .leftJoinAndSelect('e.asignado', 'a')
+      .leftJoinAndMapOne('e.resolucion', Resolucion, 'res', 'res.evento_id = e.id')
       .where('e.deletedAt IS NULL');
 
     if (solicitudId) qb.andWhere('e.solicitudId = :sid', { sid: solicitudId });
@@ -667,10 +668,14 @@ export class EventoService {
       );
     }
 
+    const estadoInicial = ['PRORROGA_EXTENSION', 'CESE_CONTROL'].includes(codigo)
+      ? 'APROBADO'
+      : 'PENDIENTE';
+
     const evento = manager.create(Evento, {
       tipoEventoId: dto.tipoEventoId,
       solicitudId: dto.solicitudId,
-      estadoEvento: 'PENDIENTE',
+      estadoEvento: estadoInicial,
       origenCreacion: dto.origenCreacion || 'FORMULARIO_WEB',
       fechaEvento: dto.fechaEvento ? new Date(dto.fechaEvento) : new Date(),
       asignadoA: dto.asignadoA,
