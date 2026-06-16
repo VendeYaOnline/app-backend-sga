@@ -24,6 +24,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { ArchivoService } from '../services/archivo.service';
+import { UploadArchivoDto } from '../dto/upload-archivo.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { PermisosGuard } from '../../../common/guards/permisos.guard';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
@@ -53,6 +54,7 @@ export class ArchivoController {
     description: 'Archivo a subir con metadatos',
     schema: {
       type: 'object',
+      required: ['file', 'entidad', 'entidadId', 'propositoId'],
       properties: {
         file: { type: 'string', format: 'binary' },
         entidad: { type: 'string' },
@@ -63,16 +65,14 @@ export class ArchivoController {
   })
   async upload(
     @UploadedFile() file: Express.Multer.File,
-    @Body('entidad') entidad: string,
-    @Body('entidadId') entidadId: string,
-    @Body('propositoId') propositoId: string,
+    @Body() dto: UploadArchivoDto,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.archivoService.upload(
       file,
-      entidad,
-      parseInt(entidadId, 10),
-      parseInt(propositoId, 10),
+      dto.entidad,
+      dto.entidadId,
+      dto.propositoId,
       user.sub,
     );
   }

@@ -12,6 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,8 @@ import {
   ApiConsumes,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { SolicitudService } from '../services/solicitud.service';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
@@ -242,7 +245,29 @@ export class SolicitudController {
     @Body('solicitudData') solicitudData: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    const dto: CreateSolicitudDto = JSON.parse(solicitudData);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(solicitudData);
+    } catch {
+      throw new BadRequestException(
+        'solicitudData no es un JSON válido',
+      );
+    }
+
+    const dto = plainToInstance(CreateSolicitudDto, parsed);
+    const errors = validateSync(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    if (errors.length > 0) {
+      const messages = errors.flatMap((e) =>
+        Object.values(e.constraints ?? {}),
+      );
+      throw new BadRequestException(
+        messages.length > 0 ? messages : 'Datos de solicitud inválidos',
+      );
+    }
+
     return this.solicitudService.create(
       dto,
       user.sub,
