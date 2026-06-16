@@ -279,10 +279,12 @@ export class SolicitudController {
 
   @Put(':id')
   @RequirePermiso(PERMISOS.SOLICITUD_EDITAR)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('documento'))
   @ApiOperation({
     summary: 'Editar datos generales de la solicitud',
     description:
-      'Modifica los datos básicos de una solicitud existente (tribunal, condenado, CRS, causas, etc.)',
+      'Modifica los datos básicos de una solicitud existente (tribunal, condenado, CRS, causas, etc.). Opcionalmente reemplaza el documento PDF de la solicitud.',
   })
   @ApiParam({ name: 'id', description: 'ID de la solicitud', type: Number })
   @ApiResponse({
@@ -291,13 +293,55 @@ export class SolicitudController {
   })
   @ApiResponse({ status: 400, description: 'Datos inválidos' })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
-  @ApiBody({ type: UpdateSolicitudDto })
+  @ApiResponse({ status: 422, description: 'Solicitud no editable en su estado actual' })
+  @ApiBody({
+    description: 'Datos a modificar de la solicitud y documento opcional',
+    schema: {
+      type: 'object',
+      required: ['solicitudData'],
+      properties: {
+        solicitudData: {
+          type: 'string',
+          description: 'JSON serializado con los campos definidos en UpdateSolicitudDto. Solo se envían los campos que se desean modificar. Ej: {"tribunalId":3,"crsId":2}',
+        },
+        documento: {
+          type: 'string',
+          format: 'binary',
+          description: 'Archivo PDF opcional. Si se envía, reemplaza el documento anterior de la solicitud (la referencia anterior recibe soft-delete).',
+        },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateSolicitudDto,
+    @UploadedFile() documento: Express.Multer.File,
+    @Body('solicitudData') solicitudData: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.solicitudService.update(id, dto, user.sub);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(solicitudData);
+    } catch {
+      throw new BadRequestException(
+        'solicitudData no es un JSON válido',
+      );
+    }
+
+    const dto = plainToInstance(UpdateSolicitudDto, parsed);
+    const errors = validateSync(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    if (errors.length > 0) {
+      const messages = errors.flatMap((e) =>
+        Object.values(e.constraints ?? {}),
+      );
+      throw new BadRequestException(
+        messages.length > 0 ? messages : 'Datos de solicitud inválidos',
+      );
+    }
+
+    return this.solicitudService.update(id, dto, user.sub, documento);
   }
 
   @Delete(':id')

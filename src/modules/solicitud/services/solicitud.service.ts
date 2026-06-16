@@ -685,6 +685,7 @@ export class SolicitudService {
     id: number,
     dto: UpdateSolicitudDto,
     userId: number,
+    documento?: Express.Multer.File,
   ): Promise<Solicitud> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -729,6 +730,28 @@ export class SolicitudService {
       } = dto;
       Object.assign(solicitud, scalarFields, { updatedBy: userId });
       await manager.save(solicitud);
+
+      if (documento) {
+        const refExistente = await manager.findOne(ArchivoReferencia, {
+          where: {
+            entidad: 'SOLICITUD',
+            entidadId: id,
+            propositoId: PROPOSITO_DOCUMENTO_SOLICITUD,
+            deletedAt: IsNull(),
+          },
+        });
+
+        if (refExistente) {
+          refExistente.deletedAt = new Date();
+          refExistente.deletedBy = userId;
+          await manager.save(refExistente);
+          this.logger.log(
+            `Documento anterior de solicitud ${id} marcado como reemplazado (ref ${refExistente.id})`,
+          );
+        }
+
+        await this.guardarDocumentoSolicitud(manager, documento, id, userId);
+      }
 
       if (delitoIds !== undefined) {
         await manager.delete(SolicitudDelito, { solicitudId: id });
