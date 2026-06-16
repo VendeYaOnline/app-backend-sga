@@ -524,8 +524,14 @@ export class EventoController {
       'Crea un EVENTO de tipo CAMBIO_DOMICILIO en estado PENDIENTE junto con su registro en RESOLUCION_CAMBIO_DOMICILIO. El coordinador deberá gestionarlo posteriormente con el endpoint de gestión.',
   })
   @ApiBody({ type: CreateCambioDomicilioDto })
-  @ApiResponse({ status: 201, description: 'Evento de cambio de domicilio creado' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o tipo de evento no configurado' })
+  @ApiResponse({
+    status: 201,
+    description: 'Evento de cambio de domicilio creado',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Datos inválidos o tipo de evento no configurado',
+  })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
   async createCambioDomicilio(
     @Body() dto: CreateCambioDomicilioDto,
@@ -541,12 +547,29 @@ export class EventoController {
     description:
       'El coordinador aporta las nuevas zonas del domicilio. Se crea una copia de la solicitud original con las nuevas zonas, copiando delitos y víctimas. El evento pasa a estado COMPLETADO.',
   })
-  @ApiParam({ name: 'eventoId', type: Number, description: 'ID del evento de tipo CAMBIO_DOMICILIO' })
+  @ApiParam({
+    name: 'eventoId',
+    type: Number,
+    description: 'ID del evento de tipo CAMBIO_DOMICILIO',
+  })
   @ApiBody({ type: GestionarCambioDomicilioDto })
-  @ApiResponse({ status: 200, description: 'Cambio de domicilio gestionado. Retorna el evento actualizado y la solicitud copia generada.' })
-  @ApiResponse({ status: 400, description: 'El evento no es de tipo CAMBIO_DOMICILIO' })
-  @ApiResponse({ status: 404, description: 'Evento o solicitud original no encontrada' })
-  @ApiResponse({ status: 409, description: 'El evento no está en estado PENDIENTE o ya fue gestionado' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Cambio de domicilio gestionado. Retorna el evento actualizado y la solicitud copia generada.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'El evento no es de tipo CAMBIO_DOMICILIO',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Evento o solicitud original no encontrada',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'El evento no está en estado PENDIENTE o ya fue gestionado',
+  })
   async gestionarCambioDomicilio(
     @Param('eventoId', ParseIntPipe) eventoId: number,
     @Body() dto: GestionarCambioDomicilioDto,

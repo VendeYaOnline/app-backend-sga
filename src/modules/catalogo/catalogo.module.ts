@@ -28,6 +28,7 @@ import { CatTipoHorario } from './entities/cat-tipo-horario.entity';
 import { CatEstadoSolicitud } from './entities/cat-estado-solicitud.entity';
 import { CatEstadoSolicitudTransicion } from './entities/cat-estado-solicitud-transicion.entity';
 import { CatTipoFactibilidad } from './entities/cat-tipo-factibilidad.entity';
+import { CatPropositoArchivo } from './entities/cat-proposito-archivo.entity';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { CatTipoFactibilidad } from './entities/cat-tipo-factibilidad.entity';
       CatEstadoSolicitud,
       CatEstadoSolicitudTransicion,
       CatTipoFactibilidad,
+      CatPropositoArchivo,
     ]),
   ],
   controllers: [CatalogoController],

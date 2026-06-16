@@ -9,7 +9,9 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCambioDomicilioDto {
-  @ApiProperty({ description: 'ID de la solicitud a la que pertenece el evento' })
+  @ApiProperty({
+    description: 'ID de la solicitud a la que pertenece el evento',
+  })
   @IsInt()
   solicitudId: number;
 
@@ -22,24 +24,32 @@ export class CreateCambioDomicilioDto {
   subtipoCambio?: string;
 
   @ApiPropertyOptional({
-    description: 'Evaluación preliminar de factibilidad (la definitiva queda en SOLICITUD_FACTIBILIDAD)',
+    description:
+      'Evaluación preliminar de factibilidad (la definitiva queda en SOLICITUD_FACTIBILIDAD)',
     enum: ['FACTIBLE', 'NO_FACTIBLE', 'NO_RECOMENDABLE'],
   })
   @IsOptional()
   @IsIn(['FACTIBLE', 'NO_FACTIBLE', 'NO_RECOMENDABLE'])
   factibilidadCd?: string;
 
-  @ApiPropertyOptional({ description: 'ID del motivo de no factibilidad (FK a CAT_MOTIVO_NO_FACTIBLE)' })
+  @ApiPropertyOptional({
+    description:
+      'ID del motivo de no factibilidad (FK a CAT_MOTIVO_NO_FACTIBLE)',
+  })
   @IsOptional()
   @IsInt()
   motivoNoFactibleId?: number;
 
-  @ApiPropertyOptional({ description: 'Indica si se solicita revalidar el cambio de domicilio' })
+  @ApiPropertyOptional({
+    description: 'Indica si se solicita revalidar el cambio de domicilio',
+  })
   @IsOptional()
   @IsBoolean()
   revalidar?: boolean;
 
-  @ApiPropertyOptional({ description: 'Fecha del evento (YYYY-MM-DD). Por defecto, fecha actual.' })
+  @ApiPropertyOptional({
+    description: 'Fecha del evento (YYYY-MM-DD). Por defecto, fecha actual.',
+  })
   @IsOptional()
   @IsDateString()
   fechaEvento?: string;

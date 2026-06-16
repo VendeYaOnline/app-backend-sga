@@ -5,7 +5,8 @@ import { CreateZonaDto } from '../../solicitud/dto/create-solicitud.dto';
 
 export class GestionarCambioDomicilioDto {
   @ApiProperty({
-    description: 'Nuevas zonas del domicilio. Deben ser las zonas del nuevo domicilio, no las de la solicitud original.',
+    description:
+      'Nuevas zonas del domicilio. Deben ser las zonas del nuevo domicilio, no las de la solicitud original.',
     type: [CreateZonaDto],
     minItems: 1,
   })

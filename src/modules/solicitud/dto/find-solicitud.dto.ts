@@ -72,7 +72,9 @@ export class FindSolicitudDto extends PaginationDto {
   @IsString()
   origenCreacion?: string;
 
-  @ApiPropertyOptional({ description: 'Buscar por nombres del condenado (búsqueda parcial)' })
+  @ApiPropertyOptional({
+    description: 'Buscar por nombres del condenado (búsqueda parcial)',
+  })
   @IsOptional()
   @IsString()
   nombresCondenado?: string;
@@ -100,7 +102,8 @@ export class FindSolicitudDto extends PaginationDto {
   sinDecretoMonitoreo?: string;
 
   @ApiPropertyOptional({
-    description: 'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
+    description:
+      'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
   })
   @IsOptional()
   @IsIn(['true', 'false'])

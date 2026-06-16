@@ -97,7 +97,9 @@ export class AgendamientoService {
 
     const solicitudIds = [
       ...new Set(
-        data.map((a) => a.evento?.solicitudId).filter((id): id is number => id != null),
+        data
+          .map((a) => a.evento?.solicitudId)
+          .filter((id): id is number => id != null),
       ),
     ];
     const resolucionMap = await this.getResolucionMonitoreo(solicitudIds);
@@ -325,11 +327,7 @@ export class AgendamientoService {
     return this.findOne(id);
   }
 
-  async reagendar(
-    id: number,
-    dto: ReagendarAgendamientoDto,
-    userId: number,
-  ) {
+  async reagendar(id: number, dto: ReagendarAgendamientoDto, userId: number) {
     const actual = await this.findOneEntity(id);
 
     const queryRunner = this.dataSource.createQueryRunner();

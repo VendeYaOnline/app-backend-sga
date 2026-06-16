@@ -126,7 +126,11 @@ export class Solicitud {
   @Column({ name: 'nomenclatura_pjud_id', type: 'bigint', nullable: true })
   nomenclaturaPjudId: number | null;
 
-  @Column({ name: 'usuario_solicitante_pjud_id', type: 'bigint', nullable: true })
+  @Column({
+    name: 'usuario_solicitante_pjud_id',
+    type: 'bigint',
+    nullable: true,
+  })
   usuarioSolicitantePjudId: number | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime2' })

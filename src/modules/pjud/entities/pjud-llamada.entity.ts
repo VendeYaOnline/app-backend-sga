@@ -65,7 +65,12 @@ export class PjudLlamada {
   })
   errorDesc: string | null;
 
-  @Column({ name: 'folio_externo', type: 'nvarchar', length: 100, nullable: true })
+  @Column({
+    name: 'folio_externo',
+    type: 'nvarchar',
+    length: 100,
+    nullable: true,
+  })
   folioExterno: string | null;
 
   @Column({ name: 'intentos', type: 'int', default: 0 })

@@ -56,25 +56,34 @@ export class CargaLaboralService {
       .innerJoin('seh.estadoNuevo', 'nue')
       .where('seh.usuarioId = :uid', { uid: usuarioId });
 
-    if (fechaDesde) sehBase.andWhere('seh.fechaCambio >= :desde', { desde: fechaDesde });
-    if (fechaHasta) sehBase.andWhere('seh.fechaCambio <= :hasta', { hasta: `${fechaHasta} 23:59:59` });
+    if (fechaDesde)
+      sehBase.andWhere('seh.fechaCambio >= :desde', { desde: fechaDesde });
+    if (fechaHasta)
+      sehBase.andWhere('seh.fechaCambio <= :hasta', {
+        hasta: `${fechaHasta} 23:59:59`,
+      });
 
-    const recepcionadas = await sehBase.clone()
+    const recepcionadas = await sehBase
+      .clone()
       .andWhere('ant.codigo = :ant', { ant: 'RECEPCIONADA' })
       .andWhere('nue.codigo = :nue', { nue: 'REVISION_DMT' })
       .getCount();
 
-    const derivadasEmpresa = await sehBase.clone()
+    const derivadasEmpresa = await sehBase
+      .clone()
       .andWhere('ant.codigo = :ant', { ant: 'REVISION_DMT' })
       .andWhere('nue.codigo = :nue', { nue: 'REVISION_EMPRESA' })
       .getCount();
 
-    const devueltas = await sehBase.clone()
+    const devueltas = await sehBase
+      .clone()
       .andWhere('ant.codigo = :ant', { ant: 'REVISION_DMT' })
       .andWhere('nue.codigo = :nue', { nue: 'DEVUELTA_SOLICITANTE' })
       .getCount();
 
-    this.logger.log(`findDmt: carga laboral del usuario DMT ${usuarioId} retornada`);
+    this.logger.log(
+      `findDmt: carga laboral del usuario DMT ${usuarioId} retornada`,
+    );
     return { solicitudesAsignadas, recepcionadas, derivadasEmpresa, devueltas };
   }
 
@@ -97,16 +106,28 @@ export class CargaLaboralService {
       .andWhere('ant.codigo = :ant', { ant: 'REVISION_EMPRESA' })
       .andWhere('nue.codigo = :nue', { nue: 'INFORME_GENERADO' });
 
-    if (fechaDesde) sehQb.andWhere('seh.fechaCambio >= :desde', { desde: fechaDesde });
-    if (fechaHasta) sehQb.andWhere('seh.fechaCambio <= :hasta', { hasta: `${fechaHasta} 23:59:59` });
+    if (fechaDesde)
+      sehQb.andWhere('seh.fechaCambio >= :desde', { desde: fechaDesde });
+    if (fechaHasta)
+      sehQb.andWhere('seh.fechaCambio <= :hasta', {
+        hasta: `${fechaHasta} 23:59:59`,
+      });
 
     const sehRecords = await sehQb.getMany();
     const solicitudIds = [...new Set(sehRecords.map((r) => r.solicitudId))];
     const total = solicitudIds.length;
 
     if (!total) {
-      this.logger.log(`findEmpresa: usuario ${usuarioId} sin solicitudes gestionadas en el período`);
-      return { total: 0, FACTIBLE: 0, NO_FACTIBLE: 0, NO_RECOMENDABLE: 0, sinFactibilidad: 0 };
+      this.logger.log(
+        `findEmpresa: usuario ${usuarioId} sin solicitudes gestionadas en el período`,
+      );
+      return {
+        total: 0,
+        FACTIBLE: 0,
+        NO_FACTIBLE: 0,
+        NO_RECOMENDABLE: 0,
+        sinFactibilidad: 0,
+      };
     }
 
     const factibilidades = await this.solicitudFactibilidadRepo
@@ -115,8 +136,12 @@ export class CargaLaboralService {
       .where('sf.solicitudId IN (:...ids)', { ids: solicitudIds })
       .getMany();
 
-    const conFactibilidadIds = new Set(factibilidades.map((f) => f.solicitudId));
-    const sinFactibilidad = solicitudIds.filter((id) => !conFactibilidadIds.has(id)).length;
+    const conFactibilidadIds = new Set(
+      factibilidades.map((f) => f.solicitudId),
+    );
+    const sinFactibilidad = solicitudIds.filter(
+      (id) => !conFactibilidadIds.has(id),
+    ).length;
 
     let factible = 0;
     let noFactible = 0;
@@ -128,8 +153,16 @@ export class CargaLaboralService {
       else if (codigo === 'NO_RECOMENDABLE') noRecomendable++;
     }
 
-    this.logger.log(`findEmpresa: carga laboral del usuario Empresa ${usuarioId} retornada`);
-    return { total, FACTIBLE: factible, NO_FACTIBLE: noFactible, NO_RECOMENDABLE: noRecomendable, sinFactibilidad };
+    this.logger.log(
+      `findEmpresa: carga laboral del usuario Empresa ${usuarioId} retornada`,
+    );
+    return {
+      total,
+      FACTIBLE: factible,
+      NO_FACTIBLE: noFactible,
+      NO_RECOMENDABLE: noRecomendable,
+      sinFactibilidad,
+    };
   }
 
   async findCoordinador(usuarioId: number, filters: FindCargaLaboralFechasDto) {
@@ -152,39 +185,73 @@ export class CargaLaboralService {
       .andWhere('te.codigo IN (:...tipos)', { tipos: tiposEvento })
       .andWhere('a.deletedAt IS NULL');
 
-    if (fechaDesde) base.andWhere('a.createdAt >= :desde', { desde: fechaDesde });
-    if (fechaHasta) base.andWhere('a.createdAt <= :hasta', { hasta: `${fechaHasta} 23:59:59` });
+    if (fechaDesde)
+      base.andWhere('a.createdAt >= :desde', { desde: fechaDesde });
+    if (fechaHasta)
+      base.andWhere('a.createdAt <= :hasta', {
+        hasta: `${fechaHasta} 23:59:59`,
+      });
 
     const total = await base.clone().getCount();
-    const reprogramados = await base.clone().andWhere('a.numeroIntento > 1').getCount();
-    const abiertos = await base.clone().andWhere('a.estaAbierto = 1').getCount();
-    const cerrados = await base.clone().andWhere('a.estaAbierto = 0').getCount();
+    const reprogramados = await base
+      .clone()
+      .andWhere('a.numeroIntento > 1')
+      .getCount();
+    const abiertos = await base
+      .clone()
+      .andWhere('a.estaAbierto = 1')
+      .getCount();
+    const cerrados = await base
+      .clone()
+      .andWhere('a.estaAbierto = 0')
+      .getCount();
 
-    const porTipoRaw: { tipo: string; cantidad: string }[] = await base.clone()
+    const porTipoRaw: { tipo: string; cantidad: string }[] = await base
+      .clone()
       .select('te.codigo', 'tipo')
       .addSelect('COUNT(a.id)', 'cantidad')
       .groupBy('te.codigo')
       .getRawMany();
 
-    const porTipo: Record<string, number> = { INSTALACION: 0, SOPORTE: 0, DESINSTALACION: 0 };
+    const porTipo: Record<string, number> = {
+      INSTALACION: 0,
+      SOPORTE: 0,
+      DESINSTALACION: 0,
+    };
     for (const row of porTipoRaw) {
       porTipo[row.tipo] = Number(row.cantidad);
     }
 
-    const porEstadoRaw: { estado: string; cantidad: string }[] = await base.clone()
+    const porEstadoRaw: { estado: string; cantidad: string }[] = await base
+      .clone()
       .select('a.estadoAgenda', 'estado')
       .addSelect('COUNT(a.id)', 'cantidad')
-      .andWhere('a.estadoAgenda IN (:...estados)', { estados: ['EN_PROCESO', 'COMPLETADO', 'NO_REALIZADO'] })
+      .andWhere('a.estadoAgenda IN (:...estados)', {
+        estados: ['EN_PROCESO', 'COMPLETADO', 'NO_REALIZADO'],
+      })
       .groupBy('a.estadoAgenda')
       .getRawMany();
 
-    const porEstadoAgenda: Record<string, number> = { EN_PROCESO: 0, COMPLETADO: 0, NO_REALIZADO: 0 };
+    const porEstadoAgenda: Record<string, number> = {
+      EN_PROCESO: 0,
+      COMPLETADO: 0,
+      NO_REALIZADO: 0,
+    };
     for (const row of porEstadoRaw) {
       porEstadoAgenda[row.estado] = Number(row.cantidad);
     }
 
-    this.logger.log(`findCoordinador: carga laboral del Coordinador ${usuarioId} retornada`);
-    return { total, porTipo, reprogramados, abiertos, cerrados, porEstadoAgenda };
+    this.logger.log(
+      `findCoordinador: carga laboral del Coordinador ${usuarioId} retornada`,
+    );
+    return {
+      total,
+      porTipo,
+      reprogramados,
+      abiertos,
+      cerrados,
+      porEstadoAgenda,
+    };
   }
 
   async findTecnico(usuarioId: number, filters: FindCargaLaboralFechasDto) {
@@ -207,38 +274,52 @@ export class CargaLaboralService {
       .andWhere('te.codigo IN (:...tipos)', { tipos: tiposEvento })
       .andWhere('a.deletedAt IS NULL');
 
-    if (fechaDesde) base.andWhere('a.createdAt >= :desde', { desde: fechaDesde });
-    if (fechaHasta) base.andWhere('a.createdAt <= :hasta', { hasta: `${fechaHasta} 23:59:59` });
+    if (fechaDesde)
+      base.andWhere('a.createdAt >= :desde', { desde: fechaDesde });
+    if (fechaHasta)
+      base.andWhere('a.createdAt <= :hasta', {
+        hasta: `${fechaHasta} 23:59:59`,
+      });
 
     const total = await base.clone().getCount();
 
-    const porTipoRaw: { tipo: string; cantidad: string }[] = await base.clone()
+    const porTipoRaw: { tipo: string; cantidad: string }[] = await base
+      .clone()
       .select('te.codigo', 'tipo')
       .addSelect('COUNT(a.id)', 'cantidad')
       .groupBy('te.codigo')
       .getRawMany();
 
-    const porTipo: Record<string, number> = { INSTALACION: 0, SOPORTE: 0, DESINSTALACION: 0 };
+    const porTipo: Record<string, number> = {
+      INSTALACION: 0,
+      SOPORTE: 0,
+      DESINSTALACION: 0,
+    };
     for (const row of porTipoRaw) {
       porTipo[row.tipo] = Number(row.cantidad);
     }
 
     // Agendamientos que tienen proceso registrado
-    const ejecutados = await base.clone()
+    const ejecutados = await base
+      .clone()
       .innerJoin('a.proceso', 'p')
       .getCount();
 
-    const realizados = await base.clone()
+    const realizados = await base
+      .clone()
       .innerJoin('a.proceso', 'p')
       .andWhere('p.realizado = 1')
       .getCount();
 
-    const noRealizados = await base.clone()
+    const noRealizados = await base
+      .clone()
       .innerJoin('a.proceso', 'p')
       .andWhere('p.realizado = 0')
       .getCount();
 
-    this.logger.log(`findTecnico: carga laboral del Técnico ${usuarioId} retornada`);
+    this.logger.log(
+      `findTecnico: carga laboral del Técnico ${usuarioId} retornada`,
+    );
     return { total, porTipo, ejecutados, realizados, noRealizados };
   }
 
@@ -260,7 +341,9 @@ export class CargaLaboralService {
       .getMany();
 
     if (!usuariosConRol.length) {
-      this.logger.log(`findUsuariosPorRol: ningún usuario activo con rol ${rol}`);
+      this.logger.log(
+        `findUsuariosPorRol: ningún usuario activo con rol ${rol}`,
+      );
       return [];
     }
 
@@ -279,7 +362,9 @@ export class CargaLaboralService {
       rolesPorUsuario[ur.usuarioId].push(ur.rol.codigo);
     }
 
-    this.logger.log(`findUsuariosPorRol: ${usuariosConRol.length} usuario(s) con rol ${rol} retornados`);
+    this.logger.log(
+      `findUsuariosPorRol: ${usuariosConRol.length} usuario(s) con rol ${rol} retornados`,
+    );
 
     return usuariosConRol.map((ur) => {
       const u = ur.usuario;
@@ -293,7 +378,9 @@ export class CargaLaboralService {
         telefonoMovil: u.telefonoMovil,
         region: u.region ? { id: u.region.id, nombre: u.region.nombre } : null,
         crs: u.crs ? { id: u.crs.id, nombreCrs: u.crs.nombreCrs } : null,
-        tribunal: u.tribunal ? { id: u.tribunal.id, nombreTribunal: u.tribunal.nombreTribunal } : null,
+        tribunal: u.tribunal
+          ? { id: u.tribunal.id, nombreTribunal: u.tribunal.nombreTribunal }
+          : null,
         roles: rolesPorUsuario[u.id] ?? [],
       };
     });

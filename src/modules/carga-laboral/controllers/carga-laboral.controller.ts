@@ -33,10 +33,19 @@ export class CargaLaboralController {
   @RequirePermiso(PERMISOS.CARGA_LABORAL_VER)
   @ApiOperation({
     summary: 'Usuarios por rol',
-    description: 'Retorna los usuarios activos que pertenecen al rol indicado, con sus datos de perfil y roles asignados.',
+    description:
+      'Retorna los usuarios activos que pertenecen al rol indicado, con sus datos de perfil y roles asignados.',
   })
-  @ApiQuery({ name: 'rol', required: true, enum: ['DMT', 'EMPRESA', 'COORDINADOR', 'TECNICO'], description: 'Código del rol' })
-  @ApiResponse({ status: 200, description: 'Lista de usuarios con el rol solicitado' })
+  @ApiQuery({
+    name: 'rol',
+    required: true,
+    enum: ['DMT', 'EMPRESA', 'COORDINADOR', 'TECNICO'],
+    description: 'Código del rol',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de usuarios con el rol solicitado',
+  })
   @ApiResponse({ status: 400, description: 'Rol inválido' })
   async findUsuariosPorRol(@Query() filters: FindUsuariosRolDto) {
     return this.cargaLaboralService.findUsuariosPorRol(filters);
@@ -52,10 +61,27 @@ export class CargaLaboralController {
       'derivadas a empresa (REVISION_DMT → REVISION_EMPRESA) y ' +
       'devueltas al solicitante (REVISION_DMT → DEVUELTA_SOLICITANTE).',
   })
-  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario DMT' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
-  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario DMT' })
+  @ApiParam({
+    name: 'usuarioId',
+    type: Number,
+    description: 'ID del usuario DMT',
+  })
+  @ApiQuery({
+    name: 'fechaDesde',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha inicio (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'fechaHasta',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha fin (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas de carga laboral del usuario DMT',
+  })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async findDmt(
     @Param('usuarioId', ParseIntPipe) usuarioId: number,
@@ -73,10 +99,27 @@ export class CargaLaboralController {
       'solicitudes gestionadas (REVISION_EMPRESA → INFORME_GENERADO) y ' +
       'conteo de respuestas de factibilidad emitidas (FACTIBLE, NO_FACTIBLE, NO_RECOMENDABLE).',
   })
-  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Empresa' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
-  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario Empresa' })
+  @ApiParam({
+    name: 'usuarioId',
+    type: Number,
+    description: 'ID del usuario Empresa',
+  })
+  @ApiQuery({
+    name: 'fechaDesde',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha inicio (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'fechaHasta',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha fin (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas de carga laboral del usuario Empresa',
+  })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async findEmpresa(
     @Param('usuarioId', ParseIntPipe) usuarioId: number,
@@ -94,10 +137,27 @@ export class CargaLaboralController {
       'agendamientos creados por tipo (INSTALACION, SOPORTE, DESINSTALACION), ' +
       'reprogramados (numero_intento > 1), abiertos/cerrados y por estado (EN_PROCESO, COMPLETADO, NO_REALIZADO).',
   })
-  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Coordinador' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
-  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario Coordinador' })
+  @ApiParam({
+    name: 'usuarioId',
+    type: Number,
+    description: 'ID del usuario Coordinador',
+  })
+  @ApiQuery({
+    name: 'fechaDesde',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha inicio (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'fechaHasta',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha fin (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas de carga laboral del usuario Coordinador',
+  })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async findCoordinador(
     @Param('usuarioId', ParseIntPipe) usuarioId: number,
@@ -115,10 +175,27 @@ export class CargaLaboralController {
       'agendamientos tomados (tecnico_id) por tipo (INSTALACION, SOPORTE, DESINSTALACION), ' +
       'y de esos cuántos fueron ejecutados (tienen PROCESO), realizados y no realizados.',
   })
-  @ApiParam({ name: 'usuarioId', type: Number, description: 'ID del usuario Técnico' })
-  @ApiQuery({ name: 'fechaDesde', required: false, type: String, description: 'Filtro de fecha inicio (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'fechaHasta', required: false, type: String, description: 'Filtro de fecha fin (YYYY-MM-DD)' })
-  @ApiResponse({ status: 200, description: 'Métricas de carga laboral del usuario Técnico' })
+  @ApiParam({
+    name: 'usuarioId',
+    type: Number,
+    description: 'ID del usuario Técnico',
+  })
+  @ApiQuery({
+    name: 'fechaDesde',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha inicio (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'fechaHasta',
+    required: false,
+    type: String,
+    description: 'Filtro de fecha fin (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas de carga laboral del usuario Técnico',
+  })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async findTecnico(
     @Param('usuarioId', ParseIntPipe) usuarioId: number,

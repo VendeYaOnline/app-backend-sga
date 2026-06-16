@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Archivo } from './archivo.entity';
+import { CatPropositoArchivo } from '../../catalogo/entities/cat-proposito-archivo.entity';
 
 @Entity('sga.ARCHIVO_REFERENCIA')
 export class ArchivoReferencia {
@@ -23,8 +24,8 @@ export class ArchivoReferencia {
   @Column({ name: 'entidad_id', type: 'int' })
   entidadId: number;
 
-  @Column({ name: 'proposito', type: 'nvarchar', length: 50 })
-  proposito: string;
+  @Column({ name: 'proposito_id', type: 'int' })
+  propositoId: number;
 
   @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
   createdAt: Date;
@@ -41,4 +42,8 @@ export class ArchivoReferencia {
   @ManyToOne(() => Archivo)
   @JoinColumn({ name: 'archivo_id', referencedColumnName: 'id' })
   archivo: Archivo;
+
+  @ManyToOne(() => CatPropositoArchivo)
+  @JoinColumn({ name: 'proposito_id', referencedColumnName: 'id' })
+  proposito: CatPropositoArchivo;
 }

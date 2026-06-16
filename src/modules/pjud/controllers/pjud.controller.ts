@@ -79,7 +79,8 @@ export class PjudController {
   @RequirePermiso(PERMISOS.PJUD_GESTIONAR)
   @ApiOperation({
     summary: 'Consultar IFT por ID correlativo PJUD',
-    description: 'Consulta el historial de llamadas IFT por su ID correlativo PJUD',
+    description:
+      'Consulta el historial de llamadas IFT por su ID correlativo PJUD',
   })
   @ApiResponse({ status: 200, description: 'Historial de llamadas IFT' })
   @ApiResponse({ status: 404, description: 'No se encontraron registros' })
@@ -88,7 +89,9 @@ export class PjudController {
     type: Number,
     description: 'ID correlativo maestro PJUD (solicitud_pjud_id)',
   })
-  async consultaIft(@Param('solicitudPjudId', ParseIntPipe) solicitudPjudId: number) {
+  async consultaIft(
+    @Param('solicitudPjudId', ParseIntPipe) solicitudPjudId: number,
+  ) {
     return this.pjudService.consultaIft(solicitudPjudId);
   }
 
@@ -113,15 +116,29 @@ export class PjudController {
       'Payload enviado a PJUD (construido automáticamente en el backend). ' +
       'No es necesario enviarlo en la petición; se documenta aquí para referencia.',
   })
-  @ApiResponse({ status: 201, description: 'Factibilidad enviada exitosamente a PJUD' })
+  @ApiResponse({
+    status: 201,
+    description: 'Factibilidad enviada exitosamente a PJUD',
+  })
   @ApiResponse({
     status: 400,
-    description: 'Sin factibilidad emitida, sin PDF subido, o sin ID PJUD en la solicitud',
+    description:
+      'Sin factibilidad emitida, sin PDF subido, o sin ID PJUD en la solicitud',
   })
   @ApiResponse({ status: 404, description: 'Solicitud no encontrada' })
-  @ApiResponse({ status: 409, description: 'La factibilidad ya fue enviada exitosamente a PJUD' })
-  @ApiResponse({ status: 502, description: 'PJUD rechazó o no respondió a la solicitud' })
-  @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud SGA' })
+  @ApiResponse({
+    status: 409,
+    description: 'La factibilidad ya fue enviada exitosamente a PJUD',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'PJUD rechazó o no respondió a la solicitud',
+  })
+  @ApiParam({
+    name: 'solicitudId',
+    type: Number,
+    description: 'ID de la solicitud SGA',
+  })
   async enviarFactibilidad(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
     @CurrentUser() user: JwtPayload,

@@ -309,8 +309,7 @@ export class UsuarioService {
       throw new ConflictException('El usuario ya tiene este rol asignado');
     }
     const rol = await this.rolRepo.findOne({ where: { id: rolId } });
-    if (!rol)
-      throw new NotFoundException(`Rol con ID ${rolId} no encontrado`);
+    if (!rol) throw new NotFoundException(`Rol con ID ${rolId} no encontrado`);
 
     const usuarioRol = this.usuarioRolRepo.create({
       usuarioId,

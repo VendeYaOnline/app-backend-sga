@@ -56,8 +56,8 @@ export class ArchivoController {
       properties: {
         file: { type: 'string', format: 'binary' },
         entidad: { type: 'string' },
-        entidadId: { type: 'string' },
-        proposito: { type: 'string' },
+        entidadId: { type: 'number' },
+        propositoId: { type: 'number' },
       },
     },
   })
@@ -65,14 +65,14 @@ export class ArchivoController {
     @UploadedFile() file: Express.Multer.File,
     @Body('entidad') entidad: string,
     @Body('entidadId') entidadId: string,
-    @Body('proposito') proposito: string,
+    @Body('propositoId') propositoId: string,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.archivoService.upload(
       file,
       entidad,
       parseInt(entidadId, 10),
-      proposito,
+      parseInt(propositoId, 10),
       user.sub,
     );
   }

@@ -278,4 +278,15 @@ export class CatalogoController {
   findTiposHorario() {
     return this.catalogoService.findTiposHorario();
   }
+
+  @Get('propositos-archivo')
+  @ApiOperation({
+    summary: 'Listar propósitos de archivo',
+    description:
+      'Retorna el catálogo de propósitos válidos para vincular archivos a entidades (RESOLUCION_JUDICIAL, INFORME_FACTIBILIDAD, etc.)',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de propósitos de archivo' })
+  findPropositosArchivo() {
+    return this.catalogoService.findPropositosArchivo();
+  }
 }

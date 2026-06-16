@@ -55,7 +55,13 @@ export class PjudService {
       solicitudId?: number;
     },
   ) {
-    const { page = 1, limit = 20, endpoint, procesadoOk, solicitudId } = filters;
+    const {
+      page = 1,
+      limit = 20,
+      endpoint,
+      procesadoOk,
+      solicitudId,
+    } = filters;
 
     const qb = this.pjudLlamadaRepo
       .createQueryBuilder('pl')
@@ -71,7 +77,10 @@ export class PjudService {
     const skip = (page - 1) * limit;
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: number): Promise<PjudLlamada> {
@@ -105,7 +114,10 @@ export class PjudService {
   async recepcionIft(dto: RecepcionIftDto): Promise<PjudLlamada> {
     // Idempotencia: si ya existe un registro con el mismo solicitudPjudId, devolver sin duplicar
     const existente = await this.pjudLlamadaRepo.findOne({
-      where: { solicitudPjudId: dto.solicitudPjudId, endpoint: 'RECEPCION_IFT' },
+      where: {
+        solicitudPjudId: dto.solicitudPjudId,
+        endpoint: 'RECEPCION_IFT',
+      },
     });
     if (existente) {
       this.logger.warn(
@@ -163,11 +175,20 @@ export class PjudService {
   // Envíos salientes
   // ---------------------------------------------------------------------------
 
-  async enviarFactibilidad(solicitudId: number, userId: number): Promise<PjudLlamada> {
-    this.logger.log(`Enviando factibilidad solicitud ${solicitudId} a PJUD (usuario ${userId})`);
+  async enviarFactibilidad(
+    solicitudId: number,
+    userId: number,
+  ): Promise<PjudLlamada> {
+    this.logger.log(
+      `Enviando factibilidad solicitud ${solicitudId} a PJUD (usuario ${userId})`,
+    );
 
     const envioPrevio = await this.pjudLlamadaRepo.findOne({
-      where: { solicitudId, endpoint: 'ENVIAR_FACTIBILIDAD', procesadoOk: true },
+      where: {
+        solicitudId,
+        endpoint: 'ENVIAR_FACTIBILIDAD',
+        procesadoOk: true,
+      },
     });
     if (envioPrevio) {
       throw new ConflictException(
@@ -180,17 +201,25 @@ export class PjudService {
       throw new BadRequestException('La solicitud no tiene ID PJUD asignado');
     }
 
-    const factibilidad = await this.solicitudService.findFactibilidad(solicitudId);
+    const factibilidad =
+      await this.solicitudService.findFactibilidad(solicitudId);
     if (!factibilidad) {
-      throw new NotFoundException('No existe informe de factibilidad emitido para esta solicitud');
+      throw new NotFoundException(
+        'No existe informe de factibilidad emitido para esta solicitud',
+      );
     }
 
-    const fechaRespuesta = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const fechaRespuesta = new Date()
+      .toISOString()
+      .replace('T', ' ')
+      .substring(0, 19);
     const payload = {
       crrIdSolicitud: solicitud.solicitudPjudId,
       fechaRespuesta,
       tipoFactibilidad: factibilidad.tipoFactibilidad.codigo,
-      ...(factibilidad.motivoNoFactible && { tipoMotivo: factibilidad.motivoNoFactible.codigo }),
+      ...(factibilidad.motivoNoFactible && {
+        tipoMotivo: factibilidad.motivoNoFactible.codigo,
+      }),
       // TODO: adjuntar PDF real en base64 cuando se implemente el HTTP real.
       // docFactibilidad: pdfBase64,
     };
@@ -203,25 +232,31 @@ export class PjudService {
     const { httpStatus, responseBody } = this.simularEnvioFactibilidad(payload);
 
     const llamada = this.pjudLlamadaRepo.create({
-      endpoint:     'ENVIAR_FACTIBILIDAD',
-      direccion:    'SALIENTE',
+      endpoint: 'ENVIAR_FACTIBILIDAD',
+      direccion: 'SALIENTE',
       solicitudId,
-      requestBody:  JSON.stringify(payload),
+      requestBody: JSON.stringify(payload),
       responseBody,
       httpStatus,
       fechaLlamada: new Date(),
-      procesadoOk:  true,
-      procesadoAt:  new Date(),
-      duracionMs:   Date.now() - start,
-      createdBy:    userId,
+      procesadoOk: true,
+      procesadoAt: new Date(),
+      duracionMs: Date.now() - start,
+      createdBy: userId,
     });
     await this.pjudLlamadaRepo.save(llamada);
 
-    this.logger.log(`Factibilidad solicitud ${solicitudId} enviada a PJUD (simulado)`);
+    this.logger.log(
+      `Factibilidad solicitud ${solicitudId} enviada a PJUD (simulado)`,
+    );
     return llamada;
   }
 
-  async enviarIncumplimiento(solicitudId: number, dto: PjudEnvioDto, userId: number): Promise<PjudLlamada> {
+  async enviarIncumplimiento(
+    solicitudId: number,
+    dto: PjudEnvioDto,
+    userId: number,
+  ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_INCUMPLIMIENTO',
       direccion: 'SALIENTE',
@@ -233,7 +268,10 @@ export class PjudService {
     return this.pjudLlamadaRepo.save(llamada);
   }
 
-  async enviarAlarmaCenco(dto: PjudEnvioDto, userId: number): Promise<PjudLlamada> {
+  async enviarAlarmaCenco(
+    dto: PjudEnvioDto,
+    userId: number,
+  ): Promise<PjudLlamada> {
     const llamada = this.pjudLlamadaRepo.create({
       endpoint: 'ENVIAR_ALARMA_CENCO',
       direccion: 'SALIENTE',
@@ -287,13 +325,18 @@ export class PjudService {
         llamada.procesadoOk = true;
         llamada.procesadoAt = new Date();
         procesados++;
-        this.logger.log(`Llamada ${llamada.id} (${llamada.endpoint}) procesada OK`);
+        this.logger.log(
+          `Llamada ${llamada.id} (${llamada.endpoint}) procesada OK`,
+        );
       } catch (error) {
         llamada.intentos += 1;
-        llamada.errorDesc = error instanceof Error ? error.message : String(error);
+        llamada.errorDesc =
+          error instanceof Error ? error.message : String(error);
 
         if (llamada.intentos < llamada.maxIntentos) {
-          llamada.proximoIntento = this.calcularProximoIntento(llamada.intentos);
+          llamada.proximoIntento = this.calcularProximoIntento(
+            llamada.intentos,
+          );
         }
 
         fallidos++;
@@ -314,7 +357,9 @@ export class PjudService {
   // Privados
   // ---------------------------------------------------------------------------
 
-  private async findPendientesParaProcesar(limit: number): Promise<PjudLlamada[]> {
+  private async findPendientesParaProcesar(
+    limit: number,
+  ): Promise<PjudLlamada[]> {
     // UPDATE atómico: marca procesando=1 y retorna los IDs tomados.
     // Evita que dos ejecuciones concurrentes del scheduler tomen el mismo lote.
     const safeLimit = Math.min(Math.max(1, Math.floor(limit)), 100);
@@ -341,7 +386,7 @@ export class PjudService {
       throw new Error('requestBody vacío, no se puede procesar');
     }
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
     const dto = JSON.parse(llamada.requestBody);
 
     if (llamada.endpoint === 'RECEPCION_IFT') {
@@ -356,13 +401,16 @@ export class PjudService {
       const createEventoDto = this.mapDecretoToCreateEventoCompletoDto(
         dto as RecepcionDecretoDto,
       );
-      await this.eventoService.createCompleto([createEventoDto], this.systemUserId);
+      await this.eventoService.createCompleto(
+        [createEventoDto],
+        this.systemUserId,
+      );
     } else {
       throw new Error(
         `Endpoint '${llamada.endpoint}' no soporta procesamiento automático`,
       );
     }
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment */
   }
 
   private calcularProximoIntento(intentos: number): Date {
@@ -405,7 +453,10 @@ export class PjudService {
   // TODO: reemplazar por HTTP real cuando llegue documentación PJUD.
   // Cuando se implemente: recibir el pdfBase64 como parámetro, hacer POST a
   // PJUD_BASE_URL + PJUD_FACTIBILIDAD_PATH y retornar { httpStatus, responseBody }.
-  private simularEnvioFactibilidad(payload: object): { httpStatus: number; responseBody: string } {
+  private simularEnvioFactibilidad(payload: object): {
+    httpStatus: number;
+    responseBody: string;
+  } {
     const responseBody = JSON.stringify({
       crrIdSolicitud: (payload as any).crrIdSolicitud,
       fechaRespuesta: new Date().toISOString(),

@@ -160,7 +160,8 @@ export class SolicitudController {
     name: 'decretoMonitoreoCompletado',
     required: false,
     enum: ['true', 'false'],
-    description: 'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
+    description:
+      'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
   })
   @ApiResponse({ status: 200, description: 'Lista paginada de solicitudes' })
   async findAll(@Query() filters: FindSolicitudDto) {

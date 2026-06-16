@@ -31,7 +31,7 @@ export class ArchivoService {
     file: Express.Multer.File,
     entidad: string,
     entidadId: number,
-    proposito: string,
+    propositoId: number,
     userId: number,
   ): Promise<Archivo> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -77,7 +77,7 @@ export class ArchivoService {
         archivoId: archivo.id,
         entidad,
         entidadId,
-        proposito,
+        propositoId,
         createdBy: userId,
       });
       await manager.save(referencia);
@@ -122,7 +122,10 @@ export class ArchivoService {
     stream.pipe(res);
   }
 
-  async findOneByEntidad(entidad: string, entidadId: number): Promise<ArchivoReferencia> {
+  async findOneByEntidad(
+    entidad: string,
+    entidadId: number,
+  ): Promise<ArchivoReferencia> {
     const ref = await this.archivoRefRepo.findOne({
       where: { entidad, entidadId, deletedAt: IsNull() },
       relations: { archivo: true },
@@ -133,7 +136,9 @@ export class ArchivoService {
         `No se encontró archivo para ${entidad} con ID ${entidadId}`,
       );
     }
-    this.logger.log(`Archivo encontrado para ${entidad}/${entidadId}: uuid=${ref.archivo.uuid}`);
+    this.logger.log(
+      `Archivo encontrado para ${entidad}/${entidadId}: uuid=${ref.archivo.uuid}`,
+    );
     return ref;
   }
 

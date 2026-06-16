@@ -106,8 +106,7 @@ export class SolicitudService {
       .leftJoinAndSelect('sd.delito', 'del')
       .where('s.deletedAt IS NULL');
 
-    if (where.id)
-      qb.andWhere('s.id = :id', { id: where.id });
+    if (where.id) qb.andWhere('s.id = :id', { id: where.id });
     if (where.estadoId)
       qb.andWhere('s.estadoActualId = :estadoId', {
         estadoId: where.estadoId,
@@ -287,12 +286,12 @@ export class SolicitudService {
   async findResumen(id: number) {
     const solicitud = await this.findOne(id);
 
-    const eventoRepo       = this.dataSource.getRepository(Evento);
+    const eventoRepo = this.dataSource.getRepository(Evento);
     const agendamientoRepo = this.dataSource.getRepository(Agendamiento);
-    const procesoRepo      = this.dataSource.getRepository(Proceso);
-    const pdRepo           = this.dataSource.getRepository(ProcesoDispositivo);
-    const sdRepo           = this.dataSource.getRepository(ProcesoSoporteDetalle);
-    const smRepo           = this.dataSource.getRepository(ProcesoSoporteMotivo);
+    const procesoRepo = this.dataSource.getRepository(Proceso);
+    const pdRepo = this.dataSource.getRepository(ProcesoDispositivo);
+    const sdRepo = this.dataSource.getRepository(ProcesoSoporteDetalle);
+    const smRepo = this.dataSource.getRepository(ProcesoSoporteMotivo);
 
     const eventos = await eventoRepo.find({
       where: { solicitudId: id, deletedAt: IsNull() },
@@ -301,14 +300,25 @@ export class SolicitudService {
     });
 
     if (!eventos.length) {
-      return { solicitud, instalaciones: [], soportes: [], desinstalaciones: [] };
+      return {
+        solicitud,
+        instalaciones: [],
+        soportes: [],
+        desinstalaciones: [],
+      };
     }
 
     const eventoIds = eventos.map((e) => e.id);
 
     const agendamientos = await agendamientoRepo.find({
       where: { eventoId: In(eventoIds), deletedAt: IsNull() },
-      relations: { condenado: true, victima: true, tecnico: true, region: true, comuna: true },
+      relations: {
+        condenado: true,
+        victima: true,
+        tecnico: true,
+        region: true,
+        comuna: true,
+      },
       order: { fechaAgendada: 'ASC' },
     });
 
@@ -329,31 +339,34 @@ export class SolicitudService {
 
     const agendamientoIds = agendamientos.map((a) => a.id);
 
-    const [procesos, dispositivos, soporteDetalles, soporteMotivos] = await Promise.all([
-      procesoRepo.find({
-        where: { agendamientoId: In(agendamientoIds) },
-        relations: {
-          region: true,
-          comuna: true,
-          tipoLugar: true,
-          motivoNoRealizado: true,
-          cerradoPor: true,
-        },
-      }),
-      pdRepo.find({
-        where: { agendamientoId: In(agendamientoIds) },
-        relations: { rolDispositivo: true },
-      }),
-      sdRepo.find({ where: { agendamientoId: In(agendamientoIds) } }),
-      smRepo.find({
-        where: { agendamientoId: In(agendamientoIds) },
-        relations: { tipoProblema: true },
-      }),
-    ]);
+    const [procesos, dispositivos, soporteDetalles, soporteMotivos] =
+      await Promise.all([
+        procesoRepo.find({
+          where: { agendamientoId: In(agendamientoIds) },
+          relations: {
+            region: true,
+            comuna: true,
+            tipoLugar: true,
+            motivoNoRealizado: true,
+            cerradoPor: true,
+          },
+        }),
+        pdRepo.find({
+          where: { agendamientoId: In(agendamientoIds) },
+          relations: { rolDispositivo: true },
+        }),
+        sdRepo.find({ where: { agendamientoId: In(agendamientoIds) } }),
+        smRepo.find({
+          where: { agendamientoId: In(agendamientoIds) },
+          relations: { tipoProblema: true },
+        }),
+      ]);
 
-    const procesoMap      = new Map(procesos.map((p) => [p.agendamientoId, p]));
-    const soporteDetalleMap = new Map(soporteDetalles.map((sd) => [sd.agendamientoId, sd]));
-    const dispositivosMap  = new Map<number, ProcesoDispositivo[]>();
+    const procesoMap = new Map(procesos.map((p) => [p.agendamientoId, p]));
+    const soporteDetalleMap = new Map(
+      soporteDetalles.map((sd) => [sd.agendamientoId, sd]),
+    );
+    const dispositivosMap = new Map<number, ProcesoDispositivo[]>();
     const soporteMotivosMap = new Map<number, ProcesoSoporteMotivo[]>();
 
     for (const d of dispositivos) {
@@ -367,7 +380,10 @@ export class SolicitudService {
       soporteMotivosMap.set(m.agendamientoId, arr);
     }
 
-    const agendamientosByEventoId = new Map<number, Record<string, unknown>[]>();
+    const agendamientosByEventoId = new Map<
+      number,
+      Record<string, unknown>[]
+    >();
     for (const ag of agendamientos) {
       const detail: Record<string, unknown> = {
         agendamiento: ag,
@@ -386,7 +402,10 @@ export class SolicitudService {
     const desinstalaciones: object[] = [];
 
     for (const evento of eventos) {
-      const item = { evento, agendamientos: agendamientosByEventoId.get(evento.id) ?? [] };
+      const item = {
+        evento,
+        agendamientos: agendamientosByEventoId.get(evento.id) ?? [],
+      };
       const codigo = evento.tipoEvento?.codigo;
       if (codigo === 'INSTALACION') instalaciones.push(item);
       else if (codigo === 'SOPORTE') soportes.push(item);
@@ -428,24 +447,24 @@ export class SolicitudService {
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-      try {
-        const manager = queryRunner.manager;
+    try {
+      const manager = queryRunner.manager;
 
-        if (dto.solicitudPjudId) {
-          const existente = await manager.findOne(Solicitud, {
-            where: { solicitudPjudId: dto.solicitudPjudId, deletedAt: IsNull() },
-          });
-          if (existente) {
-            throw new ConflictException(
-              `Ya existe una solicitud con solicitud_pjud_id ${dto.solicitudPjudId} (ID interno: ${existente.id})`,
-            );
-          }
+      if (dto.solicitudPjudId) {
+        const existente = await manager.findOne(Solicitud, {
+          where: { solicitudPjudId: dto.solicitudPjudId, deletedAt: IsNull() },
+        });
+        if (existente) {
+          throw new ConflictException(
+            `Ya existe una solicitud con solicitud_pjud_id ${dto.solicitudPjudId} (ID interno: ${existente.id})`,
+          );
         }
+      }
 
-        let condenadoId = dto.condenadoId;
+      let condenadoId = dto.condenadoId;
 
       if (dto.condenado) {
         if (dto.condenado.runCondenado) {
@@ -510,10 +529,11 @@ export class SolicitudService {
         motivoOrigen: 'ORIGINAL',
         // FORMULARIO_WEB: solo solicitudPjudId viene del response PJUD; resto queda NULL.
         // INTERCONEXION_PJUD: todos los IDs vienen en el DTO enviado por PJUD.
-        solicitudPjudId:          pjudRegistro?.solicitudPjudId ?? dto.solicitudPjudId ?? null,
-        causaPjudId:              dto.causaPjudId              ?? null,
-        tramitePjudId:            dto.tramitePjudId            ?? null,
-        nomenclaturaPjudId:       dto.nomenclaturaPjudId       ?? null,
+        solicitudPjudId:
+          pjudRegistro?.solicitudPjudId ?? dto.solicitudPjudId ?? null,
+        causaPjudId: dto.causaPjudId ?? null,
+        tramitePjudId: dto.tramitePjudId ?? null,
+        nomenclaturaPjudId: dto.nomenclaturaPjudId ?? null,
         usuarioSolicitantePjudId: dto.usuarioSolicitantePjudId ?? null,
         createdBy: userId,
       });
@@ -540,18 +560,18 @@ export class SolicitudService {
 
       if (pjudRegistro) {
         const llamada = manager.create(PjudLlamada, {
-          endpoint:        'REGISTRO_IFT_WEB',
-          direccion:       'SALIENTE',
+          endpoint: 'REGISTRO_IFT_WEB',
+          direccion: 'SALIENTE',
           solicitudPjudId: pjudRegistro.solicitudPjudId,
-          solicitudId:     saved.id,
-          folioExterno:    pjudRegistro.folioExterno,
-          requestBody:     pjudRegistro.requestBody,
-          responseBody:    pjudRegistro.responseBody,
-          httpStatus:      200,
-          fechaLlamada:    new Date(),
-          procesadoOk:     true,
-          procesadoAt:     new Date(),
-          createdBy:       userId,
+          solicitudId: saved.id,
+          folioExterno: pjudRegistro.folioExterno,
+          requestBody: pjudRegistro.requestBody,
+          responseBody: pjudRegistro.responseBody,
+          httpStatus: 200,
+          fechaLlamada: new Date(),
+          procesadoOk: true,
+          procesadoAt: new Date(),
+          createdBy: userId,
         });
         await manager.save(llamada);
       }
@@ -684,7 +704,13 @@ export class SolicitudService {
         await manager.save(condenado);
       }
 
-      const { delitoIds, zonas, victimas, condenado: _c, ...scalarFields } = dto;
+      const {
+        delitoIds,
+        zonas,
+        victimas,
+        condenado: _c,
+        ...scalarFields
+      } = dto;
       Object.assign(solicitud, scalarFields, { updatedBy: userId });
       await manager.save(solicitud);
 
@@ -1101,27 +1127,29 @@ export class SolicitudService {
   // Simula la llamada saliente a PJUD para registrar una IFT de origen FORMULARIO_WEB.
   // Retorna la misma estructura que devolvería el endpoint PJUD real.
   // TODO: reemplazar el cuerpo por el HTTP real cuando llegue la documentación PJUD.
-  private simularRegistroEnPjud(dto: CreateSolicitudDto): PjudRegistroResultado {
+  private simularRegistroEnPjud(
+    dto: CreateSolicitudDto,
+  ): PjudRegistroResultado {
     const rand = () => Math.floor(100_000 + Math.random() * 900_000_000);
 
     const requestBody = JSON.stringify({
-      tipoCausaId:      dto.tipoCausaId,
-      rucCausa:         dto.rucCausa,
-      ritCausa:         dto.ritCausa,
-      rolCausa:         dto.rolCausa,
-      tribunalId:       dto.tribunalId,
-      condenadoId:      dto.condenadoId,
-      crsId:            dto.crsId,
-      tipoLeyId:        dto.tipoLeyId,
-      tipoPenaId:       dto.tipoPenaId,
-      medidaControlId:  dto.medidaControlId,
-      tipoHorarioId:    dto.tipoHorarioId,
-      horaDesde:        dto.horaDesde,
-      horaHasta:        dto.horaHasta,
-      tipoDiaInicioId:  dto.tipoDiaInicioId,
+      tipoCausaId: dto.tipoCausaId,
+      rucCausa: dto.rucCausa,
+      ritCausa: dto.ritCausa,
+      rolCausa: dto.rolCausa,
+      tribunalId: dto.tribunalId,
+      condenadoId: dto.condenadoId,
+      crsId: dto.crsId,
+      tipoLeyId: dto.tipoLeyId,
+      tipoPenaId: dto.tipoPenaId,
+      medidaControlId: dto.medidaControlId,
+      tipoHorarioId: dto.tipoHorarioId,
+      horaDesde: dto.horaDesde,
+      horaHasta: dto.horaHasta,
+      tipoDiaInicioId: dto.tipoDiaInicioId,
       tipoDiaTerminoId: dto.tipoDiaTerminoId,
-      conBeacon:        dto.conBeacon ?? true,
-      observaciones:    dto.observaciones,
+      conBeacon: dto.conBeacon ?? true,
+      observaciones: dto.observaciones,
     });
 
     const crrIdSolicitud = rand();
@@ -1137,9 +1165,9 @@ export class SolicitudService {
 
     return {
       solicitudPjudId: crrIdSolicitud,
-      folioExterno:    String(folio),
+      folioExterno: String(folio),
       requestBody,
-      responseBody:    JSON.stringify(pjudResponse),
+      responseBody: JSON.stringify(pjudResponse),
     };
   }
 }

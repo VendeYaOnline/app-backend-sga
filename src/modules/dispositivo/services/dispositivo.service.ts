@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, UnprocessableEntityException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ProcesoDispositivo } from '../entities/proceso-dispositivo.entity';
@@ -167,7 +172,9 @@ export class DispositivoService {
         fechaAccion: new Date(),
         detalles: JSON.stringify({
           cantidadDispositivos: saved.length,
-          actualizoProceso: !!(dto.proceso && Object.keys(dto.proceso).length > 0),
+          actualizoProceso: !!(
+            dto.proceso && Object.keys(dto.proceso).length > 0
+          ),
           actualizoAgendamiento: !!(
             dto.agendamiento && Object.keys(dto.agendamiento).length > 0
           ),
@@ -295,7 +302,8 @@ export class DispositivoService {
       .where('pd.solicitud_id = :sol', { sol: solicitudId })
       .andWhere('pd.para_quien = :pq', { pq: paraQuien })
       .andWhere("rd.codigo IN ('INSTALADO', 'REEMPLAZADO_ENTRANTE')")
-      .andWhere(`pd.id = (
+      .andWhere(
+        `pd.id = (
         SELECT TOP 1 pd2.id
         FROM sga.PROCESO_DISPOSITIVO pd2
         INNER JOIN sga.CAT_ROL_DISPOSITIVO rd2 ON rd2.id = pd2.rol_dispositivo_id
@@ -304,7 +312,8 @@ export class DispositivoService {
           AND pd2.numero_serie = pd.numero_serie
           AND rd2.codigo != 'REVISADO'
         ORDER BY pd2.id DESC
-      )`)
+      )`,
+      )
       .getMany();
   }
 
@@ -319,20 +328,28 @@ export class DispositivoService {
       .where('pd.numero_serie = :serie', { serie: numeroSerie })
       .andWhere('pd.solicitud_id = :sol', { sol: solicitudId })
       .andWhere("rd.codigo IN ('REVISADO', 'REEMPLAZADO_SALIENTE')")
-      .andWhere(`EXISTS (
+      .andWhere(
+        `EXISTS (
         SELECT 1 FROM sga.PROCESO p
         INNER JOIN sga.EVENTO e ON e.id = p.evento_id
         INNER JOIN sga.CAT_TIPO_EVENTO te ON te.id = e.tipo_evento_id
         WHERE p.agendamiento_id = pd.agendamiento_id AND te.codigo = 'SOPORTE'
-      )`)
+      )`,
+      )
       .getRawOne<{ total: string }>();
     return parseInt(result?.total ?? '0', 10);
   }
 
   async findTodosSeriesConSoportes(solicitudId: number): Promise<
-    Array<{ numeroSerie: string; soportes: number; requiereCambioFisico: boolean }>
+    Array<{
+      numeroSerie: string;
+      soportes: number;
+      requiereCambioFisico: boolean;
+    }>
   > {
-    this.logger.log(`Consultando soportes por serial para solicitud ${solicitudId}`);
+    this.logger.log(
+      `Consultando soportes por serial para solicitud ${solicitudId}`,
+    );
     const rows = await this.procesoDispositivoRepo
       .createQueryBuilder('pd')
       .select('pd.numero_serie', 'numeroSerie')
@@ -359,7 +376,11 @@ export class DispositivoService {
 
     return rows.map((r) => {
       const soportes = parseInt(r.soportes ?? '0', 10);
-      return { numeroSerie: r.numeroSerie, soportes, requiereCambioFisico: soportes >= 3 };
+      return {
+        numeroSerie: r.numeroSerie,
+        soportes,
+        requiereCambioFisico: soportes >= 3,
+      };
     });
   }
 }

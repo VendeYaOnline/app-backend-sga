@@ -44,7 +44,11 @@ export class DispositivoController {
       'Retorna los dispositivos actualmente instalados para un sujeto (CONDENADO o VICTIMA) en una solicitud. Útil para previsualizar qué hay instalado antes de registrar un soporte o desinstalación.',
   })
   @ApiResponse({ status: 200, description: 'Dispositivos vigentes' })
-  @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud' })
+  @ApiParam({
+    name: 'solicitudId',
+    type: Number,
+    description: 'ID de la solicitud',
+  })
   @ApiQuery({
     name: 'paraQuien',
     enum: ['CONDENADO', 'VICTIMA'],
@@ -55,7 +59,10 @@ export class DispositivoController {
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
     @Query('paraQuien') paraQuien: string = 'CONDENADO',
   ) {
-    return this.dispositivoService.findDispositivosVigentes(solicitudId, paraQuien);
+    return this.dispositivoService.findDispositivosVigentes(
+      solicitudId,
+      paraQuien,
+    );
   }
 
   @Get('solicitudes/:solicitudId/soportes-serial')
@@ -80,7 +87,11 @@ export class DispositivoController {
       },
     },
   })
-  @ApiParam({ name: 'solicitudId', type: Number, description: 'ID de la solicitud' })
+  @ApiParam({
+    name: 'solicitudId',
+    type: Number,
+    description: 'ID de la solicitud',
+  })
   async findTodosSeriesConSoportes(
     @Param('solicitudId', ParseIntPipe) solicitudId: number,
   ) {

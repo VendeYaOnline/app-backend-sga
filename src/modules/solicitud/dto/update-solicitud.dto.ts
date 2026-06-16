@@ -8,7 +8,8 @@ export class UpdateSolicitudDto extends PartialType(
   OmitType(CreateSolicitudDto, ['condenado', 'condenadoId'] as const),
 ) {
   @ApiPropertyOptional({
-    description: 'Datos del condenado a actualizar. Aplica sobre el condenado actualmente vinculado.',
+    description:
+      'Datos del condenado a actualizar. Aplica sobre el condenado actualmente vinculado.',
     type: UpdateCondenadoDto,
   })
   @IsOptional()

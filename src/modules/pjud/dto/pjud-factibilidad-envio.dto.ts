@@ -2,13 +2,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PjudFactibilidadEnvioDto {
   @ApiProperty({
-    description: 'ID correlativo de la solicitud en el sistema PJUD (solicitudPjudId)',
+    description:
+      'ID correlativo de la solicitud en el sistema PJUD (solicitudPjudId)',
     example: 12345,
   })
   crrIdSolicitud: number;
 
   @ApiProperty({
-    description: 'Fecha y hora de la respuesta de factibilidad (YYYY-MM-DD HH:mm:ss)',
+    description:
+      'Fecha y hora de la respuesta de factibilidad (YYYY-MM-DD HH:mm:ss)',
     example: '2026-01-15 14:30:00',
   })
   fechaRespuesta: string;

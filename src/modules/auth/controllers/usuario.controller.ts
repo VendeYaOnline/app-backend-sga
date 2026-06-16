@@ -92,7 +92,10 @@ export class UsuarioController {
   })
   @ApiParam({ name: 'id', description: 'ID del usuario', type: Number })
   @ApiResponse({ status: 200, description: 'Detalle del usuario' })
-  @ApiResponse({ status: 403, description: 'Sin permiso para ver este usuario' })
+  @ApiResponse({
+    status: 403,
+    description: 'Sin permiso para ver este usuario',
+  })
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,

@@ -24,6 +24,7 @@ import { CatSexo } from '../entities/cat-sexo.entity';
 import { CatTipoCausa } from '../entities/cat-tipo-causa.entity';
 import { CatTipoLugar } from '../entities/cat-tipo-lugar.entity';
 import { CatTipoHorario } from '../entities/cat-tipo-horario.entity';
+import { CatPropositoArchivo } from '../entities/cat-proposito-archivo.entity';
 
 @Injectable()
 export class CatalogoService {
@@ -74,6 +75,8 @@ export class CatalogoService {
     private readonly tipoLugarRepo: Repository<CatTipoLugar>,
     @InjectRepository(CatTipoHorario)
     private readonly tipoHorarioRepo: Repository<CatTipoHorario>,
+    @InjectRepository(CatPropositoArchivo)
+    private readonly propositoArchivoRepo: Repository<CatPropositoArchivo>,
   ) {}
 
   private readonly logger = new Logger(CatalogoService.name);
@@ -232,6 +235,12 @@ export class CatalogoService {
     return this.tipoHorarioRepo.find({
       where: { activo: true },
       order: { descripcionHorario: 'ASC' },
+    });
+  }
+
+  async findPropositosArchivo() {
+    return this.propositoArchivoRepo.find({
+      order: { descripcionProposito: 'ASC' },
     });
   }
 }

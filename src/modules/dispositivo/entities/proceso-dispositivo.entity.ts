@@ -55,7 +55,10 @@ export class ProcesoDispositivo {
   observaciones: string | null;
 
   @ManyToOne(() => Proceso)
-  @JoinColumn({ name: 'agendamiento_id', referencedColumnName: 'agendamientoId' })
+  @JoinColumn({
+    name: 'agendamiento_id',
+    referencedColumnName: 'agendamientoId',
+  })
   proceso: Proceso;
 
   @ManyToOne(() => CatRolDispositivo)
