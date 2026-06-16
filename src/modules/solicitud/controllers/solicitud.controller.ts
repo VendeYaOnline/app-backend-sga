@@ -10,6 +10,8 @@ import {
   ParseIntPipe,
   HttpCode,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +21,9 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { SolicitudService } from '../services/solicitud.service';
 import { CreateSolicitudDto } from '../dto/create-solicitud.dto';
 import { UpdateSolicitudDto } from '../dto/update-solicitud.dto';
@@ -202,22 +206,50 @@ export class SolicitudController {
   @Post()
   @HttpCode(201)
   @RequirePermiso(PERMISOS.SOLICITUD_CREAR)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('documento'))
   @ApiOperation({
     summary: 'Crear una nueva solicitud IFT (con zonas, delitos y víctimas)',
     description:
-      'Crea una solicitud de intervención de fiscalización telemática con sus zonas, delitos asociados y víctimas vinculadas en una transacción',
+      'Crea una solicitud de intervención de fiscalización telemática con sus zonas, delitos asociados y víctimas vinculadas en una transacción. Opcionalmente recibe un archivo PDF como documento de la solicitud.',
   })
   @ApiResponse({ status: 201, description: 'Solicitud creada exitosamente' })
   @ApiResponse({
     status: 400,
     description: 'Datos inválidos o faltan campos requeridos',
   })
-  @ApiBody({ type: CreateSolicitudDto })
+  @ApiBody({
+    description: 'Datos de la solicitud y documento opcional',
+    required: true,
+    schema: {
+      type: 'object',
+      required: ['solicitudData'],
+      properties: {
+        solicitudData: {
+          type: 'string',
+          description: 'JSON serializado con los campos definidos en CreateSolicitudDto. Ej: {"tipoCausaId":1,"tribunalId":2,"condenadoId":3,...}',
+        },
+        documento: {
+          type: 'string',
+          format: 'binary',
+          description: 'Archivo PDF opcional con el documento de la solicitud. Se guarda como ArchivoReferencia con propositoId=1 (DOCUMENTO_SOLICITUD).',
+        },
+      },
+    },
+  })
   async create(
-    @Body() dto: CreateSolicitudDto,
+    @UploadedFile() documento: Express.Multer.File,
+    @Body('solicitudData') solicitudData: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.solicitudService.create(dto, user.sub, undefined, user.roles);
+    const dto: CreateSolicitudDto = JSON.parse(solicitudData);
+    return this.solicitudService.create(
+      dto,
+      user.sub,
+      undefined,
+      user.roles,
+      documento,
+    );
   }
 
   @Put(':id')

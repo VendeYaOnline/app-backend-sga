@@ -9,8 +9,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, Repository, IsNull, In } from 'typeorm';
+import { DataSource, Repository, IsNull, In, EntityManager } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import * as crypto from 'crypto';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 import { Solicitud } from '../entities/solicitud.entity';
 import { SolicitudSolicitante } from '../entities/solicitud-solicitante.entity';
 import { SolicitudVictima } from '../entities/solicitud-victima.entity';
@@ -41,9 +44,12 @@ import { Proceso } from '../../evento/entities/proceso.entity';
 import { ProcesoDispositivo } from '../../dispositivo/entities/proceso-dispositivo.entity';
 import { ProcesoSoporteDetalle } from '../../evento/entities/proceso-soporte-detalle.entity';
 import { ProcesoSoporteMotivo } from '../../evento/entities/proceso-soporte-motivo.entity';
+import { Archivo } from '../../archivo/entities/archivo.entity';
+import { ArchivoReferencia } from '../../archivo/entities/archivo-referencia.entity';
 
 const ESTADO_INICIAL_CODIGO = 'RECEPCIONADA';
 const ESTADO_EDITABLE_CODIGO = 'DEVUELTA_SOLICITANTE';
+const PROPOSITO_DOCUMENTO_SOLICITUD = 1;
 
 // Respuesta de PJUD al registrar una IFT saliente (puede cambiar con docs finales).
 interface PjudRegistroIftResponse {
@@ -420,6 +426,7 @@ export class SolicitudService {
     userId: number,
     origenCreacion?: string,
     userRoles: string[] = [],
+    documento?: Express.Multer.File,
   ): Promise<Solicitud> {
     if (!dto.condenadoId && !dto.condenado) {
       throw new BadRequestException(
@@ -557,6 +564,15 @@ export class SolicitudService {
         esPrincipal: true,
       });
       await manager.save(solicitante);
+
+      if (documento) {
+        await this.guardarDocumentoSolicitud(
+          manager,
+          documento,
+          saved.id,
+          userId,
+        );
+      }
 
       if (pjudRegistro) {
         const llamada = manager.create(PjudLlamada, {
@@ -1169,5 +1185,58 @@ export class SolicitudService {
       requestBody,
       responseBody: JSON.stringify(pjudResponse),
     };
+  }
+
+  private async guardarDocumentoSolicitud(
+    manager: EntityManager,
+    file: Express.Multer.File,
+    solicitudId: number,
+    userId: number,
+  ): Promise<void> {
+    const hash = crypto
+      .createHash('sha256')
+      .update(file.buffer)
+      .digest('hex');
+
+    let archivo = await manager.findOne(Archivo, {
+      where: { hashSha256: hash },
+    });
+
+    if (!archivo) {
+      const fecha = new Date();
+      const dirRelativo = `${fecha.getFullYear()}/${String(fecha.getMonth() + 1).padStart(2, '0')}/solicitud`;
+      const dirAbsoluto = path.join(
+        process.env.STORAGE_ROOT || 'C:/sga-storage',
+        dirRelativo,
+      );
+      await fs.mkdir(dirAbsoluto, { recursive: true });
+
+      const filename = `${Date.now()}-${file.originalname}`;
+      await fs.writeFile(path.join(dirAbsoluto, filename), file.buffer);
+
+      archivo = manager.create(Archivo, {
+        uuid: crypto.randomUUID(),
+        rutaRelativa: `${dirRelativo}/${filename}`,
+        nombreOriginal: file.originalname,
+        mimeType: file.mimetype,
+        tamanoBytes: file.size,
+        hashSha256: hash,
+        createdBy: userId,
+      });
+      await manager.save(archivo);
+    }
+
+    const referencia = manager.create(ArchivoReferencia, {
+      archivoId: archivo.id,
+      entidad: 'SOLICITUD',
+      entidadId: solicitudId,
+      propositoId: PROPOSITO_DOCUMENTO_SOLICITUD,
+      createdBy: userId,
+    });
+    await manager.save(referencia);
+
+    this.logger.log(
+      `Documento ${archivo.uuid} asociado a solicitud ${solicitudId}`,
+    );
   }
 }

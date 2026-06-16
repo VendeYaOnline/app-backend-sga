@@ -15,6 +15,8 @@ import { CatEstadoSolicitudTransicion } from '../catalogo/entities/cat-estado-so
 import { CatTipoFactibilidad } from '../catalogo/entities/cat-tipo-factibilidad.entity';
 import { Condenado } from '../persona/entities/condenado.entity';
 import { Victima } from '../persona/entities/victima.entity';
+import { Archivo } from '../archivo/entities/archivo.entity';
+import { ArchivoReferencia } from '../archivo/entities/archivo-referencia.entity';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { Victima } from '../persona/entities/victima.entity';
       CatTipoFactibilidad,
       Condenado,
       Victima,
+      Archivo,
+      ArchivoReferencia,
     ]),
   ],
   controllers: [SolicitudController],
