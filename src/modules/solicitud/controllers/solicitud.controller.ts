@@ -164,6 +164,13 @@ export class SolicitudController {
     description: 'true = solo solicitudes SIN evento Decreta Monitoreo',
   })
   @ApiQuery({
+    name: 'decretoMonitoreoAprobado',
+    required: false,
+    enum: ['true', 'false'],
+    description:
+      'true = solo solicitudes CON Decreta Monitoreo en estado APROBADO',
+  })
+  @ApiQuery({
     name: 'decretoMonitoreoCompletado',
     required: false,
     enum: ['true', 'false'],

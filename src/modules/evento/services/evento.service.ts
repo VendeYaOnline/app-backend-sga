@@ -46,8 +46,17 @@ import { CreateProcesoSoporteDetalleDto } from '../dto/create-proceso.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 import { CreateCambioDomicilioDto } from '../dto/create-cambio-domicilio.dto';
 import { GestionarCambioDomicilioDto } from '../dto/gestionar-cambio-domicilio.dto';
+import { EstadoEvento } from '../enums/evento.enum';
 
 const PROPOSITO_EVIDENCIA_PROCESO = 3;
+
+const TIPOS_RESOLUCION_APROBADO: string[] = [
+  'DECRETO_MONITOREO_INICIAL',
+  'PRORROGA_EXTENSION',
+  'CESE_CONTROL',
+  'CAMBIO_DOMICILIO',
+  'INFORME_CONTROL',
+];
 
 @Injectable()
 export class EventoService {
@@ -680,11 +689,9 @@ export class EventoService {
       );
     }
 
-    const estadoInicial = ['PRORROGA_EXTENSION', 'CESE_CONTROL'].includes(
-      codigo,
-    )
-      ? 'APROBADO'
-      : 'PENDIENTE';
+    const estadoInicial = TIPOS_RESOLUCION_APROBADO.includes(codigo)
+      ? EstadoEvento.APROBADO
+      : EstadoEvento.PENDIENTE;
 
     const evento = manager.create(Evento, {
       tipoEventoId: dto.tipoEventoId,

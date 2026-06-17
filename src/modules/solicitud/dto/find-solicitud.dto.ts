@@ -103,6 +103,14 @@ export class FindSolicitudDto extends PaginationDto {
 
   @ApiPropertyOptional({
     description:
+      'true = solo solicitudes CON Decreta Monitoreo en estado APROBADO',
+  })
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  decretoMonitoreoAprobado?: string;
+
+  @ApiPropertyOptional({
+    description:
       'true = solo solicitudes CON Decreta Monitoreo en estado COMPLETADO',
   })
   @IsOptional()
