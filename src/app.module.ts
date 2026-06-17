@@ -40,7 +40,7 @@ import { NormalizeSubscriber } from './common/subscribers/normalize.subscriber';
         password: config.get('database.password'),
         database: config.get('database.database'),
         options: {
-          encrypt: false,
+          encrypt: true,
           trustServerCertificate: true,
         },
         subscribers: [NormalizeSubscriber],
