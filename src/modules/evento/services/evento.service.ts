@@ -10,6 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository, IsNull, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import * as crypto from 'crypto';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 import { Evento } from '../entities/evento.entity';
 import { EventoValidacion } from '../entities/evento-validacion.entity';
 import { Resolucion } from '../entities/resolucion.entity';
@@ -31,6 +34,8 @@ import { SolicitudDelito } from '../../solicitud/entities/solicitud-delito.entit
 import { SolicitudVictima } from '../../solicitud/entities/solicitud-victima.entity';
 import { SolicitudEstadoHist } from '../../solicitud/entities/solicitud-estado-hist.entity';
 import { SolicitudFactibilidad } from '../../solicitud/entities/solicitud-factibilidad.entity';
+import { Archivo } from '../../archivo/entities/archivo.entity';
+import { ArchivoReferencia } from '../../archivo/entities/archivo-referencia.entity';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 import { CreateEventoCompletoDto } from '../dto/create-evento-completo.dto';
@@ -41,6 +46,8 @@ import { CreateProcesoSoporteDetalleDto } from '../dto/create-proceso.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 import { CreateCambioDomicilioDto } from '../dto/create-cambio-domicilio.dto';
 import { GestionarCambioDomicilioDto } from '../dto/gestionar-cambio-domicilio.dto';
+
+const PROPOSITO_EVIDENCIA_PROCESO = 3;
 
 @Injectable()
 export class EventoService {
@@ -899,6 +906,7 @@ export class EventoService {
       }[];
     },
     userId: number,
+    evidencias?: Express.Multer.File[],
   ) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -1044,6 +1052,15 @@ export class EventoService {
         motivosGuardados = await manager.save(entities);
       }
 
+      if (evidencias && evidencias.length > 0) {
+        await this.guardarEvidenciasProceso(
+          manager,
+          evidencias,
+          agendamientoId,
+          userId,
+        );
+      }
+
       const accion = manager.create(AccionUsuario, {
         usuarioId: userId,
         tipoAccion: 'CREAR_PROCESO',
@@ -1055,6 +1072,7 @@ export class EventoService {
           cantidadDispositivos: dispositivosGuardados.length,
           tieneSoporteDetalle: !!soporteDetalleGuardado,
           cantidadMotivos: motivosGuardados.length,
+          cantidadEvidencias: evidencias?.length ?? 0,
         }),
       });
       await manager.save(accion);
@@ -1062,7 +1080,7 @@ export class EventoService {
       await queryRunner.commitTransaction();
 
       this.logger.log(
-        `Proceso creado para agendamiento ${agendamientoId} (evento ${agendamiento.eventoId}) con ${dispositivosGuardados.length} dispositivo(s), soporte=${!!soporteDetalleGuardado}, ${motivosGuardados.length} motivo(s) por usuario ${userId}`,
+        `Proceso creado para agendamiento ${agendamientoId} (evento ${agendamiento.eventoId}) con ${dispositivosGuardados.length} dispositivo(s), soporte=${!!soporteDetalleGuardado}, ${motivosGuardados.length} motivo(s), ${evidencias?.length ?? 0} evidencia(s) por usuario ${userId}`,
       );
 
       return {
@@ -1077,6 +1095,61 @@ export class EventoService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async guardarEvidenciasProceso(
+    manager: EntityManager,
+    files: Express.Multer.File[],
+    agendamientoId: number,
+    userId: number,
+  ): Promise<void> {
+    for (const file of files) {
+      const hash = crypto
+        .createHash('sha256')
+        .update(file.buffer)
+        .digest('hex');
+
+      let archivo = await manager.findOne(Archivo, {
+        where: { hashSha256: hash },
+      });
+
+      if (!archivo) {
+        const fecha = new Date();
+        const dirRelativo = `${fecha.getFullYear()}/${String(fecha.getMonth() + 1).padStart(2, '0')}/proceso`;
+        const dirAbsoluto = path.join(
+          process.env.STORAGE_ROOT || 'C:/sga-storage',
+          dirRelativo,
+        );
+        await fs.mkdir(dirAbsoluto, { recursive: true });
+
+        const filename = `${Date.now()}-${file.originalname}`;
+        await fs.writeFile(path.join(dirAbsoluto, filename), file.buffer);
+
+        archivo = manager.create(Archivo, {
+          uuid: crypto.randomUUID(),
+          rutaRelativa: `${dirRelativo}/${filename}`,
+          nombreOriginal: file.originalname,
+          mimeType: file.mimetype,
+          tamanoBytes: file.size,
+          hashSha256: hash,
+          createdBy: userId,
+        });
+        await manager.save(archivo);
+      }
+
+      const referencia = manager.create(ArchivoReferencia, {
+        archivoId: archivo.id,
+        entidad: 'PROCESO',
+        entidadId: agendamientoId,
+        propositoId: PROPOSITO_EVIDENCIA_PROCESO,
+        createdBy: userId,
+      });
+      await manager.save(referencia);
+    }
+
+    this.logger.log(
+      `${files.length} evidencia(s) guardada(s) para proceso ${agendamientoId}`,
+    );
   }
 
   async cerrarProcesoCompleto(

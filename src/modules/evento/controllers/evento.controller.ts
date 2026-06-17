@@ -10,6 +10,9 @@ import {
   ParseIntPipe,
   HttpCode,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +22,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { EventoService } from '../services/evento.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
@@ -45,6 +49,9 @@ import { CerrarProcesoDto } from '../dto/cerrar-proceso.dto';
 import { ReagendarEventoDto } from '../dto/reagendar-evento.dto';
 import { RequirePermiso } from '../../../common/decorators/require-permiso.decorator';
 import { PERMISOS } from '../../../common/constants/permisos.constant';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 
 @ApiTags('Eventos')
 @ApiBearerAuth()
@@ -242,10 +249,13 @@ export class EventoController {
   @Post('procesos')
   @RequirePermiso(PERMISOS.PROCESO_CERRAR)
   @HttpCode(201)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('evidencias', 5))
   @ApiOperation({
     summary: 'Crear un proceso en terreno desde un agendamiento',
     description:
-      'Crea un nuevo proceso en terreno asociado al agendamiento indicado. El eventoId se resuelve automáticamente desde el agendamiento.',
+      'Crea un nuevo proceso en terreno asociado al agendamiento indicado. El eventoId se resuelve automaticamente desde el agendamiento. ' +
+      'Opcionalmente recibe hasta 5 imagenes de evidencia.',
   })
   @ApiResponse({ status: 201, description: 'Proceso creado exitosamente' })
   @ApiResponse({ status: 404, description: 'Agendamiento no encontrado' })
@@ -253,12 +263,54 @@ export class EventoController {
     status: 409,
     description: 'Ya existe un proceso para el evento del agendamiento',
   })
-  @ApiBody({ type: CreateProcesoDto })
+  @ApiBody({
+    description: 'Datos del proceso y evidencias opcionales',
+    required: true,
+    schema: {
+      type: 'object',
+      required: ['procesoData'],
+      properties: {
+        procesoData: {
+          type: 'string',
+          description:
+            'JSON serializado con los campos definidos en CreateProcesoDto. Ej: {"agendamientoId":1,"regionId":5,"dispositivos":[...]}',
+        },
+        evidencias: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+          description:
+            'Hasta 5 imagenes de evidencia del proceso en terreno (opcional).',
+        },
+      },
+    },
+  })
   async createProceso(
-    @Body() dto: CreateProcesoDto,
+    @UploadedFiles() evidencias: Express.Multer.File[],
+    @Body('procesoData') procesoData: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.eventoService.createProceso(dto, user.sub);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(procesoData) as Record<string, unknown>;
+    } catch {
+      throw new BadRequestException('procesoData no es un JSON valido');
+    }
+
+    const dto = plainToInstance(CreateProcesoDto, parsed);
+    const errors = validateSync(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    if (errors.length > 0) {
+      const messages = errors.flatMap((e) =>
+        Object.values(e.constraints ?? {}),
+      );
+      throw new BadRequestException(
+        messages.length > 0 ? messages : 'Datos de proceso invalidos',
+      );
+    }
+
+    return this.eventoService.createProceso(dto, user.sub, evidencias);
   }
 
   @Put('procesos/:agendamientoId')
