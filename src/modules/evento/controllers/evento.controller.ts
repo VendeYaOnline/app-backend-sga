@@ -289,6 +289,23 @@ export class EventoController {
     @Body('procesoData') procesoData: string,
     @CurrentUser() user: JwtPayload,
   ) {
+    if (evidencias && evidencias.length > 0) {
+      const MIME_PERMITIDOS = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/bmp',
+        'image/gif',
+      ];
+      for (const file of evidencias) {
+        if (!MIME_PERMITIDOS.includes(file.mimetype)) {
+          throw new BadRequestException(
+            `El archivo '${file.originalname}' no es una imagen valida. Tipos permitidos: JPEG, PNG, WebP, BMP, GIF.`,
+          );
+        }
+      }
+    }
+
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(procesoData) as Record<string, unknown>;
